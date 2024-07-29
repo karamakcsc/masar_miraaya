@@ -11,3 +11,10 @@ def get_item_details(item=None):
 							FROM `tabItem` ti
 							WHERE ti.disabled= 0
 							ORDER BY ti.creation DESC; """, as_dict=1)
+
+@frappe.whitelist()
+def get_wh_details(item=None):
+	return frappe.db.sql("""  SELECT *
+							FROM `tabWarehouse` tw
+							WHERE tw.is_group= 0
+							ORDER BY tw.creation DESC; """, as_dict=1)
