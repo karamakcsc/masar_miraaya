@@ -18,3 +18,10 @@ def get_wh_details():
 							FROM `tabWarehouse` tw
 							WHERE tw.is_group= 0
 							ORDER BY tw.creation DESC; """, as_dict=1)
+
+@frappe.whitelist()
+def get_exchange_rate(item=None):
+		return frappe.db.sql(""" SELECT from_currency, to_currency, exchange_rate
+							FROM `tabCurrency Exchange`
+							WHERE for_selling =1
+							ORDER BY creation DESC;""", as_dict=True)
