@@ -25,3 +25,12 @@ def get_exchange_rate():
 							FROM `tabCurrency Exchange`
 							WHERE for_selling =1
 							ORDER BY creation DESC;""", as_dict=True)
+
+@frappe.whitelist()
+def get_available_qty(item=None, warehouse=None):
+    return frappe.db.sql("""
+        SELECT tb.warehouse, tb.item_code, (tb.actual_qty - tb.reserved_qty) as `Available Quantity`
+        FROM `tabBin` tb
+        WHERE tb.item_code = %s AND tb.warehouse = %s
+        ORDER BY tb.creation DESC;""",
+        (item,warehouse),as_dict=True)
