@@ -20,7 +20,7 @@ def get_wh_details():
 							ORDER BY tw.creation DESC; """, as_dict=1)
 
 @frappe.whitelist()
-def get_exchange_rate(item=None):
+def get_exchange_rate():
 		return frappe.db.sql(""" SELECT from_currency, to_currency, exchange_rate
 							FROM `tabCurrency Exchange`
 							WHERE for_selling =1
