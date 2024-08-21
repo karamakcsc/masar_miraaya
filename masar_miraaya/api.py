@@ -34,3 +34,8 @@ def get_available_qty(item=None, warehouse=None):
         WHERE tb.item_code = %s AND tb.warehouse = %s
         ORDER BY tb.creation DESC;""",
         (item,warehouse),as_dict=True)
+    
+@frappe.whitelist()
+def create_image_magento(item):
+    image = frappe.db.get_value("Item", item, "image")
+    return image

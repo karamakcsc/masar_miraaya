@@ -129,27 +129,34 @@ app_license = "mit"
 # 		"on_trash": "method"
 # 	}
 # }
-
+doctype_js = {
+   "Item" : "custom/item/item.js"
+ }
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"masar_miraaya.tasks.all"
-# 	],
-# 	"daily": [
-# 		"masar_miraaya.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"masar_miraaya.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"masar_miraaya.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"masar_miraaya.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	# "all": [
+	# 	"masar_miraaya.override._reorder_item.reorder_item"
+	# ],
+	# "daily": [
+	# 	"masar_miraaya.override._reorder_item.reorder_item"
+	# ],
+	"hourly": [
+		"masar_miraaya.override._reorder_item.reorder_item"
+	],
+	# "weekly": [
+	# 	"masar_miraaya.tasks.weekly"
+	# ],
+	# "monthly": [
+	# 	"masar_miraaya.tasks.monthly"
+	# ],
+	# "cron": {
+	# 	"45 0 * * *": [
+	# 		"masar_miraaya.override._reorder_item.reorder_item"
+	# 	]
+	# }
+}
 
 # Testing
 # -------
@@ -160,7 +167,7 @@ app_license = "mit"
 # ------------------------------
 #
 # override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "masar_miraaya.event.get_events"
+#     "erpnext.stock.reorder_item.reorder_item": "masar_miraaya.override._reorder_item.reorder_item"
 # }
 #
 # each overriding function accepts a `data` argument;
@@ -226,4 +233,12 @@ app_license = "mit"
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
-
+fixtures = [
+    {"dt": "Custom Field", "filters": [
+        [
+            "name", "in", [
+                "Item-custom_max_qty"
+            ]
+        ]
+    ]}
+]
