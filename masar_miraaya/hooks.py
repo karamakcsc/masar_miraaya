@@ -122,16 +122,37 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Item": {
+		"validate": "masar_miraaya.custom.item.item.after_save",
+		"on_change": "masar_miraaya.custom.item.item.on_change"
+		# "on_trash": "method"
+	},
+	"Item Group": {
+		"validate": "masar_miraaya.custom.item_group.item_group.after_save"
+	},
+	"Customer": {
+		"validate": "masar_miraaya.custom.customer.customer.after_save"
+	},
+	"Customer Group": {
+		"validate": "masar_miraaya.custom.customer_group.customer_group.after_save"
+	}
+}
+
 doctype_js = {
-   "Item" : "custom/item/item.js"
- }
+   "Item" : "custom/item/item.js",
+   "Item Group": "custom/item_group/item_group.js",
+   "Customer": "custom/customer/customer.js",
+   "Customer Group": "custom/customer_group/customer_group.js"
+}
+doctype_list_js = {
+    "Item" : "custom/item/item_list.js",
+    "Item Group": "custom/item_group/item_group_list.js",
+    "Customer": "custom/customer/customer_list.js",
+    "Customer Group": "custom/customer_group/customer_group_list.js",
+    "Sales Invoice": "custom/sales_invoice/sales_invoice_list.js",
+    "Address": "custom/address/address_list.js"
+    }
 # Scheduled Tasks
 # ---------------
 
@@ -143,7 +164,7 @@ scheduler_events = {
 	# 	"masar_miraaya.override._reorder_item.reorder_item"
 	# ],
 	"hourly": [
-		"masar_miraaya.override._reorder_item.reorder_item"
+		"masar_miraaya.jobs._reorder_item.reorder_item"
 	],
 	# "weekly": [
 	# 	"masar_miraaya.tasks.weekly"
@@ -237,7 +258,22 @@ fixtures = [
     {"dt": "Custom Field", "filters": [
         [
             "name", "in", [
-                "Item-custom_max_qty"
+                "Item-custom_max_qty",
+                "Item Group-custom_item_group_id",
+                "Item Group-custom_parent_item_group_id",
+                "Customer-custom_first_name",
+                "Customer-custom_last_name",
+                "Customer-custom_email",
+                "Customer Group-custom_customer_group_id",
+                "Customer-custom_customer_id",
+                "Item-custom_item_group_id",
+                "Customer-custom_customer_group_id",
+                "Item-custom_is_publish",
+                "Item Group-custom_is_publish",
+                "Item Group-custom_column_break_oilxi",
+                "Customer-custom_is_publish",
+                "Customer Group-custom_is_publish",
+                "Sales Order-custom_sales_order_status"
             ]
         ]
     ]}

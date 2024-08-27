@@ -1,0 +1,86 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-08-27 13:38:12.265264",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "frappe_section",
+  "frappe_url",
+  "column_break_yqdj",
+  "frappe_auth",
+  "magento_section",
+  "magento_url",
+  "column_break_nxpo",
+  "magento_auth",
+  "create_magento_auth"
+ ],
+ "fields": [
+  {
+   "fieldname": "frappe_section",
+   "fieldtype": "Section Break",
+   "label": "Frappe"
+  },
+  {
+   "fieldname": "frappe_url",
+   "fieldtype": "Small Text",
+   "label": "URL"
+  },
+  {
+   "fieldname": "frappe_auth",
+   "fieldtype": "Small Text",
+   "label": "Auth"
+  },
+  {
+   "fieldname": "column_break_yqdj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "magento_section",
+   "fieldtype": "Section Break",
+   "label": "Magento"
+  },
+  {
+   "fieldname": "magento_url",
+   "fieldtype": "Small Text",
+   "label": "URL"
+  },
+  {
+   "fieldname": "magento_auth",
+   "fieldtype": "Small Text",
+   "label": "Auth"
+  },
+  {
+   "fieldname": "column_break_nxpo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "create_magento_auth",
+   "fieldtype": "Button",
+   "label": "Create Magento Auth"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-08-27 14:55:36.585790",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Magento Setting",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
