@@ -208,10 +208,10 @@ def get_magento_products():
                 item_code = item['sku']
                 item_name = item['name']
                 # exist_item_code = frappe.db.sql("SELECT name FROM `tabItem` WHERE item_code = %s" , (item_code) , as_dict = True)
-            # if not (exist_item_code and exist_item_code[0] and exist_item_code[0]['name']):
-                # value_loop +=1 
-                # if value_loop == 19:
-                #     return
+                # if not (exist_item_code and exist_item_code[0] and exist_item_code[0]['name']):
+                value_loop +=1 
+                if value_loop == 999:
+                    return
                 visibility_mapping = {
                     1: 'Not Visible Individually',
                     2: 'Catalog',
