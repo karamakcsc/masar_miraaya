@@ -7,7 +7,6 @@ from io import BytesIO
 import base64
 import pycountry
 from datetime import date
-from frappe import _
 
 def base_request_magento_data():
     setting = frappe.get_doc("Magento Setting")
@@ -121,13 +120,30 @@ def create_item_task(item_data):
         frappe.throw(f"Failed to create item in Frappe: {str(e)}")
         
 @frappe.whitelist()
+def create_brand(brand):
+    base_url_frappe, headers_frappe = base_request_data()
+    payload = {
+        "doctype": "Brand",
+        "brand": brand
+    }
+    existing_brand = frappe.db.exists('Brand', brand)
+    if existing_brand:
+        return
+    response = requests.post(f"{base_url_frappe}/Brand", headers=headers_frappe, json=payload)
+    response.raise_for_status()
+     
+@frappe.whitelist()
 def get_magento_products():
     try:
         base_url, headers = base_request_magento_data()
+        # frappe.throw(base_url)
         url = base_url + "/rest/V1/products?searchCriteria="
         request = requests.get(url, headers=headers)
         json_response = request.json()
         items = json_response['items']
+        items_list = []
+        description = ''
+        item_group = ''
 
         if items:
             for item in items:
@@ -138,9 +154,6 @@ def get_magento_products():
                 custom_attributes = item['custom_attributes']
                 image = None  
                 category_id = None 
-
-                description = ""
-                item_group = ""
 
                 for attribute in custom_attributes:
                     if attribute['attribute_code'] == 'product_description':
@@ -153,9 +166,11 @@ def get_magento_products():
                         item_group = item_group_data['name']
                     if attribute['attribute_code'] == 'image':
                         image = attribute['value']
-
+                
                 file_url = upload_image_to_frappe(image, item_code) if image else ''
-                    
+                if brand:
+                    create_brand(brand)
+                        
                 dict_items = {
                     "naming_series": "STO-ITEM-.YYYY.-",
                     "doctype": "Item",
@@ -169,10 +184,14 @@ def get_magento_products():
                     "image": file_url,
                     "custom_is_publish": 1
                 }
+                frappe.enqueue("masar_miraaya.api.create_item_task", timeout=None, queue="long", item_data=dict_items)
+                # base_url_frappe, headers_frappe = base_request_data()
+                # response = requests.post(f"{base_url_frappe}/Item", headers=headers_frappe, json=dict_items)
+                # response.raise_for_status() 
 
-                frappe.enqueue(create_item_task, item_data=dict_items)
+                items_list.append(dict_items)
 
-        return "Items are being processed"
+        return items_list
     except Exception as e:
         frappe.throw(f"General Error: {e}", "Magento Sync")
         return f"General Error: {e}"
@@ -424,66 +443,52 @@ def get_customer_group_name(id):
 #         return {}
 
 @frappe.whitelist()
-def get_magento_sales_invoices(customer_id, sku):
+def get_magento_sales_invoices():
     try:
         base_url, headers = base_request_magento_data()
-        url = f"{base_url}/rest/V1/invoices?searchCriteria"
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        json_response = response.json()
+        url = base_url + "/rest/V1/invoices?searchCriteria"
+        request = requests.get(url, headers=headers)
+        json_response = request.json()
 
         base_url_frappe_sales_invoice, headers_frappe_sales_invoice = base_request_data()
 
-        if "items" in json_response and json_response["items"]:
-            magento_invoice = json_response["items"][0]
-            customer_id = magento_invoice.get("customer_id")
+        if "items" in json_response and len(json_response["items"]) > 0:
+            for magento_invoice in json_response["items"]:
+                customer_id = magento_invoice.get("customer_id")
 
-            customer_details = customer_id
-            customer_name = customer_details.get("customer_name", "Unknown Customer")
+                customer_details = next((customer for customer in get_magento_customers() if customer['custom_customer_id'] == customer_id), None)
+                customer_name = customer_details.get("customer_name", "Unknown Customer") if customer_details else "Unknown Customer"
 
-            data = {
-                "customer": customer_name,
-                "posting_date": magento_invoice["created_at"],
-                "grand_total": magento_invoice["grand_total"],
-                "items": []
-            }
+                data = {
+                    "customer": customer_name,
+                    "posting_date": magento_invoice["created_at"],
+                    "grand_total": magento_invoice["grand_total"],
+                    "items": []
+                }
 
-            for item in magento_invoice["items"]:
-                sku = item["sku"]
-                
-                product_details = sku
-                
-                if product_details:
-                    image_url = product_details.get("image")
-                    image = upload_image_to_frappe(image_url, product_details["item_code"]) if image_url else ''
+                for item in magento_invoice["items"]:
+                    sku = item["sku"]
 
-                    data["items"].append({
-                        "item_code": product_details["item_code"],
-                        "item_name": product_details["item_name"],
-                        "qty": item["qty"],
-                        "rate": item["price"],
-                        "amount": item["row_total"],
-                        "description": product_details.get("description", ""),
-                        "image": image
-                    })
+                    product_details = next((product for product in get_magento_products() if product['item_code'] == sku), None)
 
-            frappe_response = requests.post(
-                f"{base_url_frappe_sales_invoice}/api/resource/Sales Invoice", 
-                headers=headers_frappe_sales_invoice, 
-                json=data
-            )
-            frappe_response.raise_for_status()
+                    if product_details:
+                        data["items"].append({
+                            "item_code": product_details["item_code"],
+                            "item_name": product_details["item_name"],
+                            "qty": item["qty"],
+                            "rate": item["price"],
+                            "amount": item["row_total"],
+                            "description": product_details["description"],
+                            "image": product_details["image"]
+                        })
 
-            return _("Sales invoice created successfully in Frappe.")
-        else:
-            return _("No invoices found.")
+                response = requests.post(f"{base_url_frappe_sales_invoice}/Sales Invoice", headers=headers_frappe_sales_invoice, json=data)
+                response.raise_for_status()
 
-    except requests.exceptions.RequestException as e:
-        frappe.throw(_("Error connecting to Magento API: {0}").format(str(e)), "Magento Sync")
-    except KeyError as e:
-        frappe.throw(_("Missing expected data: {0}").format(str(e)), "Magento Sync")
+        return "All sales invoices created successfully in Frappe."
     except Exception as e:
-        frappe.throw(_("Error creating sales invoice: {0}").format(str(e)), "Magento Sync")
+        frappe.throw(f"Error creating sales invoices: {e}", "Magento Sync")
+        return f"Error creating sales invoices: {e}"
 
 @frappe.whitelist()
 def get_magento_sales_order():
