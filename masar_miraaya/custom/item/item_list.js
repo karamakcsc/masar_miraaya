@@ -3,6 +3,8 @@ frappe.listview_settings['Item'] = {
         listview.page.add_inner_button(__("Sync"), function () {
             frappe.call({
                 method: 'masar_miraaya.api.get_magento_products',
+                freeze: true,
+                freeze_message: 'Please Wait .....',
                 callback: function(response) {
                     frappe.msgprint(__(response.message));
                 },

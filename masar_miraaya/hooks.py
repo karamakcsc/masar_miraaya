@@ -136,7 +136,10 @@ doc_events = {
 	},
 	"Customer Group": {
 		"validate": "masar_miraaya.custom.customer_group.customer_group.after_save"
-	}
+	}, 
+    "Price List": { 
+        "validate" : "masar_miraaya.custom.price_list.price_list.validate"
+    }
 }
 
 doctype_js = {
@@ -152,7 +155,9 @@ doctype_list_js = {
     "Customer Group": "custom/customer_group/customer_group_list.js",
     "Sales Invoice": "custom/sales_invoice/sales_invoice_list.js",
     "Sales Order": "custom/sales_order/sales_order_list.js",
-    "Address": "custom/address/address_list.js"
+    "Address": "custom/address/address_list.js",
+    "Brand": "custom/brand/brand_list.js",
+    "Item Attribute": "custom/item_attribute/item_attribute_list.js"
     }
 # Scheduled Tasks
 # ---------------
@@ -276,7 +281,11 @@ fixtures = [
                 "Customer Group-custom_is_publish",
                 "Sales Order-custom_sales_order_status",
                 "Address-custom_address_id",
-                "Sales Order-custom_address_id"
+                "Sales Order-custom_address_id",
+                "Item Attribute Value-custom_value",
+                "Price List-custom_magento_selling",
+                "Item-custom_item_id",
+                "custom_tax_category_id"
             ]
         ]
     ]}
