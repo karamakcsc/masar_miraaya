@@ -151,6 +151,7 @@ doctype_list_js = {
     "Customer": "custom/customer/customer_list.js",
     "Customer Group": "custom/customer_group/customer_group_list.js",
     "Sales Invoice": "custom/sales_invoice/sales_invoice_list.js",
+    "Sales Order": "custom/sales_order/sales_order_list.js",
     "Address": "custom/address/address_list.js"
     }
 # Scheduled Tasks
@@ -172,11 +173,11 @@ scheduler_events = {
 	# "monthly": [
 	# 	"masar_miraaya.tasks.monthly"
 	# ],
-	# "cron": {
-	# 	"45 0 * * *": [
-	# 		"masar_miraaya.override._reorder_item.reorder_item"
-	# 	]
-	# }
+	"cron": {
+        "*/30 * * * *": [
+            "masar_miraaya.api.create_magento_auth"
+        ]
+    }
 }
 
 # Testing
@@ -273,7 +274,9 @@ fixtures = [
                 "Item Group-custom_column_break_oilxi",
                 "Customer-custom_is_publish",
                 "Customer Group-custom_is_publish",
-                "Sales Order-custom_sales_order_status"
+                "Sales Order-custom_sales_order_status",
+                "Address-custom_address_id",
+                "Sales Order-custom_address_id"
             ]
         ]
     ]}

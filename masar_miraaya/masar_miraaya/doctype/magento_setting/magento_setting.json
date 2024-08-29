@@ -12,8 +12,12 @@
   "magento_section",
   "magento_url",
   "column_break_nxpo",
+  "create_magento_auth",
   "magento_auth",
-  "create_magento_auth"
+  "magento_admin_details_section",
+  "username",
+  "column_break_uajd",
+  "password"
  ],
  "fields": [
   {
@@ -29,7 +33,7 @@
   {
    "fieldname": "frappe_auth",
    "fieldtype": "Small Text",
-   "label": "Auth"
+   "label": "Authorization"
   },
   {
    "fieldname": "column_break_yqdj",
@@ -48,7 +52,7 @@
   {
    "fieldname": "magento_auth",
    "fieldtype": "Small Text",
-   "label": "Auth"
+   "label": "Authorization"
   },
   {
    "fieldname": "column_break_nxpo",
@@ -58,12 +62,31 @@
    "fieldname": "create_magento_auth",
    "fieldtype": "Button",
    "label": "Create Magento Auth"
+  },
+  {
+   "fieldname": "magento_admin_details_section",
+   "fieldtype": "Section Break",
+   "label": "Magento Admin Details"
+  },
+  {
+   "fieldname": "username",
+   "fieldtype": "Data",
+   "label": "Username"
+  },
+  {
+   "fieldname": "column_break_uajd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "password",
+   "fieldtype": "Data",
+   "label": "Password"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-08-27 14:55:36.585790",
+ "modified": "2024-08-28 11:05:04.911067",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Magento Setting",

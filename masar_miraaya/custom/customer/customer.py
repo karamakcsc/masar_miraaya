@@ -5,7 +5,7 @@ from masar_miraaya.api import base_request_magento_data
 
 def after_save(self, method):
     # if self.custom_is_publish:
-    create_new_customer(self)
+    # create_new_customer(self)
     pass
     
 def create_new_customer(self):

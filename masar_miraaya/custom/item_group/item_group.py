@@ -4,8 +4,8 @@ import requests
 from masar_miraaya.api import base_request_magento_data
 
 def after_save(self, method):
-    if self.custom_is_publish and self.custom_is_publish is not None:
-        create_new_item_group(self)
+    # if self.custom_is_publish and self.custom_is_publish is not None:
+    #     create_new_item_group(self)
     pass
 
 
@@ -41,11 +41,6 @@ def create_new_item_group(self):
     # if self.is_new() == 1:
 
     is_active = 0
-
-    if self.custom_is_publish == 1:
-            is_active = 1
-    else:
-        is_active = 0
 
     if self.name not in get_magento_categories():
         parent_id = 1 if self.is_group == 1 else self.custom_parent_item_group_id

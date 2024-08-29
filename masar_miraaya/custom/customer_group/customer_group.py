@@ -4,8 +4,8 @@ import requests
 from masar_miraaya.api import base_request_magento_data
 
 def after_save(self, method):
-    if self.custom_is_publish:
-        create_new_customer_group(self)
+    # if self.custom_is_publish:
+    #     create_new_customer_group(self)
     pass
     
 def create_new_customer_group(self):
@@ -37,4 +37,4 @@ def create_new_customer_group(self):
             response.raise_for_status()
 
     except Exception as e:
-        frappe.throw(f"Failed to create or update customer: {str(e)}")
+        frappe.throw(f"Failed to create customer group: {str(e)}")

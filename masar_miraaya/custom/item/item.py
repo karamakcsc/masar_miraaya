@@ -7,13 +7,13 @@ from masar_miraaya.api import base_request_magento_data
 
 def on_change(self , method):
     # if self.is_new() == 0:
-    if self.image and self.image is not None:
-        add_image_to_item(self)
+    # if self.image and self.image is not None:
+    #     add_image_to_item(self)
     pass
         
 def after_save(self, method):
     # if self.custom_is_publish:
-    create_new_item(self)
+    # create_new_item(self)
     pass
     
 @frappe.whitelist()
