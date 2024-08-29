@@ -210,7 +210,7 @@ def get_magento_products():
                 # exist_item_code = frappe.db.sql("SELECT name FROM `tabItem` WHERE item_code = %s" , (item_code) , as_dict = True)
                 # if not (exist_item_code and exist_item_code[0] and exist_item_code[0]['name']):
                 value_loop +=1 
-                if value_loop == 500:
+                if value_loop == 100:
                     return
                 visibility_mapping = {
                     1: 'Not Visible Individually',
