@@ -150,14 +150,14 @@ doctype_js = {
 }
 doctype_list_js = {
     "Item" : "custom/item/item_list.js",
-    "Item Group": "custom/item_group/item_group_list.js",
+    #"Item Group": "custom/item_group/item_group_list.js",
     "Customer": "custom/customer/customer_list.js",
     "Customer Group": "custom/customer_group/customer_group_list.js",
     "Sales Invoice": "custom/sales_invoice/sales_invoice_list.js",
     "Sales Order": "custom/sales_order/sales_order_list.js",
-    "Address": "custom/address/address_list.js",
-    "Brand": "custom/brand/brand_list.js",
-    "Item Attribute": "custom/item_attribute/item_attribute_list.js"
+    "Address": "custom/address/address_list.js"
+    #"Brand": "custom/brand/brand_list.js",
+    #"Item Attribute": "custom/item_attribute/item_attribute_list.js"
     }
 # Scheduled Tasks
 # ---------------
@@ -282,10 +282,33 @@ fixtures = [
                 "Sales Order-custom_sales_order_status",
                 "Address-custom_address_id",
                 "Sales Order-custom_address_id",
-                "Item Attribute Value-custom_value",
                 "Price List-custom_magento_selling",
                 "Item-custom_item_id",
-                "custom_tax_category_id"
+                "custom_tax_category_id",
+                "Item-custom_ingredients",
+                "Item-custom_how_to_use",
+                "Item-custom_formulation", 
+                "Item-custom_country_of_manufacture",
+                "Item-custom_free_from",
+                "Item-custom_key_features",
+                "Item-custom_magento_item_type",
+                "Item Attribute-custom_column_break_7kpvy",
+                "Item Attribute-custom_attribute_code",
+                "Customer-custom_website_id",
+                "Customer-custom_store_id",
+                "Customer-custom_middle_name",
+                "Customer-custom_is_subscribed",
+                "Address-custom_first_name",
+                "Address-custom_last_name",
+                "Item-custom_magento_variants",
+                "Item-custom_shade",
+                "Item-custom_color",
+                "Item-custom_column_break_zgmvm",
+                "Item-custom_size_ml",
+                "Item-custom_size",
+                "Item-custom_section_break_a7brh"
+
+
             ]
         ]
     ]}

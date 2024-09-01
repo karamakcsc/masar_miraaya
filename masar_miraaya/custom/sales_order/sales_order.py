@@ -1,84 +1,74 @@
 import frappe
 import requests
-from datetime import datetime
+import pycountry
+from datetime import date
 from masar_miraaya.api import base_request_magento_data
 
 
 
 @frappe.whitelist()
-def get_customer_group_name(id):
-    query = frappe.db.sql(f"""
-                         SELECT customer_group_name FROM `tabCustomer Group` WHERE custom_customer_group_id = {id}
-                         """, as_dict=True)
-    customer_group = query[0]['customer_group_name']
-    return customer_group
-
-@frappe.whitelist()  
-def get_magento_customers():
+def get_magento_sales_order():
+    base_url, headers = base_request_magento_data()
     try:
-        base_url, headers = base_request_magento_data()
-        url = base_url + "/rest/V1/customers/search?searchCriteria="
-        request = requests.get(url, headers=headers)
-        json_response = request.json()
-        customers = json_response['items']
-        customer_list = []
+        response = requests.get(f'{base_url}/rest/V1/orders?searchCriteria', headers=headers)
+        json_response = response.json()
+        sales_order = json_response['items']
+        return sales_order
+    except Exception as e:
+        return f"Error Get Sales Order: {e}"
+    
+@frappe.whitelist()
+def get_customer_address():
+    magento_so = get_magento_sales_order()
+    try:
+        addresses = []
+        for address in magento_so:
+            billing_address = address['billing_address']
+            addresses.append(billing_address)
+                    
+        return addresses
+    except Exception as e:
+        return f"Error Get Customer Address: {e}"
 
-        for customer in customers:
-            customer_id = customer['id']
-            customer_group_id = customer['group_id']
-            customer_group_name = get_customer_group_name(customer_group_id)
-            customer_first_name = customer['firstname']
-            customer_last_name = customer['lastname']
-            
-            # if customer['dob']:
-            #     customer_dob = customer['dob']
-            # else:
-            #     customer_dob = ""
-            full_name = " ".join([customer_first_name, customer_last_name])
-            customer_email = customer['email']
-            customer_gender = customer['gender']
-            
-            if customer_gender == 1:
-                customer_gender = "Male"
-            elif customer_gender == 2:
-                customer_gender = "Female"
-            else:
-                customer_gender = ""
-                
-            # customer_list.append(customer_dob)
-                
-            existing_customers = frappe.db.sql("Select name FROM `tabCustomer` WHERE name = %s",(full_name), as_dict = True)
-            if not (existing_customers and existing_customers[0] and existing_customers[0]['name']):
-                new_customer = frappe.new_doc('Customer')
-                new_customer.custom_customer_id = customer_id
-                new_customer.customer_name = full_name
-                new_customer.custom_first_name = customer_first_name
-                new_customer.custom_last_name = customer_last_name
-                new_customer.custom_email = customer_email
-                new_customer.customer_group = customer_group_name
-                new_customer.gender = customer_gender
-                new_customer.custom_customer_group_id = customer_group_id
-                # new_customer.custom_date_of_birth = customer_dob
-                new_customer.save(ignore_permissions = True)
+def get_country_name(country_code):
+    response = requests.get(f'https://restcountries.com/v3.1/alpha/{country_code}')
+    if response.status_code == 200:
+        data = response.json()
+        return data[0]['name']['common']
+    return "Unknown Country"
 
+@frappe.whitelist()
+def create_customer_address():
+    magento_addresses = get_customer_address()
+    base_url, headers = base_request_data()
+    try:
+        results = []
+        for address in magento_addresses:
+            country = get_country_name(address['country_id'])
+            address_type = address['address_type'].title()
+            address_line = address['street'][0]
+            city = address['city']
+            pincode = address['postcode']
+            phone = address['telephone']
+            email_id = address['email']
+            customer_first_name = address['firstname']
+            customer_last_name = address['lastname']
             
-            adresses = customer['addresses']
-            for address in adresses:
-                address_id = address['id']
-                # address_type = address['address_type'].title()
-                address_line = address['street'][0]
-                country = address['region']['region']
-                city = address['city']
-                pincode = address['postcode']
-                phone = address['telephone']
-                email_id = customer_email
-                full_name = f"{address['firstname']} {address['lastname']}"
-                # address_name = 
-                # existing_addresses = frappe.db.sql("Select name FROM `tabAddress` WHERE name = %s",(full_name), as_dict = True)
-                # if not (existing_addresses and existing_addresses[0] and existing_addresses[0]['name']):
+            customer_name_q = frappe.db.sql(""" SELECT name
+                                          FROM `tabCustomer` 
+                                          WHERE custom_first_name = %s AND custom_last_name = %s """, 
+                                          (customer_first_name, customer_last_name), as_dict = True)
+            customer_name = customer_name_q[0]['name']
+            existing_address = frappe.db.sql(
+                """SELECT name FROM `tabAddress`
+                WHERE address_line1 = %s AND city = %s AND pincode = %s AND phone = %s AND email_id = %s""",
+                (address_line, city, pincode, phone, email_id),
+                as_dict=True
+            )
+            if not (existing_address and existing_address[0] and existing_address[0]['name']):
                 new_address = frappe.new_doc("Address")
                 new_address.custom_address_id = address_id
-                # new_address.address_type = address_type
+                new_address.address_type = address_type
                 new_address.address_line1 = address_line
                 new_address.county = country
                 new_address.city = city
@@ -86,13 +76,53 @@ def get_magento_customers():
                 new_address.phone = phone
                 new_address.email_id = email_id
                 new_address.is_shipping_address = 1
-                new_address.is_primary_address = 1
                 new_address.append('links', {
                         'link_doctype': "Customer",
                         'link_name': full_name
                     })
                 new_address.save(ignore_permissions = True)
-                
-        return "customer_list"
+
+        return "Address created successfully"
     except Exception as e:
-        return f"Error get customers: {e}"
+        return f"Error Create Customer Address: {e}"
+    
+@frappe.whitelist()
+def create_sales_order():
+    base_url, headers = base_request_magento_data()    
+    try:
+        sales_order = get_magento_sales_order()
+        for order in sales_order:
+            so_items = []
+            customer = order['customer_firstname'] + ' ' + order['customer_lastname']
+            transaction_date = order['created_at'].split('T')[0]
+            sales_order_status = order['status']
+            customer_address = order['billing_address_id']
+            
+            for item in order['items']:
+                item_code = item['sku']
+                delivery_date = str(date.today())
+                qty = item['qty_ordered']
+                rate = item['price']
+                
+            # existing_address = frappe.db.sql(
+            #         """SELECT name FROM `tabAddress`
+            #         WHERE address_line1 = %s AND city = %s AND pincode = %s AND phone = %s AND email_id = %s""",
+            #         (address_line, city, pincode, phone, email_id),
+            #         as_dict=True
+            #     )
+            # if not (existing_address and existing_address[0] and existing_address[0]['name']):
+            new_sales_order = frappe.new_doc("Sales Order")
+            new_sales_order.customer = customer
+            new_sales_order.transaction_date = transaction_date
+            new_sales_order.custom_sales_order_status = sales_order_status
+            new_sales_order.append('Items', {
+                    'item_code': item_code,
+                    'delivery_date': delivery_date,
+                    'qty': qty,
+                    'rate': rate
+                })
+            new_sales_order.save(ignore_permissions = True)
+        return "Sales Orders created successfully"
+    
+    except Exception as e:
+        return f"Error creating sales order: {e}"

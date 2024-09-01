@@ -20,4 +20,4 @@ def validate(self , method ):
                 "Magento Selling must be enabled with the Selling check",
                 title=_("Magento Selling Requirement")
             )
-
+    
