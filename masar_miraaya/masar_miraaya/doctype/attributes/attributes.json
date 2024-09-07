@@ -1,0 +1,206 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:default_frontend_label",
+ "creation": "2024-09-01 13:49:10.698741",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "is_wysiwyg_enabled",
+  "is_html_allowed_on_front",
+  "used_for_sort_by",
+  "is_filterable",
+  "is_visible",
+  "column_break_snjt",
+  "is_filterable_in_search",
+  "is_used_in_grid",
+  "is_visible_in_grid",
+  "is_filterable_in_grid",
+  "is_required",
+  "section_break_ktxb",
+  "apply_to",
+  "is_visible_in_advanced_search",
+  "is_used_for_promo_rules",
+  "used_in_product_listing",
+  "attribute_code",
+  "column_break_taat",
+  "is_searchable",
+  "is_comparable",
+  "is_visible_on_front",
+  "scope",
+  "default_frontend_label",
+  "attributes_details_tab",
+  "att_details",
+  "section_break_prde",
+  "default_value"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "is_wysiwyg_enabled",
+   "fieldtype": "Check",
+   "label": "Is wysiwyg Enabled"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_html_allowed_on_front",
+   "fieldtype": "Check",
+   "label": "Is HTML Allowed on Front"
+  },
+  {
+   "default": "0",
+   "fieldname": "used_for_sort_by",
+   "fieldtype": "Check",
+   "label": "Used for Sort by"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_filterable",
+   "fieldtype": "Check",
+   "label": "Is Filterable"
+  },
+  {
+   "fieldname": "column_break_snjt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_filterable_in_search",
+   "fieldtype": "Check",
+   "label": "Is Filterable in Search"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_used_in_grid",
+   "fieldtype": "Check",
+   "label": "Is Used in Grid"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_visible_in_grid",
+   "fieldtype": "Check",
+   "label": "Is Visible in Grid"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_filterable_in_grid",
+   "fieldtype": "Check",
+   "label": "Is Filterable in Grid"
+  },
+  {
+   "fieldname": "section_break_ktxb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "apply_to",
+   "fieldtype": "Data",
+   "label": "Apply to"
+  },
+  {
+   "fieldname": "is_visible_in_advanced_search",
+   "fieldtype": "Data",
+   "label": "Is Visible in Advanced Search"
+  },
+  {
+   "fieldname": "column_break_taat",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "is_searchable",
+   "fieldtype": "Data",
+   "label": "Is Searchable"
+  },
+  {
+   "fieldname": "is_comparable",
+   "fieldtype": "Data",
+   "label": "Is Comparable"
+  },
+  {
+   "fieldname": "is_used_for_promo_rules",
+   "fieldtype": "Data",
+   "label": "Is Used for Promo Rules"
+  },
+  {
+   "fieldname": "is_visible_on_front",
+   "fieldtype": "Data",
+   "label": "Is Visible on Front"
+  },
+  {
+   "fieldname": "used_in_product_listing",
+   "fieldtype": "Data",
+   "label": "Used in Product Listing"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_visible",
+   "fieldtype": "Check",
+   "label": "Is Visible"
+  },
+  {
+   "fieldname": "scope",
+   "fieldtype": "Data",
+   "label": "Scope"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_required",
+   "fieldtype": "Check",
+   "label": "Is Required"
+  },
+  {
+   "fieldname": "attribute_code",
+   "fieldtype": "Data",
+   "label": "Attribute Code"
+  },
+  {
+   "fieldname": "attributes_details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Attributes Details"
+  },
+  {
+   "fieldname": "att_details",
+   "fieldtype": "Table",
+   "options": "Attributes Details"
+  },
+  {
+   "fieldname": "default_frontend_label",
+   "fieldtype": "Data",
+   "label": "Default Frontend Label",
+   "unique": 1
+  },
+  {
+   "fieldname": "section_break_prde",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "default_value",
+   "fieldtype": "Data",
+   "label": "Default Value"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-09-01 14:42:56.485657",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Attributes",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

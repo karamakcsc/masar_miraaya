@@ -124,21 +124,26 @@ app_license = "mit"
 
 doc_events = {
 	"Item": {
-		"validate": "masar_miraaya.custom.item.item.after_save",
-		"on_change": "masar_miraaya.custom.item.item.on_change"
-		# "on_trash": "method"
+		"validate": "masar_miraaya.custom.item.item.validate"
 	},
 	"Item Group": {
-		"validate": "masar_miraaya.custom.item_group.item_group.after_save"
+		"validate": "masar_miraaya.custom.item_group.item_group.validate"
 	},
 	"Customer": {
-		"validate": "masar_miraaya.custom.customer.customer.after_save"
+		"validate": "masar_miraaya.custom.customer.customer.validate"
 	},
 	"Customer Group": {
-		"validate": "masar_miraaya.custom.customer_group.customer_group.after_save"
+		"validate": "masar_miraaya.custom.customer_group.customer_group.validate"
 	}, 
     "Price List": { 
         "validate" : "masar_miraaya.custom.price_list.price_list.validate"
+    },
+    "Sales Order": {
+        "on_submit": "masar_miraaya.custom.sales_order.sales_order.on_submit"
+    },
+    "File": { 
+        "validate" : "masar_miraaya.custom.file.file.validate",
+        "on_trash" : "masar_miraaya.custom.file.file.on_trash"
     }
 }
 
@@ -154,7 +159,7 @@ doctype_list_js = {
     "Customer": "custom/customer/customer_list.js",
     "Customer Group": "custom/customer_group/customer_group_list.js",
     "Sales Invoice": "custom/sales_invoice/sales_invoice_list.js",
-    "Sales Order": "custom/sales_order/sales_order_list.js",
+    # "Sales Order": "custom/sales_order/sales_order_list.js",
     "Address": "custom/address/address_list.js"
     #"Brand": "custom/brand/brand_list.js",
     #"Item Attribute": "custom/item_attribute/item_attribute_list.js"
@@ -306,7 +311,27 @@ fixtures = [
                 "Item-custom_column_break_zgmvm",
                 "Item-custom_size_ml",
                 "Item-custom_size",
-                "Item-custom_section_break_a7brh"
+                "Item-custom_section_break_a7brh",
+                "Item-custom_item_name_ar",
+                "Customer-custom_created_in_frappe",
+                "Item-custom_is_taxable",
+                "Item-custom_created_in_frappe",
+                "Item Group-custom_created_in_frappe",
+                "Customer Group-custom_created_in_frappe",
+                "Customer-custom_magento_address",
+                "Customer-custom_street",
+                "Customer-custom_address_id",
+                "Customer-custom_country",
+                "Customer-custom_country_id",
+                "Customer-custom_city",
+                "Customer-custom_pincode",
+                "Customer-custom_column_break_4jgnq",
+                "Customer-custom_phone",
+                "Customer-custom_address_first_name",
+                "Customer-custom_address_last_name",
+                "Customer-custom_address_email_id",
+                "Customer-custom_is_shipping_address",
+                "Customer-custom_is_primary_address"
 
 
             ]

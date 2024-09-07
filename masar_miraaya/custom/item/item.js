@@ -23,21 +23,21 @@ frappe.ui.form.on('Item', {
             });
         }
     },
-    item_group: function (frm) {
-        if (frm.doc.item_group) {
-            frappe.call({
-                method: "masar_miraaya.custom.item.item.get_item_group_id",
-                args: {
-                    item_group: frm.doc.item_group,
-                },
-                callback: function(r) {
-                    if (r.message) {
-                        frm.set_value('custom_item_group_id', r.message);
-                    }
-                }
-            });
-        }
-    },
+    // item_group: function (frm) {
+    //     if (frm.doc.item_group) {
+    //         frappe.call({
+    //             method: "masar_miraaya.custom.item.item.get_item_group_id",
+    //             args: {
+    //                 item_group: frm.doc.item_group,
+    //             },
+    //             callback: function(r) {
+    //                 if (r.message) {
+    //                     frm.set_value('custom_item_group_id', r.message);
+    //                 }
+    //             }
+    //         });
+    //     }
+    // },
     validate: function (frm) {
         if (frm.doc.custom_max_qty) {
             let max_qty = frm.doc.custom_max_qty;
