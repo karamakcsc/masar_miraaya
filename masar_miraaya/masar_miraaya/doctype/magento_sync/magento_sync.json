@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-09-12 10:05:09.976589",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sync",
+  "syncs_section",
+  "item",
+  "item_group",
+  "item_attributes",
+  "column_break_lqbh",
+  "brand",
+  "customer",
+  "customer_group"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "sync",
+   "fieldtype": "Check",
+   "label": "Sync"
+  },
+  {
+   "depends_on": "sync",
+   "fieldname": "syncs_section",
+   "fieldtype": "Section Break",
+   "label": "Syncs"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Button",
+   "label": "Item"
+  },
+  {
+   "fieldname": "item_group",
+   "fieldtype": "Button",
+   "label": "Item Group"
+  },
+  {
+   "fieldname": "item_attributes",
+   "fieldtype": "Button",
+   "label": "Item Attributes"
+  },
+  {
+   "fieldname": "column_break_lqbh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "brand",
+   "fieldtype": "Button",
+   "label": "Brand"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Button",
+   "label": "Customer"
+  },
+  {
+   "fieldname": "customer_group",
+   "fieldtype": "Button",
+   "label": "Customer Group"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-09-12 10:09:19.590396",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Magento Sync",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

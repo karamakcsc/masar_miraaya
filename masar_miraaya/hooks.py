@@ -123,6 +123,9 @@ app_license = "mit"
 # Hook on document methods and events
 
 doc_events = {
+    "Brand": {
+        "validate" : "masar_miraaya.custom.brand.brand.validate"
+    },
 	"Item": {
 		"validate": "masar_miraaya.custom.item.item.validate"
 	},
@@ -139,31 +142,30 @@ doc_events = {
         "validate" : "masar_miraaya.custom.price_list.price_list.validate"
     },
     "Sales Order": {
-        "on_submit": "masar_miraaya.custom.sales_order.sales_order.on_submit"
+        "on_submit": "masar_miraaya.custom.sales_order.sales_order.on_submit",
+        "validate" : "masar_miraaya.custom.sales_order.sales_order.validate",
+        "on_change": "masar_miraaya.custom.sales_order.sales_order.on_change"
     },
     "File": { 
         "validate" : "masar_miraaya.custom.file.file.validate",
         "on_trash" : "masar_miraaya.custom.file.file.on_trash"
+    },
+    "Item Attribute": {
+        "validate" : "masar_miraaya.custom.item_attribute.item_attribute.validate"
+    },
+    "Sales Invoice": {
+        "on_submit": "masar_miraaya.custom.sales_invoice.sales_invoice.on_submit"
+    },
+    "Item Price": {
+        "validate" : "masar_miraaya.custom.item_price.item_price.validate"
     }
 }
 
 doctype_js = {
-   "Item" : "custom/item/item.js",
-   "Item Group": "custom/item_group/item_group.js",
-   "Customer": "custom/customer/customer.js",
-   "Customer Group": "custom/customer_group/customer_group.js"
+   "Sales Order": "custom/sales_order/sales_order.js",
+   "Company": "custom/company/company.js"
+
 }
-doctype_list_js = {
-    "Item" : "custom/item/item_list.js",
-    #"Item Group": "custom/item_group/item_group_list.js",
-    "Customer": "custom/customer/customer_list.js",
-    "Customer Group": "custom/customer_group/customer_group_list.js",
-    "Sales Invoice": "custom/sales_invoice/sales_invoice_list.js",
-    # "Sales Order": "custom/sales_order/sales_order_list.js",
-    "Address": "custom/address/address_list.js"
-    #"Brand": "custom/brand/brand_list.js",
-    #"Item Attribute": "custom/item_attribute/item_attribute_list.js"
-    }
 # Scheduled Tasks
 # ---------------
 
@@ -313,11 +315,6 @@ fixtures = [
                 "Item-custom_size",
                 "Item-custom_section_break_a7brh",
                 "Item-custom_item_name_ar",
-                "Customer-custom_created_in_frappe",
-                "Item-custom_is_taxable",
-                "Item-custom_created_in_frappe",
-                "Item Group-custom_created_in_frappe",
-                "Customer Group-custom_created_in_frappe",
                 "Customer-custom_magento_address",
                 "Customer-custom_street",
                 "Customer-custom_address_id",
@@ -331,8 +328,21 @@ fixtures = [
                 "Customer-custom_address_last_name",
                 "Customer-custom_address_email_id",
                 "Customer-custom_is_shipping_address",
-                "Customer-custom_is_primary_address"
-
+                "Customer-custom_is_primary_address",
+                "Sales Order-custom_magento_status",
+                "Sales Order-custom_payment_channel",
+                "Sales Order-custom_payment_channels",
+                "Sales Order-custom_total_amount",
+                "Company-custom_cost_of_delivery",
+                "Customer-custom_is_delivery",
+                "Sales Order-custom_delivery_company",
+                "Sales Order-custom_magento_id",
+                "Customer-custom_is_payment_channel",
+                "Company-custom_receivable_payment_channel",
+                "File-custom_magento_sync",
+                "Item Price-custom_publish_to_magento",
+                "Brand-custom_publish_to_magento",
+                "Item Attribute-custom_publish_to_magento"
 
             ]
         ]

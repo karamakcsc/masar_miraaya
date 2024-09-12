@@ -1,15 +1,18 @@
 import frappe
 import requests
-import json
 import base64
 import os
-from masar_miraaya.api import base_request_magento_data
+from masar_miraaya.api import base_data
 
         
 def validate(self, method):
-    if self.custom_is_publish and self.custom_created_in_frappe:
-        create_new_item(self)
-    pass
+    if self.custom_is_publish:
+        magento = frappe.get_doc('Magento Sync')
+        if magento.sync == 0 :
+            create_new_item(self)
+        else: 
+            frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
+    
     
 @frappe.whitelist()
 def get_values(item_code):
@@ -33,9 +36,11 @@ def get_values(item_code):
 
 
 @frappe.whitelist()
-def create_new_item(self):
+def create_new_item(name):
+    self = frappe.get_doc('Item' , name)
+    # frappe.throw(str(self))
     try:
-        base_url, headers = base_request_magento_data()
+        base_url, headers = base_data("magento")
         url = f"{base_url}/rest/V1/products/{self.item_code}"
 
         is_active = 1 if self.disabled == 0 else 0
@@ -47,170 +52,180 @@ def create_new_item(self):
             'Catalog & Search': 4
         }.get(self.custom_visibility, 1)
 
-        if not self.get('barcodes'):
-            frappe.throw("Please Add Barcode")
-
         ean = None
-        for barcode in self.get('barcodes'):
-            if barcode.barcode_type == 'EAN':
+        if self.barcodes:
+            for barcode in self.barcodes:
                 ean = barcode.barcode
-                str_ean = str(ean)
+                break
         
-        attribute = ''
-        attribute_list = []
-        for attribute in self.get('attributes'):
-            if self.variant_based_on == 'Item Attribute':
-                attribute = attribute.attribute
-                attribute_list.append(attribute)
+        item_group_ids = get_item_groups(self.item_group)
+        category_links = [
+            {"position": idx, "category_id": id}
+            for idx, id in enumerate(item_group_ids)
+        ]
         
-        frappe.throw(str(attribute_list))
+        ######### get the value for custom attributes (color, shade, size, size_ml)
+        attribute_query = frappe.db.sql(""" SELECT DISTINCT tiav.parent, tiav.attribute_value , tiav.abbr
+                                            FROM `tabItem Attribute Value` tiav
+                                            INNER JOIN `tabItem Variant Attribute` tiva ON tiav.attribute_value = tiva.attribute_value 
+                                            INNER JOIN `tabItem` ti ON ti.name = tiva.parent 
+                                            WHERE ti.name = %s and tiva.attribute = tiav.parent
+                                         """, (self.name), as_dict = True)
+        size_abbr = 0
+        size_ml_abbr = 0
+        color_abbr = 0
+        shade_abbr = 0
+        for data in attribute_query:
+            if data['parent'].lower() == 'size':
+                size_abbr = data['abbr']
+            elif data['parent'].lower() == 'size (ml)':
+                size_ml_abbr = data['abbr']
+            elif data['parent'].lower() == 'color':
+                color_abbr = data['abbr']
+            elif data['parent'].lower() == 'shade':
+                shade_abbr = data['abbr']
+                
+                
+                
         
         product_type = "configurable" if self.has_variants else self.custom_magento_item_type.lower()
+
         
+        ######### base data payload
         data = {
             "product": {
-                "sku": self.item_code,
+                "sku": self.name,
                 "name": self.item_name,
-                "price": 200,
+                "price": get_item_price(self.item_code, self.stock_uom),
                 "status": is_active,
                 "visibility": visibility,
                 "type_id": product_type,
                 "attribute_set_id": 16,
                 "extension_attributes": {
-                    "website_ids": [
-                        1
-                    ],
-                "category_links": [
-                    {
-                    "position": 0,
-                    "category_id": self.custom_root_item_group_id if self.custom_root_item_group_id else 0
-                    },
-                    {
-                    "position": 1,
-                    "category_id": self.custom_parent_item_group_id if self.custom_parent_item_group_id else 0
-                    },
-                    {
-                    "position": 2,
-                    "category_id": self.custom_item_group_id if self.custom_item_group_id else 0
-                    }
-                ]
+                    "website_ids": [1],
+                    "category_links": category_links
                 },
-                "custom_attributes": [
-                        {
-                            "attribute_code": "brand",
-                            "value": self.brand
-                        },
-                        {
-                            "attribute_code": "free_from",
-                            "value": self.custom_free_from
-                        },
-                        {
-                            "attribute_code": "key_features",
-                            "value": self.custom_key_features
-                        },
-                        {
-                            "attribute_code": "options_container",
-                            "value": "container2"
-                        },
-                        {
-                            "attribute_code": "url_key",
-                            "value": self.name + self.item_name
-                        },
-                        {
-                            "attribute_code": "ingredients",
-                            "value": self.custom_ingredients
-                        },
-                        {
-                            "attribute_code": "ean",
-                            "value": str_ean
-                        },
-                        {
-                            "attribute_code": "tax_class_id",
-                            "value": 2 if self.custom_is_taxable else 0
-                        },
-                        {
-                            "attribute_code": "how_to_use",
-                            "value": self.custom_how_to_use
-                        },
-                        {
-                            "attribute_code": "arabic_name",
-                            "value": self.custom_item_name_ar
-                        },
-                        {
-                            "attribute_code": "formulation",
-                            "value": self.custom_formulation
-                        },
-                        {
-                            "attribute_code": "product_description",
-                            "value": self.description
-                        },
-                        {
-                            "attribute_code": "country_of_manufacture",
-                            "value": self.custom_country_of_manufacture
-                        },
-                        {
-                            "attribute_code": "size_ml",
-                            "value": self.custom_size_ml if self.custom_size_ml else 0
-                        },
-                        {
-                            "attribute_code": "size",
-                            "value": self.custom_size if self.custom_size else 0
-                        },
-                        {
-                            "attribute_code": "shade",
-                            "value": self.custom_shade if self.custom_shade else 0
-                        },
-                        {
-                            "attribute_code": "color",
-                            "value": self.custom_color if self.custom_color else 0
-                        }
-                    ]
-                },
-            "saveOptions": True
             }
-        attribute_id = {
-            "Color": 93,
-            "Shade": 159,
-            "Size": 144,
-            "Size (ml)": 158
         }
-
-        configurable_product_options = []
-
-        if product_type == "configurable":
-            for label in attribute_list:
-                configurable_product_options.append({
-                    "attribute_id": attribute_id.get(label, ""),
-                    "label": label,
-                    "values": [
-                        {"value_index": 239},
-                        {"value_index": 244},
-                        {"value_index": 245},
-                        {"value_index": 246}
-                    ],
-                })
-
-            data["product"]["extension_attributes"]["configurable_product_options"] = configurable_product_options
-            data["product"]["extension_attributes"]["configurable_product_links"] = [
-                2139,
-                2140,
-                2141,
-                2142
-            ]
         
-        # response = requests.put(url, headers=headers, json=data)
-        # if response.status_code == 200:
-        #     json_response = response.json()
-        #     item_id = json_response['id']
-        #     self.custom_item_id = item_id
-        #     frappe.msgprint(f"Item Created/Updated Successfully in Magento: {str(response.text)}")
+        ######### add custom attributes
+        custom_attributes_dict = {}
+        if self.brand:
+            custom_attributes_dict["brand"] = self.brand
+        if self.custom_free_from:
+            custom_attributes_dict["free_from"] = self.custom_free_from
+        if self.custom_key_features:
+            custom_attributes_dict["key_features"] = self.custom_key_features
+        custom_attributes_dict["url_key"] = f"{self.name}-{self.item_name}" if self.item_name else self.name
+        if self.custom_ingredients:
+            custom_attributes_dict["ingredients"] = self.custom_ingredients
+        if ean:
+            custom_attributes_dict["ean"] = ean
+        if self.custom_how_to_use:
+            custom_attributes_dict["how_to_use"] = self.custom_how_to_use
+        if self.custom_item_name_ar:
+            custom_attributes_dict["arabic_name"] = self.custom_item_name_ar
+        if self.custom_formulation:
+            custom_attributes_dict["formulation"] = self.custom_formulation
+        if self.description:
+            custom_attributes_dict["product_description"] = str(self.description)
+        if self.custom_country_of_manufacture:
+            custom_attributes_dict["country_of_manufacture"] = self.custom_country_of_manufacture
+        if shade_abbr:
+            custom_attributes_dict["shade"] = shade_abbr if shade_abbr else 0
+        if size_ml_abbr:
+            custom_attributes_dict["size_ml"] = size_ml_abbr if size_ml_abbr else 0
+        if size_abbr:
+            custom_attributes_dict["size"] = size_abbr if size_abbr else 0
+        if color_abbr:
+            custom_attributes_dict["color"] = color_abbr if color_abbr else 0
+        
+        ######### Static Custom Attributes
+        custom_attributes_dict["options_container"] = "container2"
+        custom_attributes_dict["tax_class_id"] = "2"
+
+        custom_attributes = [
+            {
+                "attribute_code": key,
+                "value": value
+            } for key, value in custom_attributes_dict.items()
+        ]
+        
+        
+        ######### add custom attributes to payload
+        if custom_attributes:    
+            data["product"]["custom_attributes"] = custom_attributes
+        
+        
+        ######### add item alternative
+        if self.allow_alternative_item:
+            alt_item_code = frappe.db.sql(" SELECT alternative_item_code FROM `tabItem Alternative` WHERE item_code = %s ", (self.item_code), as_dict = True)
+            if alt_item_code and alt_item_code[0] and alt_item_code[0]['alternative_item_code']:
+                releated_products_list = []
+                for alt in alt_item_code:
+                    if alt.get('alternative_item_code'):
+                        releated_products_list.append({
+                            "sku": self.item_code,
+                            "link_type": "related",
+                            "linked_product_sku": alt['alternative_item_code'],
+                            "linked_product_type": "simple",
+                            "position": 0,
+                        })
+                
+                if releated_products_list:    
+                    data["product"]["product_links"] = releated_products_list
+                    
+                    # frappe.throw(str(data))
+                
+        ######### if item is template
+        if self.has_variants:
+            product_options = []
+            if self.attributes:
+                for attribute in self.attributes:
+                    attribute_name = attribute.attribute.lower().title()
+                    attribute_id_map = {
+                        "Color": 93,
+                        "Shade": 159,
+                        "Size": 144,
+                        "Size (ml)": 158
+                    }.get(attribute_name)
+                    
+                    if attribute_id_map:
+                        values_sql = frappe.db.sql('SELECT abbr FROM `tabItem Attribute Value` WHERE LOWER(parent) = %s', (attribute_name.lower()), as_dict=True)
+                        values = [{"value_index": int(value.abbr)} for value in values_sql]
+                        
+                        option = {
+                            'attribute_id': attribute_id_map, 
+                            'label': attribute.attribute, 
+                            'values': values
+                        }
+                        product_options.append(option)
+                        
             
-        # else:
-        #     frappe.throw(f"Failed to Create or Update Item in Magento: {str(response.text)}")
-  
+            data["product"]["extension_attributes"]["configurable_product_options"] = product_options
+            
+            
+            ######### add product links
+            variant_item_ids = [item['custom_item_id'] for item in frappe.db.sql("""
+                                            SELECT ti.custom_item_id
+                                            FROM tabItem ti 
+                                            WHERE ti.variant_of = %s
+                                            """, (self.name), as_dict=True)]
+            data["product"]["extension_attributes"]["configurable_product_links"] = variant_item_ids
+            
+        
+        response = requests.put(url, headers=headers, json=data)
+        if response.status_code == 200:
+            json_response = response.json()
+            self.custom_item_id = json_response['id']
+            return {'msg':(f"Item Created/Updated Successfully in Magento: {str(response.text)}"),
+                    'throw' : False}
+            
+        else:
+            frappe.throw(f"Failed to Create or Update Item in Magento: {str(response.text)}")
+    
     except requests.RequestException as e:
         frappe.throw(f"Failed to Create or Update Item in Magento: {str(e)}")
-
 
 
 @frappe.whitelist()
@@ -234,7 +249,7 @@ def add_image_to_item(self, file_path):
         with open(file_path, "rb") as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
 
-        base_url, headers = base_request_magento_data()
+        base_url, headers = base_data("magento")
         data = {
             "entry": {
                 "media_type": "image",
@@ -266,10 +281,12 @@ def add_image_to_item(self, file_path):
     except Exception as e:
         frappe.throw(f"Failed to add image to product in Magento: {str(e)}")
 
+
+
 @frappe.whitelist()
 def get_magento_image_id(self, image_path):
     try:
-        base_url, headers = base_request_magento_data()
+        base_url, headers = base_data("magento")
         
         url = base_url + f"/rest/default/V1/products/{self.item_code}/media"
         
@@ -280,13 +297,11 @@ def get_magento_image_id(self, image_path):
         else:
             frappe.throw(f"Error Deleting Image: {response.text}")
         
-        # filename = image_path.split('/')[-1]
-        # frappe.throw(str(filename))
+
         for data in image_data:
             magento_filename = data['file'].split('/')[-1]
             if magento_filename == image_path:
                 entity_id = data['id']
-        # frappe.msgprint(str(magento_filename))        
         if entity_id:
             remove_image_from_magento(self, entity_id)    
             
@@ -294,9 +309,10 @@ def get_magento_image_id(self, image_path):
     except Exception as e:
         return f"Error GET Magento image ID: {e}"
 
+
 @frappe.whitelist()
 def remove_image_from_magento(self, entity_id):
-    base_url, headers = base_request_magento_data()
+    base_url, headers = base_data("magento")
     try:
         url = base_url + f"/rest/V1/products/{self.item_code}/media/{entity_id}"
         
@@ -311,11 +327,31 @@ def remove_image_from_magento(self, entity_id):
         frappe.throw(str(f"Error Removing Image from Magento: {e}"))
     
 
+@frappe.whitelist()
+def get_item_price(item_code, uom):
+    item_price = frappe.db.sql(""" SELECT price_list_rate FROM `tabItem Price` 
+                                    WHERE item_code = %s AND uom = %s """, (item_code, uom), as_dict = True)
+    price = item_price[0]['price_list_rate'] if item_price and item_price[0].get('price_list_rate') else 0
+    
+    return price
+
+@frappe.whitelist()
+def get_item_groups(item_group, item_groups_ids=None):
+    if item_groups_ids is None:
+        item_groups_ids = []
+    
+    item_group_query = frappe.db.sql("""
+        SELECT tig.custom_item_group_id, tig.parent_item_group 
+        FROM `tabItem Group` tig 
+        WHERE tig.item_group_name = %s
+    """, (item_group), as_dict=True)
+    
+    if item_group_query:
+        item_groups_ids.append(item_group_query[0]['custom_item_group_id'])
         
-# @frappe.whitelist()
-# def get_item_group_id(item_group):
-#     query = frappe.db.sql(f"""
-#                          SELECT custom_item_group_id FROM `tabItem Group` WHERE name = '{item_group}'
-#                          """, as_dict=True)
-#     parent_group_id = query[0]['custom_item_group_id']
-#     return parent_group_id
+        parent_item_group = item_group_query[0]['parent_item_group']
+        
+        if parent_item_group and parent_item_group != '1 - Root Catalog':
+            return get_item_groups(parent_item_group, item_groups_ids)
+    
+    return item_groups_ids

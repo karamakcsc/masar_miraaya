@@ -2,15 +2,36 @@ import frappe
 import requests
 import pycountry
 from datetime import date
-from masar_miraaya.api import base_request_magento_data
-
-
+from masar_miraaya.api import base_data
+from frappe import _
+from erpnext.selling.doctype.sales_order.sales_order  import make_sales_invoice 
+from frappe.utils import flt, cint
 def on_submit(self, method):
-    create_magento_sales_order(self)
+    # create_magento_sales_order(self)
+    pass
+
+
+def validate(self, method):
+    calculate_amount(self)
+    
+def on_change(self, method):
+    create_journal_entry(self)
+    if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
+        create_sales_invoice(self)
+    
+
+
+
+def create_sales_invoice(self):
+    doclist = make_sales_invoice(self.name, ignore_permissions=True)
+    doclist.flags.ignore_mandatory = True
+    doclist.insert(ignore_permissions = True)
+    doclist.submit()
+    
 
 @frappe.whitelist()
 def create_magento_sales_order(self):
-    base_url, headers = base_request_magento_data()
+    base_url, headers = base_data("magento")
     
     try:
         customer_doc = frappe.get_doc('Customer', self.customer)
@@ -119,127 +140,74 @@ def create_magento_sales_order(self):
     except Exception as e:
         frappe.throw(str(f"Error Creating Sales Order in Magento: {e}"))
 
+@frappe.whitelist()
+def calculate_amount(self):
+    total = 0.0
+    for row in self.custom_payment_channels:
+        total += row.amount
+        
+    self.custom_total_amount = total
 
 
+@frappe.whitelist()
+def create_journal_entry(self):
+    if self.custom_magento_status == 'On the Way' and self.docstatus == 1:
 
-
-# @frappe.whitelist()
-# def get_magento_sales_order():
-#     base_url, headers = base_request_magento_data()
-#     try:
-#         response = requests.get(f'{base_url}/rest/V1/orders?searchCriteria', headers=headers)
-#         json_response = response.json()
-#         sales_order = json_response['items']
-#         return sales_order
-#     except Exception as e:
-#         return f"Error Get Sales Order: {e}"
-    
-# @frappe.whitelist()
-# def get_customer_address():
-#     magento_so = get_magento_sales_order()
-#     try:
-#         addresses = []
-#         for address in magento_so:
-#             billing_address = address['billing_address']
-#             addresses.append(billing_address)
-                    
-#         return addresses
-#     except Exception as e:
-#         return f"Error Get Customer Address: {e}"
-
-# def get_country_name(country_code):
-#     response = requests.get(f'https://restcountries.com/v3.1/alpha/{country_code}')
-#     if response.status_code == 200:
-#         data = response.json()
-#         return data[0]['name']['common']
-#     return "Unknown Country"
-
-# @frappe.whitelist()
-# def create_customer_address():
-#     magento_addresses = get_customer_address()
-#     base_url, headers = base_request_data()
-#     try:
-#         results = []
-#         for address in magento_addresses:
-#             country = get_country_name(address['country_id'])
-#             address_type = address['address_type'].title()
-#             address_line = address['street'][0]
-#             city = address['city']
-#             pincode = address['postcode']
-#             phone = address['telephone']
-#             email_id = address['email']
-#             customer_first_name = address['firstname']
-#             customer_last_name = address['lastname']
+        debit_account_query = frappe.db.sql("SELECT tc.custom_cost_of_delivery , cost_center FROM tabCompany tc WHERE name = %s", (self.company), as_dict = True)
+        cost_center = self.cost_center if self.cost_center else debit_account_query[0]['cost_center']
+        if cost_center in [ '' , 0 , None]:
+            frappe.throw("Set Cost Center in Sales Order or in Company as Defualt Cost Center.")
+        if not(debit_account_query and debit_account_query[0] and debit_account_query[0]['custom_cost_of_delivery']):
+            frappe.throw(f"Set Debit Account in Company in Default Cost of Delivery." , title=_("Missing Debit Account"))
+            return
+        debit_account = debit_account_query[0]['custom_cost_of_delivery']
+        account = frappe.db.sql("""SELECT tpa.account AS `customer_account`, tpa2.account AS `customer_group_account`, tc2.custom_receivable_payment_channel AS `company_account` 
+                                    FROM tabCustomer tc 
+                                    INNER JOIN `tabParty Account` tpa ON tpa.parent = tc.name 
+                                    LEFT JOIN `tabCustomer Group` tcg ON tcg.name = tc.customer_group 
+                                    LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tcg.name 
+                                    LEFT JOIN tabCompany tc2 ON tpa2.company = tc2.name
+                                    WHERE tc.name = %s AND tc.custom_is_delivery = 1""", (self.custom_delivery_company), as_dict = True)
+        if len(account) != 0:
+            if account and account[0]:
+                if account[0]['customer_account']:
+                    credit_account = account[0]['customer_account']
+                elif account[0]['customer_group_account']:
+                    credit_account = account[0]['customer_group_account']
+                elif account[0]['company_account']:
+                    credit_account = account[0]['company_account']
+        else:
+            frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")  
             
-#             customer_name_q = frappe.db.sql(""" SELECT name
-#                                           FROM `tabCustomer` 
-#                                           WHERE custom_first_name = %s AND custom_last_name = %s """, 
-#                                           (customer_first_name, customer_last_name), as_dict = True)
-#             customer_name = customer_name_q[0]['name']
-#             existing_address = frappe.db.sql(
-#                 """SELECT name FROM `tabAddress`
-#                 WHERE address_line1 = %s AND city = %s AND pincode = %s AND phone = %s AND email_id = %s""",
-#                 (address_line, city, pincode, phone, email_id),
-#                 as_dict=True
-#             )
-#             if not (existing_address and existing_address[0] and existing_address[0]['name']):
-#                 new_address = frappe.new_doc("Address")
-#                 new_address.custom_address_id = address_id
-#                 new_address.address_type = address_type
-#                 new_address.address_line1 = address_line
-#                 new_address.county = country
-#                 new_address.city = city
-#                 new_address.pincode = pincode
-#                 new_address.phone = phone
-#                 new_address.email_id = email_id
-#                 new_address.is_shipping_address = 1
-#                 new_address.append('links', {
-#                         'link_doctype': "Customer",
-#                         'link_name': full_name
-#                     })
-#                 new_address.save(ignore_permissions = True)
+        if credit_account in ['', None]:
+            frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")
+        jv = frappe.new_doc("Journal Entry")
+        jv.posting_date = self.transaction_date
+        jv.company = self.company
+        debit_accounts = {
+            "account": debit_account,
+            "debit_in_account_currency": float(self.grand_total),
+            "debit" : float(self.grand_total),
+            "cost_center": cost_center,
+            "is_advance": "Yes"
+        }
+        credit_accounts = {
+            "account": credit_account,
+            "credit_in_account_currency": float(self.grand_total),
+            "credit" : float(self.grand_total),
+            "party_type": "Customer",
+            "party": self.custom_delivery_company,
+            "cost_center": cost_center,
+            # "reference_type": "Sales Order",
+            # "reference_name": self.name,
+            # "reference_due_date": self.transaction_date,
+            # "user_remark": f"{self.name} - {row.channel_name}"
+        }
+        jv.append("accounts", debit_accounts)
+        jv.append("accounts", credit_accounts)
 
-#         return "Address created successfully"
-#     except Exception as e:
-#         return f"Error Create Customer Address: {e}"
-    
-# @frappe.whitelist()
-# def create_sales_order():
-#     base_url, headers = base_request_magento_data()    
-#     try:
-#         sales_order = get_magento_sales_order()
-#         for order in sales_order:
-#             so_items = []
-#             customer = order['customer_firstname'] + ' ' + order['customer_lastname']
-#             transaction_date = order['created_at'].split('T')[0]
-#             sales_order_status = order['status']
-#             customer_address = order['billing_address_id']
-            
-#             for item in order['items']:
-#                 item_code = item['sku']
-#                 delivery_date = str(date.today())
-#                 qty = item['qty_ordered']
-#                 rate = item['price']
-                
-#             # existing_address = frappe.db.sql(
-#             #         """SELECT name FROM `tabAddress`
-#             #         WHERE address_line1 = %s AND city = %s AND pincode = %s AND phone = %s AND email_id = %s""",
-#             #         (address_line, city, pincode, phone, email_id),
-#             #         as_dict=True
-#             #     )
-#             # if not (existing_address and existing_address[0] and existing_address[0]['name']):
-#             new_sales_order = frappe.new_doc("Sales Order")
-#             new_sales_order.customer = customer
-#             new_sales_order.transaction_date = transaction_date
-#             new_sales_order.custom_sales_order_status = sales_order_status
-#             new_sales_order.append('Items', {
-#                     'item_code': item_code,
-#                     'delivery_date': delivery_date,
-#                     'qty': qty,
-#                     'rate': rate
-#                 })
-#             new_sales_order.save(ignore_permissions = True)
-#         return "Sales Orders created successfully"
-    
-#     except Exception as e:
-#         return f"Error creating sales order: {e}"
+
+        
+        # frappe.throw(str(jv.as_dict()))
+        jv.save(ignore_permissions=True)
+        jv.submit()

@@ -1,0 +1,56 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-09-09 13:48:17.858138",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "channel_id",
+  "channel_name",
+  "column_break_czno",
+  "percentage",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "channel_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Channel Name",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "column_break_czno",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "percentage",
+   "fieldtype": "Percent",
+   "label": "Percentage"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount"
+  },
+  {
+   "fieldname": "channel_id",
+   "fieldtype": "Int",
+   "label": "Channel ID"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-09-10 19:09:29.338122",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Payment Channel Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
