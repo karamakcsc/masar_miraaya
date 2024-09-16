@@ -145,7 +145,8 @@ doc_events = {
     "Sales Order": {
         "on_submit": "masar_miraaya.custom.sales_order.sales_order.on_submit",
         "validate" : "masar_miraaya.custom.sales_order.sales_order.validate",
-        "on_change": "masar_miraaya.custom.sales_order.sales_order.on_change"
+        "on_change": "masar_miraaya.custom.sales_order.sales_order.on_change", 
+        "on_cancel": "masar_miraaya.custom.sales_order.sales_order.on_cancel"
     },
     "File": { 
         "validate" : "masar_miraaya.custom.file.file.validate",
@@ -354,8 +355,25 @@ fixtures = [
                 "Customer-custom_suffix",
                 "Price List-custom_is_publish",
                 "Item Alternative-custom_is_publish"
+                "Customer-custom_delivery_fees",
+                "Sales Order-custom_delivery_fees",
+                "Journal Entry-custom_sales_order"
 
             ]
         ]
-    ]}
+    ]},
+    {
+        "doctype": "Property Setter",
+        "filters": [
+            [
+                "name",
+                "in",
+                [
+                    "Sales Order-main-links_order",
+                    "Sales Order-main-field_order",
+                    "Journal Entry-main-field_order"
+                ]
+            ]
+        ]
+    }
 ]

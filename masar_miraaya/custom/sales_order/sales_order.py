@@ -20,7 +20,8 @@ def on_change(self, method):
     # if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
     #     create_sales_invoice(self)
     
-
+def on_cancel(self , method):
+    cancel_linked_jv(self)
 def create_sales_invoice(self):
     doclist = make_sales_invoice(self.name, ignore_permissions=True)
     doclist.flags.ignore_mandatory = True
@@ -181,25 +182,30 @@ def create_journal_entry(self):
             
         if credit_account in ['', None]:
             frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")
+        delivery_fees_doc = frappe.get_doc('Customer' ,self.custom_delivery_company)
+        delivery_fees = delivery_fees_doc.custom_delivery_fees
+        if delivery_fees in[0 , None]:
+            frappe.throw(f"Set Delivery Fees in Customer:{self.custom_delivery_company}")
         jv = frappe.new_doc("Journal Entry")
         jv.posting_date = self.transaction_date
         jv.company = self.company
+        jv.custom_sales_order =  self.name
         debit_accounts = {
             "account": debit_account,
-            "debit_in_account_currency": float(self.grand_total),
-            "debit" : float(self.grand_total),
+            "debit_in_account_currency": float(delivery_fees),
+            "debit" : float(delivery_fees),
             "cost_center": cost_center,
             "is_advance": "Yes"
         }
         credit_accounts = {
             "account": credit_account,
-            "credit_in_account_currency": float(self.grand_total),
-            "credit" : float(self.grand_total),
+            "credit_in_account_currency": float(delivery_fees),
+            "credit" : float(delivery_fees),
             "party_type": "Customer",
             "party": self.custom_delivery_company,
             "cost_center": cost_center,
-            # "reference_type": "Sales Order",
-            # "reference_name": self.name,
+            # "cheque_no": "Sales Order",
+            
             # "reference_due_date": self.transaction_date,
             # "user_remark": f"{self.name} - {row.channel_name}"
         }
@@ -211,3 +217,19 @@ def create_journal_entry(self):
         # frappe.throw(str(jv.as_dict()))
         jv.save(ignore_permissions=True)
         jv.submit()
+
+
+def cancel_linked_jv(self):
+    linked_jv_sql = frappe.db.sql("SELECT name FROM `tabJournal Entry` WHERE custom_sales_order = %s" , (self.name) , as_dict= True)
+    msg_linked = list()
+    if len(linked_jv_sql) != 0 :
+        for linked_jv in linked_jv_sql:
+            doc = frappe.get_doc('Journal Entry' , linked_jv.name)
+            doc.run_method('cancel')
+            msg_linked.append(linked_jv.name)
+    if len(msg_linked)!=0:
+        msg = 'The Linked Journal Entry are Cancelled:<br><ul>'
+        for jv_linked in msg_linked:
+            msg+=f'<li>Journal Entry : <b>{jv_linked}</b></li>'
+        msg+= '</ul>'
+        frappe.msgprint(msg , title=_("Linked Journal Entry") , indicator='red')
