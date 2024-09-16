@@ -369,9 +369,7 @@ fixtures = [
                 "name",
                 "in",
                 [
-                    "Sales Order-main-links_order",
-                    "Sales Order-main-field_order",
-                    "Journal Entry-main-field_order"
+                    "Sales Order-main-links_order"
                 ]
             ]
         ]
