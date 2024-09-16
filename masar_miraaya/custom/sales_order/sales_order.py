@@ -153,70 +153,71 @@ def calculate_amount(self):
 @frappe.whitelist()
 def create_journal_entry(self):
     if self.custom_magento_status == 'On the Way' and self.docstatus == 1:
+        linked_jv_sql = frappe.db.sql("SELECT name FROM `tabJournal Entry` WHERE custom_sales_order = %s" , (self.name) , as_dict= True)
+        if not(linked_jv_sql and linked_jv_sql[0] and linked_jv_sql[0]['name']):
+            debit_account_query = frappe.db.sql("SELECT tc.custom_cost_of_delivery , cost_center FROM tabCompany tc WHERE name = %s", (self.company), as_dict = True)
+            cost_center = self.cost_center if self.cost_center else debit_account_query[0]['cost_center']
+            if cost_center in [ '' , 0 , None]:
+                frappe.throw("Set Cost Center in Sales Order or in Company as Defualt Cost Center.")
+            if not(debit_account_query and debit_account_query[0] and debit_account_query[0]['custom_cost_of_delivery']):
+                frappe.throw(f"Set Debit Account in Company in Default Cost of Delivery." , title=_("Missing Debit Account"))
+                return
+            debit_account = debit_account_query[0]['custom_cost_of_delivery']
+            account = frappe.db.sql("""SELECT tpa.account AS `customer_account`, tpa2.account AS `customer_group_account`, tc2.custom_receivable_payment_channel AS `company_account` 
+                                        FROM tabCustomer tc 
+                                        INNER JOIN `tabParty Account` tpa ON tpa.parent = tc.name 
+                                        LEFT JOIN `tabCustomer Group` tcg ON tcg.name = tc.customer_group 
+                                        LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tcg.name 
+                                        LEFT JOIN tabCompany tc2 ON tpa2.company = tc2.name
+                                        WHERE tc.name = %s AND tc.custom_is_delivery = 1""", (self.custom_delivery_company), as_dict = True)
+            if len(account) != 0:
+                if account and account[0]:
+                    if account[0]['customer_account']:
+                        credit_account = account[0]['customer_account']
+                    elif account[0]['customer_group_account']:
+                        credit_account = account[0]['customer_group_account']
+                    elif account[0]['company_account']:
+                        credit_account = account[0]['company_account']
+            else:
+                frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")  
+                
+            if credit_account in ['', None]:
+                frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")
+            delivery_fees_doc = frappe.get_doc('Customer' ,self.custom_delivery_company)
+            delivery_fees = delivery_fees_doc.custom_delivery_fees
+            if delivery_fees in[0 , None]:
+                frappe.throw(f"Set Delivery Fees in Customer:{self.custom_delivery_company}")
+            jv = frappe.new_doc("Journal Entry")
+            jv.posting_date = self.transaction_date
+            jv.company = self.company
+            jv.custom_sales_order =  self.name
+            debit_accounts = {
+                "account": debit_account,
+                "debit_in_account_currency": float(delivery_fees),
+                "debit" : float(delivery_fees),
+                "cost_center": cost_center,
+                "is_advance": "Yes"
+            }
+            credit_accounts = {
+                "account": credit_account,
+                "credit_in_account_currency": float(delivery_fees),
+                "credit" : float(delivery_fees),
+                "party_type": "Customer",
+                "party": self.custom_delivery_company,
+                "cost_center": cost_center,
+                # "cheque_no": "Sales Order",
+                
+                # "reference_due_date": self.transaction_date,
+                # "user_remark": f"{self.name} - {row.channel_name}"
+            }
+            jv.append("accounts", debit_accounts)
+            jv.append("accounts", credit_accounts)
 
-        debit_account_query = frappe.db.sql("SELECT tc.custom_cost_of_delivery , cost_center FROM tabCompany tc WHERE name = %s", (self.company), as_dict = True)
-        cost_center = self.cost_center if self.cost_center else debit_account_query[0]['cost_center']
-        if cost_center in [ '' , 0 , None]:
-            frappe.throw("Set Cost Center in Sales Order or in Company as Defualt Cost Center.")
-        if not(debit_account_query and debit_account_query[0] and debit_account_query[0]['custom_cost_of_delivery']):
-            frappe.throw(f"Set Debit Account in Company in Default Cost of Delivery." , title=_("Missing Debit Account"))
-            return
-        debit_account = debit_account_query[0]['custom_cost_of_delivery']
-        account = frappe.db.sql("""SELECT tpa.account AS `customer_account`, tpa2.account AS `customer_group_account`, tc2.custom_receivable_payment_channel AS `company_account` 
-                                    FROM tabCustomer tc 
-                                    INNER JOIN `tabParty Account` tpa ON tpa.parent = tc.name 
-                                    LEFT JOIN `tabCustomer Group` tcg ON tcg.name = tc.customer_group 
-                                    LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tcg.name 
-                                    LEFT JOIN tabCompany tc2 ON tpa2.company = tc2.name
-                                    WHERE tc.name = %s AND tc.custom_is_delivery = 1""", (self.custom_delivery_company), as_dict = True)
-        if len(account) != 0:
-            if account and account[0]:
-                if account[0]['customer_account']:
-                    credit_account = account[0]['customer_account']
-                elif account[0]['customer_group_account']:
-                    credit_account = account[0]['customer_group_account']
-                elif account[0]['company_account']:
-                    credit_account = account[0]['company_account']
-        else:
-            frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")  
+
             
-        if credit_account in ['', None]:
-            frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")
-        delivery_fees_doc = frappe.get_doc('Customer' ,self.custom_delivery_company)
-        delivery_fees = delivery_fees_doc.custom_delivery_fees
-        if delivery_fees in[0 , None]:
-            frappe.throw(f"Set Delivery Fees in Customer:{self.custom_delivery_company}")
-        jv = frappe.new_doc("Journal Entry")
-        jv.posting_date = self.transaction_date
-        jv.company = self.company
-        jv.custom_sales_order =  self.name
-        debit_accounts = {
-            "account": debit_account,
-            "debit_in_account_currency": float(delivery_fees),
-            "debit" : float(delivery_fees),
-            "cost_center": cost_center,
-            "is_advance": "Yes"
-        }
-        credit_accounts = {
-            "account": credit_account,
-            "credit_in_account_currency": float(delivery_fees),
-            "credit" : float(delivery_fees),
-            "party_type": "Customer",
-            "party": self.custom_delivery_company,
-            "cost_center": cost_center,
-            # "cheque_no": "Sales Order",
-            
-            # "reference_due_date": self.transaction_date,
-            # "user_remark": f"{self.name} - {row.channel_name}"
-        }
-        jv.append("accounts", debit_accounts)
-        jv.append("accounts", credit_accounts)
-
-
-        
-        # frappe.throw(str(jv.as_dict()))
-        jv.save(ignore_permissions=True)
-        jv.submit()
+            # frappe.throw(str(jv.as_dict()))
+            jv.save(ignore_permissions=True)
+            jv.submit()
 
 
 def cancel_linked_jv(self):
