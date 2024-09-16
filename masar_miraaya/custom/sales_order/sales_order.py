@@ -218,7 +218,9 @@ def create_journal_entry(self):
             # frappe.throw(str(jv.as_dict()))
             jv.save(ignore_permissions=True)
             jv.submit()
-
+            frappe.msgprint(f"Journal Entry has been Created Successfully." ,alert=True , indicator='green')
+        else:
+            frappe.msgprint(f"Journal Entry alerady Created for this Sales Order" ,alert=True , indicator='blue')
 
 def cancel_linked_jv(self):
     linked_jv_sql = frappe.db.sql("SELECT name FROM `tabJournal Entry` WHERE custom_sales_order = %s" , (self.name) , as_dict= True)
