@@ -154,7 +154,10 @@ def calculate_amount(self):
 def create_journal_entry(self):
     if self.custom_magento_status == 'On the Way' and self.docstatus == 1:
         linked_jv_sql = frappe.db.sql("SELECT name FROM `tabJournal Entry` WHERE custom_sales_order = %s" , (self.name) , as_dict= True)
-        if not(linked_jv_sql and linked_jv_sql[0] and linked_jv_sql[0]['name']):
+        if (linked_jv_sql and linked_jv_sql[0] and linked_jv_sql[0]['name']):
+            frappe.msgprint(f"Journal Entry alerady Created for this Sales Order" ,alert=True , indicator='blue')
+            return
+        else:
             debit_account_query = frappe.db.sql("SELECT tc.custom_cost_of_delivery , cost_center FROM tabCompany tc WHERE name = %s", (self.company), as_dict = True)
             cost_center = self.cost_center if self.cost_center else debit_account_query[0]['cost_center']
             if cost_center in [ '' , 0 , None]:
@@ -215,12 +218,11 @@ def create_journal_entry(self):
 
 
             
-            # frappe.throw(str(jv.as_dict()))
+            # frappe.throw(str(debit_accounts))
             jv.save(ignore_permissions=True)
             jv.submit()
             frappe.msgprint(f"Journal Entry has been Created Successfully." ,alert=True , indicator='green')
-        else:
-            frappe.msgprint(f"Journal Entry alerady Created for this Sales Order" ,alert=True , indicator='blue')
+           
 
 def cancel_linked_jv(self):
     linked_jv_sql = frappe.db.sql("SELECT name FROM `tabJournal Entry` WHERE custom_sales_order = %s" , (self.name) , as_dict= True)

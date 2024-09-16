@@ -4,6 +4,7 @@ frappe.ui.form.on('Company', {
             return {
                 filters: {
                     "is_group": 0,
+                    "account_type" : 'Expense Account'
                 }
             };
         };
@@ -13,6 +14,7 @@ frappe.ui.form.on('Company', {
             return {
                 filters: {
                     "is_group": 0,
+                    "account_type" : 'Expense Account'
                 }
             };
         };
@@ -22,6 +24,7 @@ frappe.ui.form.on('Company', {
             return {
                 filters: {
                     "is_group": 0,
+                    "account_type" : 'Expense Account'
                 }
             };
         };

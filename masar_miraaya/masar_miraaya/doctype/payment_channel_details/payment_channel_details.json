@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "channel_id",
+  "channel",
   "channel_name",
   "column_break_czno",
   "percentage",
@@ -14,11 +15,12 @@
  ],
  "fields": [
   {
+   "fetch_from": "channel.customer_name",
    "fieldname": "channel_name",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Channel Name",
-   "options": "Customer"
+   "read_only": 1
   },
   {
    "fieldname": "column_break_czno",
@@ -39,12 +41,19 @@
    "fieldname": "channel_id",
    "fieldtype": "Int",
    "label": "Channel ID"
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Channel",
+   "options": "Customer"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-10 19:09:29.338122",
+ "modified": "2024-09-16 16:17:16.927502",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Payment Channel Details",
