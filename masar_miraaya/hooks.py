@@ -132,13 +132,13 @@ doc_events = {
 	"Item Group": {
 		"validate": "masar_miraaya.custom.item_group.item_group.validate"
 	},
-	"Customer": {
-		"validate": "masar_miraaya.custom.customer.customer.validate"
-	},
-	"Customer Group": {
-		"validate": "masar_miraaya.custom.customer_group.customer_group.validate",
-        "after_rename": "masar_miraaya.custom.customer_group.customer_group.after_rename"
-	}, 
+	# "Customer": {
+	# 	"validate": "masar_miraaya.custom.customer.customer.validate"
+	# },
+	# "Customer Group": {
+	# 	"validate": "masar_miraaya.custom.customer_group.customer_group.validate",
+    #     "after_rename": "masar_miraaya.custom.customer_group.customer_group.after_rename"
+	# }, 
     "Price List": { 
         "validate" : "masar_miraaya.custom.price_list.price_list.validate"
     },
