@@ -17,8 +17,8 @@ def validate(self, method):
     
 def on_change(self, method):
     create_journal_entry(self)
-    if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
-        create_sales_invoice(self)
+    # if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
+    #     create_sales_invoice(self)
     
 
 def create_sales_invoice(self):
