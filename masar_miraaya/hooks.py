@@ -122,80 +122,80 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-#     "Brand": {
-#         "validate" : "masar_miraaya.custom.brand.brand.validate"
-#     },
-# 	"Item": {
-# 		"validate": "masar_miraaya.custom.item.item.validate"
-# 	},
-# 	"Item Group": {
-# 		"validate": "masar_miraaya.custom.item_group.item_group.validate"
-# 	},
-	# "Customer": {
-	# 	"validate": "masar_miraaya.custom.customer.customer.validate"
-	# },
-	# "Customer Group": {
-	# 	"validate": "masar_miraaya.custom.customer_group.customer_group.validate",
-    #     "after_rename": "masar_miraaya.custom.customer_group.customer_group.after_rename"
-	# }, 
-#     "Price List": { 
-#         "validate" : "masar_miraaya.custom.price_list.price_list.validate"
-#     },
-#     "Sales Order": {
-#         "on_submit": "masar_miraaya.custom.sales_order.sales_order.on_submit",
-#         "validate" : "masar_miraaya.custom.sales_order.sales_order.validate",
-#         "on_change": "masar_miraaya.custom.sales_order.sales_order.on_change"
-#     },
-#     "File": { 
-#         "validate" : "masar_miraaya.custom.file.file.validate",
-#         "on_trash" : "masar_miraaya.custom.file.file.on_trash"
-#     },
-#     "Item Attribute": {
-#         "validate" : "masar_miraaya.custom.item_attribute.item_attribute.validate"
-#     },
-#     "Sales Invoice": {
-#         "on_submit": "masar_miraaya.custom.sales_invoice.sales_invoice.on_submit"
-#     },
-#     "Item Price": {
-#         "validate": "masar_miraaya.custom.item_price.item_price.validate"
-#     },
-#     "Address": {
-#         "validate": "masar_miraaya.custom.address.address.validate"
-#     }
-# }
+doc_events = {
+    "Brand": {
+        "validate" : "masar_miraaya.custom.brand.brand.validate"
+    },
+	"Item": {
+		"validate": "masar_miraaya.custom.item.item.validate"
+	},
+	"Item Group": {
+		"validate": "masar_miraaya.custom.item_group.item_group.validate"
+	},
+	"Customer": {
+		"validate": "masar_miraaya.custom.customer.customer.validate"
+	},
+	"Customer Group": {
+		"validate": "masar_miraaya.custom.customer_group.customer_group.validate",
+        "after_rename": "masar_miraaya.custom.customer_group.customer_group.after_rename"
+	}, 
+    "Price List": { 
+        "validate" : "masar_miraaya.custom.price_list.price_list.validate"
+    },
+    "Sales Order": {
+        "on_submit": "masar_miraaya.custom.sales_order.sales_order.on_submit",
+        "validate" : "masar_miraaya.custom.sales_order.sales_order.validate",
+        "on_change": "masar_miraaya.custom.sales_order.sales_order.on_change"
+    },
+    "File": { 
+        "validate" : "masar_miraaya.custom.file.file.validate",
+        "on_trash" : "masar_miraaya.custom.file.file.on_trash"
+    },
+    "Item Attribute": {
+        "validate" : "masar_miraaya.custom.item_attribute.item_attribute.validate"
+    },
+    "Sales Invoice": {
+        "on_submit": "masar_miraaya.custom.sales_invoice.sales_invoice.on_submit"
+    },
+    "Item Price": {
+        "validate": "masar_miraaya.custom.item_price.item_price.validate"
+    },
+    "Address": {
+        "validate": "masar_miraaya.custom.address.address.validate"
+    }
+}
 
-# doctype_js = {
-#    "Sales Order": "custom/sales_order/sales_order.js",
-#    "Company": "custom/company/company.js",
-#    "Item Alternative": "custom/item_alternative/item_alternative.js"
+doctype_js = {
+   "Sales Order": "custom/sales_order/sales_order.js",
+   "Company": "custom/company/company.js",
+   "Item Alternative": "custom/item_alternative/item_alternative.js"
 
-# }
+}
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	# "all": [
-# 	# 	"masar_miraaya.override._reorder_item.reorder_item"
-# 	# ],
-# 	# "daily": [
-# 	# 	"masar_miraaya.override._reorder_item.reorder_item"
-# 	# ],
-# 	"hourly": [
-# 		"masar_miraaya.jobs._reorder_item.reorder_item"
-# 	],
-# 	# "weekly": [
-# 	# 	"masar_miraaya.tasks.weekly"
-# 	# ],
-# 	# "monthly": [
-# 	# 	"masar_miraaya.tasks.monthly"
-# 	# ],
-# 	"cron": {
-#         "*/30 * * * *": [
-#             "masar_miraaya.api.create_magento_auth"
-#         ]
-#     }
-# }
+scheduler_events = {
+	# "all": [
+	# 	"masar_miraaya.override._reorder_item.reorder_item"
+	# ],
+	# "daily": [
+	# 	"masar_miraaya.override._reorder_item.reorder_item"
+	# ],
+	"hourly": [
+		"masar_miraaya.jobs._reorder_item.reorder_item"
+	],
+	# "weekly": [
+	# 	"masar_miraaya.tasks.weekly"
+	# ],
+	# "monthly": [
+	# 	"masar_miraaya.tasks.monthly"
+	# ],
+	"cron": {
+        "*/30 * * * *": [
+            "masar_miraaya.api.create_magento_auth"
+        ]
+    }
+}
 
 # Testing
 # -------
