@@ -4,7 +4,7 @@ import requests
 from io import BytesIO
 import base64
 from urllib.parse import urlparse
-
+###
 def magento_admin_details():
     setting = frappe.get_doc("Magento Setting")
     username = str(setting.username)
