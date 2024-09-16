@@ -354,7 +354,7 @@ fixtures = [
                 "Customer-custom_prefix",
                 "Customer-custom_suffix",
                 "Price List-custom_is_publish",
-                "Item Alternative-custom_is_publish"
+                "Item Alternative-custom_is_publish",
                 "Customer-custom_delivery_fees",
                 "Sales Order-custom_delivery_fees",
                 "Journal Entry-custom_sales_order"
