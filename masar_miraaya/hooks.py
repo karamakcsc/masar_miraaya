@@ -136,7 +136,8 @@ doc_events = {
 		"validate": "masar_miraaya.custom.customer.customer.validate"
 	},
 	"Customer Group": {
-		"validate": "masar_miraaya.custom.customer_group.customer_group.validate"
+		"validate": "masar_miraaya.custom.customer_group.customer_group.validate",
+        "after_rename": "masar_miraaya.custom.customer_group.customer_group.after_rename"
 	}, 
     "Price List": { 
         "validate" : "masar_miraaya.custom.price_list.price_list.validate"
@@ -157,13 +158,17 @@ doc_events = {
         "on_submit": "masar_miraaya.custom.sales_invoice.sales_invoice.on_submit"
     },
     "Item Price": {
-        "validate" : "masar_miraaya.custom.item_price.item_price.validate"
+        "validate": "masar_miraaya.custom.item_price.item_price.validate"
+    },
+    "Address": {
+        "validate": "masar_miraaya.custom.address.address.validate"
     }
 }
 
 doctype_js = {
    "Sales Order": "custom/sales_order/sales_order.js",
-   "Company": "custom/company/company.js"
+   "Company": "custom/company/company.js",
+   "Item Alternative": "custom/item_alternative/item_alternative.js"
 
 }
 # Scheduled Tasks
@@ -286,6 +291,7 @@ fixtures = [
                 "Item Group-custom_column_break_oilxi",
                 "Customer-custom_is_publish",
                 "Customer Group-custom_is_publish",
+                "Customer-custom_date_of_birth",
                 "Sales Order-custom_sales_order_status",
                 "Address-custom_address_id",
                 "Sales Order-custom_address_id",
@@ -305,6 +311,8 @@ fixtures = [
                 "Customer-custom_store_id",
                 "Customer-custom_middle_name",
                 "Customer-custom_is_subscribed",
+                "Customer-custom_default_billing_id",
+                "Customer-custom_default_shipping_id",
                 "Address-custom_first_name",
                 "Address-custom_last_name",
                 "Item-custom_magento_variants",
@@ -326,7 +334,6 @@ fixtures = [
                 "Customer-custom_phone",
                 "Customer-custom_address_first_name",
                 "Customer-custom_address_last_name",
-                "Customer-custom_address_email_id",
                 "Customer-custom_is_shipping_address",
                 "Customer-custom_is_primary_address",
                 "Sales Order-custom_magento_status",
@@ -342,7 +349,11 @@ fixtures = [
                 "File-custom_magento_sync",
                 "Item Price-custom_publish_to_magento",
                 "Brand-custom_publish_to_magento",
-                "Item Attribute-custom_publish_to_magento"
+                "Item Attribute-custom_publish_to_magento",
+                "Customer-custom_prefix",
+                "Customer-custom_suffix",
+                "Price List-custom_is_publish",
+                "Item Alternative-custom_is_publish"
 
             ]
         ]

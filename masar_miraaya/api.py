@@ -245,6 +245,8 @@ def insert_item_price(
 				}
 			)
     item_price.insert()
+    frappe.db.set_value("Item Price" ,item_price.name , 'custom_publish_to_magento' , 1 )
+    frappe.db.commit()
 
 @frappe.whitelist()
 def sync_magento_products():
@@ -285,6 +287,8 @@ def get_magento_brand(response_json = None):
                 new_brand = frappe.new_doc('Brand')
                 new_brand.brand = brand_name
                 new_brand.insert(ignore_permissions=True)
+                frappe.db.set_value("Brand" ,new_brand.name , 'custom_publish_to_magento' , 1 )
+                frappe.db.commit()
     except Exception as e:
         return (f"General Error: {e}", "Magento Sync")
     if response_json:
@@ -396,18 +400,18 @@ def create_item_group_childs(parent , children_data):
              create_item_group_childs_loop(unique_name , children_data['children_data'])
              
              
-
+@frappe.whitelist()
 def get_magento_item_attributes(all_simple= None , all_configurable_links = None , all_configurable = None , altenative_items = None):
     base_url, headers = base_data("magento")
     url = base_url + "/rest/V1/products/attributes?searchCriteria[pageSize]=100"
     response = requests.get(url, headers=headers)
-    response.raise_for_status()
+    # response.raise_for_status()
     json_response = response.json()
     attributes = json_response['items']
     for attribute in attributes:
         process_item_attribute(attribute)
 
-    if all_simple and all_configurable and altenative_items and all_configurable_links:
+    if all_simple or all_configurable or altenative_items or all_configurable_links:
         frappe.enqueue(
             'masar_miraaya.api.create_templete_items',
             queue='long',
@@ -463,7 +467,11 @@ def process_item_attribute(attribute):
                     new_attribute.append('att_details', {
                         'label': 'Default', 'value': attribute.get('default_value')
                     })
-
+                else:  
+                    if attribute.get('default_value') in ["" , " " , None] or not  attribute.get('default_value'):
+                        new_attribute.append('att_details', {
+                            'label': 'Default', 'value': "default"
+                        })
                 for option in attribute.get('options', []):
                     if (option.get('value') not in [None, "", '', 0, ' ', " "]) and (option.get('label') not in [None, "", '', 0, " ", ' ']):
                         existing_attribute_value = frappe.db.get_value('Attributes Details', {
@@ -486,7 +494,36 @@ def process_item_attribute(attribute):
                             item_attribute.attribute_name = default_frontend_label
                             item_attribute.custom_attribute_code = attribute.get('attribute_code', '')
                             item_attribute.insert(ignore_permissions=True)
-
+                            frappe.db.set_value("Item Attribute" ,item_attribute.name , 'custom_publish_to_magento' , 1 )
+                            frappe.db.commit()
+                        if attribute.get('default_value'):
+                            existing_default_value = frappe.db.get_value('Item Attribute Value', {
+                                    'parent': default_frontend_label,
+                                    'attribute_value': str(option.get('label'))
+                                }, 'name')
+                            if not existing_default_value:
+                                    new_attribute_value = frappe.new_doc('Item Attribute Value')
+                                    new_attribute_value.attribute_value =  'Default'
+                                    new_attribute_value.abbr = str( attribute.get('default_value'))
+                                    new_attribute_value.parent = default_frontend_label
+                                    new_attribute_value.parentfield = 'item_attribute_values'
+                                    new_attribute_value.parenttype = 'Item Attribute'
+                                    new_attribute_value.insert(ignore_permissions=True)
+                        else:  
+                            if attribute.get('default_value') in ["" , " " , None] or not  attribute.get('default_value'):
+                                existing_default_value = frappe.db.get_value('Item Attribute Value', {
+                                    'parent': default_frontend_label,
+                                    'attribute_value': str(option.get('label'))
+                                }, 'name')
+                            if not existing_default_value:
+                                    new_attribute_value = frappe.new_doc('Item Attribute Value')
+                                    new_attribute_value.attribute_value =  'Default'
+                                    new_attribute_value.abbr = str('default')
+                                    new_attribute_value.parent = default_frontend_label
+                                    new_attribute_value.parentfield = 'item_attribute_values'
+                                    new_attribute_value.parenttype = 'Item Attribute'
+                                    new_attribute_value.insert(ignore_permissions=True)
+                        
                         for option in attribute.get('options', []):
                             if (option.get('value') not in [None, "", '', 0, ' ', " "]) and (option.get('label') not in [None, "", '', 0, " ", ' ']):
                                 existing_attribute_value = frappe.db.get_value('Item Attribute Value', {
@@ -622,6 +659,7 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                                 new_brand = frappe.new_doc('Brand')
                                 new_brand.brand = att_value
                                 new_brand.insert(ignore_permissions=True)
+                                frappe.db.set_value("Brand" ,new_brand.name , 'custom_publish_to_magento' , 1 )
                                 brand = new_brand.name
                             new_item_.brand = brand
                         if att_code == "free_from" and att_value:
@@ -645,11 +683,19 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                             SELECT tia.name , tav.attribute_value FROM `tabItem Attribute` tia 
                                         INNER JOIN  `tabItem Attribute Value` tav ON tia.name = tav.parent 
                                         WHERE tav.abbr = %s OR tav.attribute_value =  %s
-                                        """, (str(att_value),str(att_value)), as_dict=True)
+                                        """, (str(att_value),str(att_value)), as_dict=True)                          
                             if attribute_value and attribute_value[0] and attribute_value[0]['attribute_value']:
                                 variant = attribute_value[0]['attribute_value']
                             else:
-                                variant = att_value
+                                variant_sql = frappe.db.sql("""
+                                SELECT tia.name , tav.attribute_value FROM `tabItem Attribute` tia 
+                                            INNER JOIN  `tabItem Attribute Value` tav ON tia.name = tav.parent 
+                                            WHERE tav.abbr = %s OR tav.attribute_value =  %s
+                                            """, ("default","Default"), as_dict=True)[0]['attribute_value']
+                                if  variant_sql and variant_sql[0] and variant_sql[0]['attribute_value']:
+                                    variant = variant_sql[0]['attribute_value']
+                                else:
+                                   variant = att_value 
                             if att_code == 'color':
                                 frappe.db.set_value('Item', new_item_.name, 'custom_color', variant)
                             if att_code == 'size':
@@ -679,6 +725,7 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                                         new_att.parentfield = 'attributes'
                                         new_att.parenttype = 'Item'
                                         new_att.insert(ignore_permissions=True , ignore_mandatory=True)
+                                        
                                         frappe.db.commit()
 
                     # Process images
@@ -730,9 +777,9 @@ def get_alternative_items(altenative_items):
                 new.item_code = links['sku'] 
                 new.alternative_item_code = links['linked_product_sku'] 
                 new.insert(ignore_permissions=True)
+                frappe.db.set_value('Item Alternative' , new.name , 'custom_is_publish' , 1 )
+                frappe.db.commit()
                      
-                
-
 @frappe.whitelist()
 def get_magento_customers():
     try:
@@ -746,6 +793,8 @@ def get_magento_customers():
         for customer in customers:
             customer_id = customer['id']
             customer_group_id = customer['group_id']
+            customer_default_shipping_id = customer.get('default_shipping', "")
+            customer_default_billing_id = customer.get('default_billing', "")
             customer_group_name = get_customer_group_name(customer_group_id)
             customer_first_name = customer.get('firstname', "")
             customer_middle_name = customer.get('middlename', "")
@@ -787,13 +836,14 @@ def get_magento_customers():
                 new_customer.custom_customer_group_id = customer_group_id
                 new_customer.custom_is_subscribed = is_subscribed
                 new_customer.customer_type = 'Individual'
-                new_customer.custom_is_publish = 1
                 new_customer.disabled = 0
                 new_customer.tax_id = customer_tax_id
                 new_customer.tax_category = 'Retail Customer'
                 new_customer.custom_website_id = website_id
                 new_customer.custom_store_id = store_id
-                new_customer.custom_date_of_birth = customer_dob       
+                new_customer.custom_date_of_birth = customer_dob
+                new_customer.custom_default_billing_id = customer_default_billing_id
+                new_customer.custom_default_shipping_id = customer_default_shipping_id
                 new_customer.save(ignore_permissions=True)
                 addresses = customer['addresses']
                 for address in addresses:
@@ -818,6 +868,15 @@ def get_magento_customers():
                     new_customer.custom_is_shipping_address = 1
                     new_customer.custom_is_primary_address = 1
                 new_customer.save(ignore_permissions=True)
+                frappe.db.set_value("Customer" ,new_customer.name , 'custom_is_publish' , 1 )
+                
+            if len(customer['addresses']) != 0 :   
+                create_customer_address(customer['addresses'] , customer_email)
+                primary_address_sql = frappe.db.sql("SELECT name FROM tabAddress WHERE custom_address_id = %s" ,((customer_default_billing_id)) , as_dict = True)
+                if primary_address_sql and primary_address_sql[0] and primary_address_sql[0]['name']:
+                    frappe.db.set_value("Customer" ,new_customer.name , 'customer_primary_address' ,primary_address_sql[0]['name'] )
+                frappe.db.commit()
+                new_customer.reload()
         return "Customers Created Successfully"
     except Exception as e:
         return f"Error get customers: {e}"
@@ -836,6 +895,8 @@ def get_customer_group():
             new_customer_group.is_group = 1
             new_customer_group.custom_customer_group_id = 99999
             new_customer_group.save(ignore_permissions=True)
+            frappe.db.set_value("Customer Group" ,new_group.name , 'custom_is_publish' , 1 )
+            frappe.db.commit()
             
         url = base_url + "/rest/V1/customerGroups/search?searchCriteria="
         request = requests.get(url, headers=headers)
@@ -855,7 +916,8 @@ def get_customer_group():
                 new_group.custom_customer_group_id = customer_group_id
                 new_group.parent_customer_group = "All Customer Groups"
                 new_group.save(ignore_permissions=True)
-            
+                frappe.db.set_value("Customer Group" ,new_group.name , 'custom_is_publish' , 1 )
+                frappe.db.commit()
             existing_tax_group = frappe.db.sql("Select name FROM `tabTax Category` WHERE name = %s", (tax_class_name), as_dict = True)
             if not (existing_tax_group and existing_tax_group[0] and existing_tax_group[0]['name']):
                 new_tax_group = frappe.new_doc('Tax Category')
@@ -886,6 +948,8 @@ def get_customer_group_name(id):
             new_group.custom_customer_group_id = json_response['id']
             new_group.parent_customer_group = "All Customer Groups"
             new_group.save(ignore_permissions=True)
+            frappe.db.set_value("Customer Group" ,new_group.name , 'custom_is_publish' , 1 )
+            frappe.db.commit()
             existing_tax_group = frappe.db.sql("Select name FROM `tabTax Category` WHERE name = %s", (json_response['tax_class_name']), as_dict = True)
             if not (existing_tax_group and existing_tax_group[0] and existing_tax_group[0]['name']):
                 new_tax_group = frappe.new_doc('Tax Category')
@@ -893,4 +957,47 @@ def get_customer_group_name(id):
                 new_tax_group.custom_tax_category_id = json_response['tax_class_id']
                 new_tax_group.save(ignore_permissions=True)
         return new_group.name
-            
+    
+    
+    
+def create_customer_address(adresses , customer_email):
+                for address in adresses:
+                    address_id = address['id']
+                    address_line = address['street'][0]
+                    city = address['city']
+                    pincode = address['postcode']
+                    phone = address['telephone']
+                    email_id = customer_email
+                    first_name = address.get('firstname', "")
+                    last_name = address.get('lastname', "")
+                    exist_address_sql = frappe.db.sql("SELECT name FROM `tabAddress` WHERE custom_address_id = %s" , (address_id) , as_dict = True)
+                    if exist_address_sql and exist_address_sql[0] and exist_address_sql[0]['name']:
+                        address_doc = exist_address_sql[0]['name']
+                    else:
+                        address_doc = frappe.new_doc('Address')
+                        address_doc.custom_address_id = address_id
+                    address_doc.address_line1 = str(address_line)
+                    counrt_id_sql = frappe.db.sql("SELECT name FROM tabCountry WHERE code = %s" , ((address['country_id']).lower()) , as_dict = True)
+                    if counrt_id_sql and counrt_id_sql[0] and counrt_id_sql[0]['name']:
+                        country = counrt_id_sql[0]['name']
+                        address_doc.country = country
+                    address_doc.state =  address['region']['region']
+                    address_doc.city = city
+                    address_doc.pincode = pincode
+                    address_doc.phone = phone
+                    address_doc.custom_first_name = first_name
+                    address_doc.custom_last_name = last_name if last_name not in [None, "", '', 0, ' ', " "] else "Test"
+                    address_doc.email_id = email_id 
+                    if address.get('default_billing' , False): 
+                        address_doc.is_primary_address = (address['default_billing'])
+                    if address.get('default_shipping', False): 
+                        address_doc.is_shipping_address = (address['default_shipping'])
+                    customer_sql = frappe.db.sql("SELECT name FROM tabCustomer WHERE custom_customer_id = %s" , (address['customer_id']) , as_dict=True)
+                    if customer_sql and customer_sql[0] and customer_sql[0]['name']:
+                        customer = customer_sql[0]['name']
+                        address_doc.append('links', {
+                                'link_doctype': "Customer",
+                                'link_name': customer
+                            })
+                    address_doc.save(ignore_permissions = True)
+                    

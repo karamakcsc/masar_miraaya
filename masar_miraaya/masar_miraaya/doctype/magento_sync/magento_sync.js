@@ -47,7 +47,7 @@ frappe.ui.form.on("Magento Sync", {
     },
     item:function(frm){
         frappe.call({
-            method: 'masar_miraaya.api.get_magento_products',
+            method: 'masar_miraaya.api.sync_magento_products',
             freeze: true,
             freeze_message: 'Please Wait .....',
             callback: function(response) {
@@ -61,7 +61,7 @@ frappe.ui.form.on("Magento Sync", {
     },
     item_attributes:function(frm){
         frappe.call({
-            method: 'masar_miraaya.api.get_magento_item_attribute',
+            method: 'masar_miraaya.api.get_magento_item_attributes',
             freeze: true,
             freeze_message: 'Please Wait .....',
             callback: function(response) {

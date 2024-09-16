@@ -36,9 +36,7 @@ def get_values(item_code):
 
 
 @frappe.whitelist()
-def create_new_item(name):
-    self = frappe.get_doc('Item' , name)
-    # frappe.throw(str(self))
+def create_new_item(self):
     try:
         base_url, headers = base_data("magento")
         url = f"{base_url}/rest/V1/products/{self.item_code}"
@@ -100,7 +98,7 @@ def create_new_item(name):
                 "status": is_active,
                 "visibility": visibility,
                 "type_id": product_type,
-                "attribute_set_id": 16,
+                "attribute_set_id": 4,
                 "extension_attributes": {
                     "website_ids": [1],
                     "category_links": category_links
@@ -140,7 +138,7 @@ def create_new_item(name):
         if color_abbr:
             custom_attributes_dict["color"] = color_abbr if color_abbr else 0
         
-        ######### Static Custom Attributes
+        # ######### Static Custom Attributes
         custom_attributes_dict["options_container"] = "container2"
         custom_attributes_dict["tax_class_id"] = "2"
 
@@ -159,7 +157,7 @@ def create_new_item(name):
         
         ######### add item alternative
         if self.allow_alternative_item:
-            alt_item_code = frappe.db.sql(" SELECT alternative_item_code FROM `tabItem Alternative` WHERE item_code = %s ", (self.item_code), as_dict = True)
+            alt_item_code = frappe.db.sql(" SELECT alternative_item_code FROM `tabItem Alternative` WHERE item_code = %s AND custom_is_publish = 1", (self.item_code), as_dict = True)
             if alt_item_code and alt_item_code[0] and alt_item_code[0]['alternative_item_code']:
                 releated_products_list = []
                 for alt in alt_item_code:
@@ -201,7 +199,7 @@ def create_new_item(name):
                         }
                         product_options.append(option)
                         
-            
+            # frappe.throw(str(product_options))
             data["product"]["extension_attributes"]["configurable_product_options"] = product_options
             
             
@@ -213,7 +211,7 @@ def create_new_item(name):
                                             """, (self.name), as_dict=True)]
             data["product"]["extension_attributes"]["configurable_product_links"] = variant_item_ids
             
-        
+        # frappe.throw(str(data))
         response = requests.put(url, headers=headers, json=data)
         if response.status_code == 200:
             json_response = response.json()

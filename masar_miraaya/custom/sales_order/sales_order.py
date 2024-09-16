@@ -1,11 +1,12 @@
 import frappe
 import requests
-import pycountry
 from datetime import date
 from masar_miraaya.api import base_data
 from frappe import _
 from erpnext.selling.doctype.sales_order.sales_order  import make_sales_invoice 
 from frappe.utils import flt, cint
+
+
 def on_submit(self, method):
     # create_magento_sales_order(self)
     pass
@@ -20,13 +21,12 @@ def on_change(self, method):
         create_sales_invoice(self)
     
 
-
-
 def create_sales_invoice(self):
     doclist = make_sales_invoice(self.name, ignore_permissions=True)
     doclist.flags.ignore_mandatory = True
     doclist.insert(ignore_permissions = True)
-    doclist.submit()
+    # frappe.throw(str(doclist.as_dict()))
+    # doclist.submit()
     
 
 @frappe.whitelist()
