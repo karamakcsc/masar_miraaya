@@ -24,7 +24,7 @@ def create_new_item_group(self):
     try:
         base_url, headers = base_data("magento")
 
-        is_active = False if self.custom_disabled else True
+        is_active = self.custom_disabled
         # frappe.throw(str(is_active))
         brand_sql = frappe.db.sql(" SELECT name FROM tabBrand WHERE name = %s", (self.name.split(' - ', 1)[-1].strip()), as_dict=True)
         if int(self.custom_parent_item_group_id) == 404 or ( brand_sql and brand_sql[0] and brand_sql [0]['name']):
@@ -38,7 +38,7 @@ def create_new_item_group(self):
             "category": {
                 "parent_id": self.custom_parent_item_group_id,
                 "name": self.name.split(' - ', 1)[-1].strip(),
-                "is_active": is_active,
+                "is_active": bool(is_active),
                 "position": 1,
                 "include_in_menu": True
             }

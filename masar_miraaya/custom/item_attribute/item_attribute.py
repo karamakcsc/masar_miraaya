@@ -25,40 +25,42 @@ def create_attributes_in_magento(self):
             attribute_id = 158
         else:
             attribute_id = None
-        base_url, headers = base_data("magento")
+        base_url, headers = base_data("magento")        
         url = base_url + f"/rest/V1/products/attributes/{attribute_id}"
         
-        for row in self.item_attribute_values:
-            if row.is_new():
-                data = {
-                    "attribute": {
-                        "attribute_id":attribute_id,
-                        "attribute_code": self.custom_attribute_code,
-                        "frontend_input": "select",
-                        "entity_type_id": "4",
-                        "is_required": False,
-                        "options": [
-                            {
-                                "label": row.attribute_value,
-                                "value": row.abbr if row.abbr else row.attribute_value.lower()
-                            }
-                        ]
-                    }
-                }
-                
-                response = requests.put(url, headers=headers, json=data)
-                
-                if response.status_code == 200:
+        get_response = requests.get(url, headers=headers)
+        if response.status_code == 200:
                     json_response = response.json()
                     options = json_response['options']
                     for option in options:
-                        if option['label'] == row.attribute_value:
-                            value = option['value']
-                    row.abbr = value
-                    frappe.msgprint(f"Color '{row.attribute_value}' Created Successfully in Magento")
-                else:
-                    frappe.throw(f"Failed to Create Color in Magento: {str(response.text)}")
-                
+                        for row in self.item_attribute_values:
+                            if option['label'] != row.attribute_value:
+                                data = {
+                                    "attribute": {
+                                        "attribute_id":attribute_id,
+                                        "attribute_code": self.custom_attribute_code,
+                                        "frontend_input": "select",
+                                        "entity_type_id": "4",
+                                        "is_required": False,
+                                        "options": [
+                                            {
+                                                "label": row.attribute_value,
+                                                "value": row.abbr if row.abbr else row.attribute_value.lower()
+                                            }
+                                        ]
+                                    }
+                                }
+                                response = requests.put(url, headers=headers, json=data)
+                                if response.status_code == 200:
+                                    json_response = response.json()
+                                    options = json_response['options']
+                                    for option in options:
+                                        if option['label'] == row.attribute_value:
+                                            value = option['value']
+                                    row.abbr = value
+                                    frappe.msgprint(f"Attribute '{row.attribute_value}' Created Successfully in Magento")
+                                else:
+                                    frappe.throw(f"Failed to Create Attribute in Magento: {str(response.text)}")
     except Exception as e:
-        frappe.throw(f"Failed to create Color: {str(e)}")
+        frappe.throw(f"Failed to create Attribute: {str(e)}")
 
