@@ -360,7 +360,7 @@ fixtures = [
                 "Sales Order-custom_delivery_fees",
                 "Journal Entry-custom_sales_order",
                 "Item-custom_visibility",
-                "Item Group-custom_is_disabled",
+                "Item Group-custom_disabled",
                 "Customer-custom_lp_balance"
 
             ]
