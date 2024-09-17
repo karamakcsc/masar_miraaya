@@ -74,6 +74,7 @@ def update_item_group_name(self):
         is_active = True if not self.custom_disabled else False
         data = {
             "category": {
+                 "id": self.custom_item_group_id,
                 "parent_id": self.custom_parent_item_group_id,
                 "name": self.name.split(' - ', 1)[-1].strip(),
                 "is_active": is_active,
