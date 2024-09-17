@@ -660,6 +660,7 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                                 new_brand.brand = att_value
                                 new_brand.insert(ignore_permissions=True)
                                 frappe.db.set_value("Brand" ,new_brand.name , 'custom_publish_to_magento' , 1 )
+                                frappe.db.commit()
                                 brand = new_brand.name
                             new_item_.brand = brand
                         if att_code == "free_from" and att_value:

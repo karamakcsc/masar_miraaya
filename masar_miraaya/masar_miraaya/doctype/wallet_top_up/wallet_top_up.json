@@ -1,12 +1,13 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2024-09-17 10:36:22.811366",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_break_ly2m",
-  "series",
+  "naming_series",
   "customer",
   "customer_name",
   "amended_from",
@@ -44,12 +45,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "series",
-   "fieldtype": "Select",
-   "label": "Series",
-   "options": "WAl-Top-.YYYY.-"
-  },
-  {
    "fieldname": "column_break_rftt",
    "fieldtype": "Column Break"
   },
@@ -57,7 +52,8 @@
    "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Date",
-   "label": "Posting Date"
+   "label": "Posting Date",
+   "read_only": 1
   },
   {
    "fieldname": "customer",
@@ -73,6 +69,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "customer",
    "fieldname": "transaction_type",
    "fieldtype": "Select",
    "label": "Transaction Type",
@@ -83,17 +80,20 @@
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "eval: (doc.transaction_type == \"Gift Card\")",
    "fieldname": "gift_card_no",
    "fieldtype": "Data",
    "label": "Gift Card Number"
   },
   {
+   "depends_on": "eval: (doc.transaction_type == \"Compensation\")",
    "fieldname": "sales_order_no",
    "fieldtype": "Link",
    "label": "Sales Order Number",
    "options": "Sales Order"
   },
   {
+   "depends_on": "eval: (doc.transaction_type == \"Loyalty Program (LP)\")",
    "fetch_from": "customer.custom_lp_balance",
    "fieldname": "lp_balance",
    "fieldtype": "Float",
@@ -105,6 +105,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: (doc.transaction_type == \"Loyalty Program (LP)\")",
    "fieldname": "redeem_point",
    "fieldtype": "Float",
    "label": "Redeem Point"
@@ -120,12 +121,14 @@
    "label": "Top-up Amount"
   },
   {
+   "depends_on": "eval: (doc.transaction_type == \"Compensation\")",
    "fetch_from": "sales_order_no.grand_total",
    "fieldname": "so_amount",
    "fieldtype": "Data",
    "label": "Sales Order Amount"
   },
   {
+   "depends_on": "eval: (doc.transaction_type == \"Compensation\")",
    "fetch_from": "sales_order_no.status",
    "fieldname": "so_status",
    "fieldtype": "Data",
@@ -133,6 +136,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval: (doc.transaction_type == \"Compensation\")",
    "fetch_from": "sales_order_no.custom_magento_status",
    "fieldname": "magento_status",
    "fieldtype": "Data",
@@ -140,11 +144,13 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval: (doc.transaction_type == \"Compensation\")",
    "fieldname": "wallet_top_up_items_section",
    "fieldtype": "Section Break",
    "label": "Wallet Top up Items"
   },
   {
+   "depends_on": "eval: (doc.transaction_type == \"Compensation\")",
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Items",
@@ -152,20 +158,28 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval: (doc.transaction_type == \"Compensation\")",
    "fetch_from": "sales_order_no.custom_magento_id",
    "fieldname": "magento_id",
    "fieldtype": "Data",
    "label": "Magento ID",
    "read_only": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "WAl-Top-.YYYY.-"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-17 12:12:03.030241",
+ "modified": "2024-09-17 14:27:11.237087",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Wallet Top-up",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

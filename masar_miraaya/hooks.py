@@ -130,7 +130,8 @@ doc_events = {
 		"validate": "masar_miraaya.custom.item.item.validate"
 	},
 	"Item Group": {
-		"validate": "masar_miraaya.custom.item_group.item_group.validate"
+		"validate": "masar_miraaya.custom.item_group.item_group.validate",
+        "after_rename": "masar_miraaya.custom.item_group.item_group.after_rename"
 	},
 	"Customer": {
 		"validate": "masar_miraaya.custom.customer.customer.validate"
@@ -153,7 +154,7 @@ doc_events = {
         "on_trash" : "masar_miraaya.custom.file.file.on_trash"
     },
     "Item Attribute": {
-        "validate" : "masar_miraaya.custom.item_attribute.item_attribute.validate"
+        "before_save" : "masar_miraaya.custom.item_attribute.item_attribute.validate"
     },
     "Sales Invoice": {
         "on_submit": "masar_miraaya.custom.sales_invoice.sales_invoice.on_submit"
@@ -357,7 +358,9 @@ fixtures = [
                 "Item Alternative-custom_is_publish",
                 "Customer-custom_delivery_fees",
                 "Sales Order-custom_delivery_fees",
-                "Journal Entry-custom_sales_order"
+                "Journal Entry-custom_sales_order",
+                "Item-custom_visibility",
+                "Item Group-custom_is_disabled"
 
             ]
         ]

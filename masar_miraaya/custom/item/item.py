@@ -47,7 +47,7 @@ def create_new_item(self):
             'Not Visible Individually': 1,
             'Catalog': 2,
             'Search': 3,
-            'Catalog & Search': 4
+            'Catalog, Search': 4
         }.get(self.custom_visibility, 1)
 
         ean = None

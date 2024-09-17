@@ -1,6 +1,3 @@
-// Copyright (c) 2024, KCSC and contributors
-// For license information, please see license.txt
-
 frappe.ui.form.on('Wallet Top-up', {
     customer: function (frm) {
         update_sales_order_filter(frm);
@@ -40,9 +37,15 @@ frappe.ui.form.on('Wallet Top-up', {
                             child.amount = item.amount;
                         });
                         frm.refresh_field('items');
+                    } else {
+                        frm.clear_table('items');
+                        frm.refresh_field('items');
                     }
                 }
             });
+        } else {
+            frm.clear_table('items');
+            frm.refresh_field('items');
         }
     }
 });
@@ -58,12 +61,4 @@ function update_sales_order_filter(frm) {
             }
         };
     });
-}
-
-function toggle_series_field(frm) {
-    if (frm.doc.transaction_type === 'Gift Card') {
-        frm.toggle_display('series', false);
-    } else {
-        frm.toggle_display('series', true);
-    }
 }
