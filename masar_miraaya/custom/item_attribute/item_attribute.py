@@ -29,12 +29,12 @@ def create_attributes_in_magento(self):
         url = base_url + f"/rest/V1/products/attributes/{attribute_id}"
         
         get_response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-                    json_response = response.json()
+        if get_response.status_code == 200:
+                    json_response = get_response.json()
                     options = json_response['options']
-                    for option in options:
-                        for row in self.item_attribute_values:
-                            if option['label'] != row.attribute_value:
+                    for row in self.item_attribute_values:
+                        for option in options:
+                            if option['label'].lower() != row.attribute_value.lower():
                                 data = {
                                     "attribute": {
                                         "attribute_id":attribute_id,

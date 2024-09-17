@@ -71,13 +71,13 @@ def update_item_group_name(self):
     try:
         base_url, headers = base_data("magento")
         url = base_url + f"/rest/V1/categories/{self.custom_item_group_id}"
-        is_active = True if not self.custom_disabled else False
+        is_active = self.custom_disabled
         data = {
             "category": {
-                 "id": self.custom_item_group_id,
+                "id": self.custom_item_group_id,
                 "parent_id": self.custom_parent_item_group_id,
                 "name": self.name.split(' - ', 1)[-1].strip(),
-                "is_active": is_active,
+                "is_active": bool(is_active),
                 "position": 1,
                 "include_in_menu": True
             }
