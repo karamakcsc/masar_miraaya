@@ -49,8 +49,8 @@ def update_customer_address(self):
                         "city": self.city,
                         "firstname": self.custom_first_name,
                         "lastname": self.custom_last_name,
-                        "default_shipping": True if self.is_shipping_address else False,
-                        "default_billing": True if self.is_primary_address else False
+                        # "default_shipping": True if self.is_shipping_address else False, ## if send address send without default_shipping and default_billing
+                        # "default_billing": True if self.is_primary_address else False    ## to stop error
                     }
                 ]
             }
@@ -63,7 +63,7 @@ def update_customer_address(self):
             address = json_response['addresses'][0]
             address_id = address['id']
             self.custom_address_id = address_id
-            frappe.msgprint(f"Customer Address Updated Successfully in Magento: {str(response.text)}")
+            frappe.msgprint(f"Customer Address Updated Successfully in Magento", alert = True, indicator = 'green')
         else:
             frappe.throw(f"Failed to Update Customer Address in Magento: {str(response.text)}")
     except Exception as e:

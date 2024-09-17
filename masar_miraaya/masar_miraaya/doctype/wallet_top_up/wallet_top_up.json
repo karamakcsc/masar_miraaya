@@ -1,0 +1,188 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-09-17 10:36:22.811366",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_ly2m",
+  "series",
+  "customer",
+  "customer_name",
+  "amended_from",
+  "column_break_rftt",
+  "posting_date",
+  "transaction_type",
+  "section_break_fpqy",
+  "gift_card_no",
+  "lp_balance",
+  "sales_order_no",
+  "column_break_osgu",
+  "redeem_point",
+  "so_amount",
+  "so_status",
+  "magento_status",
+  "magento_id",
+  "wallet_top_up_items_section",
+  "items",
+  "section_break_tluh",
+  "topup_amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_ly2m",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Wallet Top-up",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "WAl-Top-.YYYY.-"
+  },
+  {
+   "fieldname": "column_break_rftt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fetch_from": "customer.customer_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transaction_type",
+   "fieldtype": "Select",
+   "label": "Transaction Type",
+   "options": "\nGift Card\nLoyalty Program (LP)\nCompensation\nAdjustment"
+  },
+  {
+   "fieldname": "section_break_fpqy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "gift_card_no",
+   "fieldtype": "Data",
+   "label": "Gift Card Number"
+  },
+  {
+   "fieldname": "sales_order_no",
+   "fieldtype": "Link",
+   "label": "Sales Order Number",
+   "options": "Sales Order"
+  },
+  {
+   "fetch_from": "customer.custom_lp_balance",
+   "fieldname": "lp_balance",
+   "fieldtype": "Float",
+   "label": "LP Balance",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_osgu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "redeem_point",
+   "fieldtype": "Float",
+   "label": "Redeem Point"
+  },
+  {
+   "fieldname": "section_break_tluh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "topup_amount",
+   "fieldtype": "Float",
+   "label": "Top-up Amount"
+  },
+  {
+   "fetch_from": "sales_order_no.grand_total",
+   "fieldname": "so_amount",
+   "fieldtype": "Data",
+   "label": "Sales Order Amount"
+  },
+  {
+   "fetch_from": "sales_order_no.status",
+   "fieldname": "so_status",
+   "fieldtype": "Data",
+   "label": "Sales Order Status",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "sales_order_no.custom_magento_status",
+   "fieldname": "magento_status",
+   "fieldtype": "Data",
+   "label": "Magento Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "wallet_top_up_items_section",
+   "fieldtype": "Section Break",
+   "label": "Wallet Top up Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Wallet Top-up Items",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "sales_order_no.custom_magento_id",
+   "fieldname": "magento_id",
+   "fieldtype": "Data",
+   "label": "Magento ID",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-09-17 12:12:03.030241",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Wallet Top-up",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

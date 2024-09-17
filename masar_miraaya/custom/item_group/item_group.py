@@ -43,7 +43,7 @@ def create_new_item_group(self):
                     "parentId": self.custom_parent_item_group_id,
                 }
                 response = requests.put(url, headers=headers, json=data)
-            frappe.msgprint("Category Created/Updated Successfully in Magento")
+            frappe.msgprint("Category Created/Updated Successfully in Magento", alert = True, indicator = 'green')
         else:
                 frappe.throw(f"Failed To Created/Updated Category in Magento: {str(response.text)}")
     except requests.exceptions.RequestException as e:

@@ -24,6 +24,12 @@ def create_new_customer(self):
             'Female': 2,
         }.get(self.gender, 0)
         
+        if not self.customer_group:
+            frappe.throw("Customer Group is Mandatory")
+        
+        
+        ### Send the address empty until fix in Magento 2 customer address or send it without default billing and default shipping
+        
         address_sql = frappe.db.sql(""" SELECT 
                                             ta.address_line1, ta.custom_address_id, ta.city, ta.country, ta.pincode,
                                             ta.custom_first_name, ta.custom_last_name, 
@@ -34,6 +40,8 @@ def create_new_customer(self):
                                     """, (self.name), as_dict=True)
         
         address_data = []
+        is_address_billing = 0
+        is_address_shipping = 0
         
         if address_sql:
             for address in address_sql:
@@ -53,15 +61,17 @@ def create_new_customer(self):
                     "city": address['city'],
                     "firstname": address['custom_first_name'],
                     "lastname": address['custom_last_name'],
-                    "default_shipping": True if is_address_shipping == 1 else False,
-                    "default_billing": True if is_address_billing == 1 else False
+                    # "default_shipping": True if is_address_shipping == 1 else False,
+                    # "default_billing": True if is_address_billing == 1 else False
                 })
+                
+                # frappe.throw(str(address_data))
         
         data = {
             "customer": {
                 "group_id": self.custom_customer_group_id,
-                "default_billing": str(address_id) if is_address_billing == 1 else "0",
-                "default_shipping": str(address_id) if is_address_shipping == 1 else "0",
+                # "default_billing": str(address_id) if is_address_billing == 1 else "0", ### automatically fill the default_billing, default_shipping ids
+                # "default_shipping": str(address_id) if is_address_shipping == 1 else "0",
                 "email": self.custom_email,
                 "firstname": self.custom_first_name,
                 "middlename": self.custom_middle_name,
@@ -91,7 +101,7 @@ def create_new_customer(self):
             # self.custom_address_id = address_id
             # self.custom_default_shipping_id = default_shipping
             # self.custom_default_billing_id = default_billing
-            frappe.msgprint(f"Customer Created/Updated Successfully in Magento: {str(response.text)}")
+            frappe.msgprint(f"Customer Created/Updated Successfully in Magento", alert = True, indicator = 'green')
         else:
             frappe.throw(f"Failed to Create/Update Customer in Magento: {str(response.text)}")
     except Exception as e:

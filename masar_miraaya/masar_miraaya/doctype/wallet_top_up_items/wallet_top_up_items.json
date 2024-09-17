@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-09-17 11:45:29.661501",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "wallet_top_up_items_section",
+  "item_code",
+  "rate",
+  "column_break_bpcv",
+  "qty",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "wallet_top_up_items_section",
+   "fieldtype": "Section Break",
+   "label": "Wallet Top up Items"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Read Only",
+   "label": "Item Code"
+  },
+  {
+   "fieldname": "column_break_bpcv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Read Only",
+   "label": "Quantity"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Read Only",
+   "label": "Amount"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Read Only",
+   "label": "Rate"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-09-17 11:54:09.837941",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Wallet Top-up Items",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
