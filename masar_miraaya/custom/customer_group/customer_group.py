@@ -30,9 +30,8 @@ def create_new_customer_group(self):
                 for group in json_response['items']:
                     if group['code'] == self.customer_group_name:
                         frappe.throw("The Customer Group Already Exists In Magento")
-                    else:
                 
-                        url = base_url + "/rest/V1/customerGroups"
+                url = base_url + "/rest/V1/customerGroups"
                             
                 data = {
                         "group": {
@@ -61,7 +60,6 @@ def update_customer_group(self):
             json_response = get_response.json()
             for group in json_response['items']:
                 if group['id'] == self.custom_customer_group_id and group['code'] != self.name:
-                    # frappe.throw(str(group['id'] + " " + group['code']))
                     base_url, headers = base_data("magento")
                     url = base_url + f"/rest/V1/customerGroups/{self.custom_customer_group_id}"
                     data = {
@@ -73,7 +71,6 @@ def update_customer_group(self):
                     response = requests.put(url, headers=headers, json=data)
                     if response.status_code == 200:
                         json_response = response.json()
-                        # frappe.throw(str(json_response))
                         customer_group_id = json_response['id']
                         self.custom_customer_group_id = customer_group_id
                         frappe.msgprint(f"Customer Group Updated Successfully in Magento" , alert=True , indicator='green')

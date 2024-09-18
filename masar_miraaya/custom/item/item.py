@@ -1,7 +1,5 @@
 import frappe
 import requests
-import base64
-import os
 from masar_miraaya.api import base_data
 
         
@@ -82,7 +80,8 @@ def create_new_item(self):
                 color_abbr = data['abbr']
             elif data['parent'].lower() == 'shade':
                 shade_abbr = data['abbr']
-                
+        
+        # frappe.throw(str(color_abbr))        
                 
                 
         
@@ -189,7 +188,7 @@ def create_new_item(self):
                     }.get(attribute_name)
                     
                     if attribute_id_map:
-                        values_sql = frappe.db.sql('SELECT abbr FROM `tabItem Attribute Value` WHERE LOWER(parent) = %s', (attribute_name.lower()), as_dict=True)
+                        values_sql = frappe.db.sql('SELECT abbr FROM `tabItem Attribute Value` WHERE LOWER(parent) = %s AND attribute_value != "Default"', (attribute_name.lower()), as_dict=True)
                         values = [{"value_index": int(value.abbr)} for value in values_sql]
                         
                         option = {
@@ -198,7 +197,7 @@ def create_new_item(self):
                             'values': values
                         }
                         product_options.append(option)
-                        
+                
             # frappe.throw(str(product_options))
             data["product"]["extension_attributes"]["configurable_product_options"] = product_options
             
@@ -211,102 +210,21 @@ def create_new_item(self):
                                             """, (self.name), as_dict=True)]
             data["product"]["extension_attributes"]["configurable_product_links"] = variant_item_ids
             
+            
+            # frappe.throw(str(variant_item_ids))
+            
         # frappe.throw(str(data))
         response = requests.put(url, headers=headers, json=data)
         if response.status_code == 200:
             json_response = response.json()
             self.custom_item_id = json_response['id']
-            return {'msg':(f"Item Created/Updated Successfully in Magento: {str(response.text)}"),
-                    'throw' : False}
+            frappe.msgprint(f"Item Created Successfully in Magento" , alert=True , indicator='green')
             
         else:
             frappe.throw(f"Failed to Create or Update Item in Magento: {str(response.text)}")
     
     except requests.RequestException as e:
         frappe.throw(f"Failed to Create or Update Item in Magento: {str(e)}")
-
-
-@frappe.whitelist()
-def add_image_to_item(self, file_path):
-    try:
-        image_path = file_path
-        if not image_path:
-            frappe.throw("Image path is empty. Please ensure the image is attached to the Item.")
-        if "files/" in image_path:
-            image = image_path.split("files/")[1]
-        else:
-            frappe.throw("Invalid image path format. 'files/' not found in the path.")
-        
-        bench_path = frappe.utils.get_bench_path()
-        site_name = frappe.utils.get_site_name(frappe.local.site)
-        file_path = os.path.join(bench_path, 'sites', site_name, 'public', 'files', image)
-
-        if not os.path.exists(file_path):
-            frappe.throw(f"File not found at {file_path}")
-        
-        with open(file_path, "rb") as image_file:
-            encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-
-        base_url, headers = base_data("magento")
-        data = {
-            "entry": {
-                "media_type": "image",
-                "label": "",
-                "position": 1,
-                "disabled": False,
-                "types": [
-                    "image",
-                    "small_image",
-                    "thumbnail",
-                    "swatch_image"
-                ],
-                "content": {
-                    "base64_encoded_data": encoded_image,
-                    "type": "image/jpeg",
-                    "name": image
-                }
-            }
-        }
-        url = base_url + f"/rest/V1/products/{self.item_code}/media"
-    
-        response = requests.post(url, headers=headers, json=data)
-        
-        if response.status_code == 200:
-            frappe.msgprint("Image Added to Item Successfully")
-        else:
-            frappe.throw(f"Error Image: {response.text}")
-    
-    except Exception as e:
-        frappe.throw(f"Failed to add image to product in Magento: {str(e)}")
-
-
-
-@frappe.whitelist()
-def get_magento_image_id(self, image_path):
-    try:
-        base_url, headers = base_data("magento")
-        
-        url = base_url + f"/rest/default/V1/products/{self.item_code}/media"
-        
-        response = requests.get(url, headers=headers)
-        
-        if response.status_code == 200:
-            image_data = response.json()
-        else:
-            frappe.throw(f"Error Deleting Image: {response.text}")
-        
-
-        for data in image_data:
-            magento_filename = data['file'].split('/')[-1]
-            if magento_filename == image_path:
-                entity_id = data['id']
-        if entity_id:
-            remove_image_from_magento(self, entity_id)    
-            
-            
-    except Exception as e:
-        return f"Error GET Magento image ID: {e}"
-
 
 @frappe.whitelist()
 def remove_image_from_magento(self, entity_id):

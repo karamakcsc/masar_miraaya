@@ -496,6 +496,7 @@ def process_item_attribute(attribute):
                             item_attribute.insert(ignore_permissions=True)
                             frappe.db.set_value("Item Attribute" ,item_attribute.name , 'custom_publish_to_magento' , 1 )
                             frappe.db.commit()
+                            
                         if attribute.get('default_value'):
                             existing_default_value = frappe.db.get_value('Item Attribute Value', {
                                     'parent': default_frontend_label,
@@ -538,6 +539,7 @@ def process_item_attribute(attribute):
                                     new_attribute_value.parentfield = 'item_attribute_values'
                                     new_attribute_value.parenttype = 'Item Attribute'
                                     new_attribute_value.insert(ignore_permissions=True)
+                        
     except Exception as e:
         return f"Error processing attribute {attribute.get('default_frontend_label', 'Unknown')}: {e}"
     

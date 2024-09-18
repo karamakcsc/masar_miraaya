@@ -18,8 +18,9 @@
   "gift_card_no",
   "lp_balance",
   "sales_order_no",
+  "adjustment_amount",
   "column_break_osgu",
-  "redeem_point",
+  "redeemed_point",
   "so_amount",
   "so_status",
   "magento_status",
@@ -58,8 +59,10 @@
   {
    "fieldname": "customer",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Customer",
-   "options": "Customer"
+   "options": "Customer",
+   "reqd": 1
   },
   {
    "fetch_from": "customer.customer_name",
@@ -73,6 +76,7 @@
    "fieldname": "transaction_type",
    "fieldtype": "Select",
    "label": "Transaction Type",
+   "mandatory_depends_on": "customer",
    "options": "\nGift Card\nLoyalty Program (LP)\nCompensation\nAdjustment"
   },
   {
@@ -83,13 +87,15 @@
    "depends_on": "eval: (doc.transaction_type == \"Gift Card\")",
    "fieldname": "gift_card_no",
    "fieldtype": "Data",
-   "label": "Gift Card Number"
+   "label": "Gift Card Number",
+   "mandatory_depends_on": "eval: (doc.transaction_type == \"Gift Card\")"
   },
   {
    "depends_on": "eval: (doc.transaction_type == \"Compensation\")",
    "fieldname": "sales_order_no",
    "fieldtype": "Link",
    "label": "Sales Order Number",
+   "mandatory_depends_on": "eval: (doc.transaction_type == \"Compensation\")",
    "options": "Sales Order"
   },
   {
@@ -103,12 +109,6 @@
   {
    "fieldname": "column_break_osgu",
    "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: (doc.transaction_type == \"Loyalty Program (LP)\")",
-   "fieldname": "redeem_point",
-   "fieldtype": "Float",
-   "label": "Redeem Point"
   },
   {
    "fieldname": "section_break_tluh",
@@ -125,7 +125,8 @@
    "fetch_from": "sales_order_no.grand_total",
    "fieldname": "so_amount",
    "fieldtype": "Data",
-   "label": "Sales Order Amount"
+   "label": "Sales Order Amount",
+   "read_only": 1
   },
   {
    "depends_on": "eval: (doc.transaction_type == \"Compensation\")",
@@ -147,6 +148,7 @@
    "depends_on": "eval: (doc.transaction_type == \"Compensation\")",
    "fieldname": "wallet_top_up_items_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Wallet Top up Items"
   },
   {
@@ -170,12 +172,26 @@
    "fieldtype": "Select",
    "label": "Series",
    "options": "WAl-Top-.YYYY.-"
+  },
+  {
+   "depends_on": "eval: (doc.transaction_type == \"Loyalty Program (LP)\")",
+   "fieldname": "redeemed_point",
+   "fieldtype": "Float",
+   "label": "Redeemed Point",
+   "mandatory_depends_on": "eval: (doc.transaction_type == \"Loyalty Program (LP)\")"
+  },
+  {
+   "depends_on": "eval: (doc.transaction_type == \"Adjustment\")",
+   "fieldname": "adjustment_amount",
+   "fieldtype": "Float",
+   "label": "Adjustment Amount",
+   "mandatory_depends_on": "eval: (doc.transaction_type == \"Adjustment\")"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-17 14:27:11.237087",
+ "modified": "2024-09-17 19:38:28.256471",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Wallet Top-up",

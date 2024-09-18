@@ -3,6 +3,7 @@
 
 frappe.ui.form.on("Magento Sync", {
 	brand:function(frm) {
+    if (frm.doc.sync ===1 ){
         frappe.call({
             method: 'masar_miraaya.api.get_magento_brand',
             freeze: true,
@@ -15,9 +16,10 @@ frappe.ui.form.on("Magento Sync", {
             message: __('Sync has started in the background.'),
             indicator: 'green',
         });
-
+    }
 	},
     customer: function(frm){
+        if (frm.doc.sync ===1 ){
         frappe.call({
             method: 'masar_miraaya.api.get_magento_customers',
             freeze: true,
@@ -30,8 +32,10 @@ frappe.ui.form.on("Magento Sync", {
             message: __('Sync has started in the background.'),
             indicator: 'green',
         });
+    }
     },
     customer_group: function(frm){
+        if (frm.doc.sync ===1 ){
         frappe.call({
             method: 'masar_miraaya.api.get_customer_group',
             freeze: true,
@@ -44,8 +48,10 @@ frappe.ui.form.on("Magento Sync", {
             message: __('Sync has started in the background.'),
             indicator: 'green',
         });
+    }
     },
     item:function(frm){
+        if (frm.doc.sync ===1 ){
         frappe.call({
             method: 'masar_miraaya.api.sync_magento_products',
             freeze: true,
@@ -58,8 +64,10 @@ frappe.ui.form.on("Magento Sync", {
             message: __('Sync has started in the background.'),
             indicator: 'green',
         });
+    }
     },
     item_attributes:function(frm){
+        if (frm.doc.sync ===1 ){
         frappe.call({
             method: 'masar_miraaya.api.get_magento_item_attributes',
             freeze: true,
@@ -72,8 +80,10 @@ frappe.ui.form.on("Magento Sync", {
             message: __('Sync has started in the background.'),
             indicator: 'green',
         });
+    }
     },
     item_group:function(frm){
+        if (frm.doc.sync ===1 ){
         frappe.call({
             method: 'masar_miraaya.api.create_item_group',
             freeze: true,
@@ -86,5 +96,6 @@ frappe.ui.form.on("Magento Sync", {
             message: __('Sync has started in the background.'),
             indicator: 'green',
         });
+    }
     }
 });

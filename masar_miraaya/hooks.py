@@ -124,14 +124,15 @@ app_license = "mit"
 
 doc_events = {
     "Brand": {
-        "validate" : "masar_miraaya.custom.brand.brand.validate"
+        "validate" : "masar_miraaya.custom.brand.brand.validate", 
+        "before_rename": "masar_miraaya.custom.brand.brand.before_rename"
     },
 	"Item": {
 		"validate": "masar_miraaya.custom.item.item.validate"
 	},
 	"Item Group": {
 		"validate": "masar_miraaya.custom.item_group.item_group.validate",
-        "after_rename": "masar_miraaya.custom.item_group.item_group.after_rename"
+        "before_rename": "masar_miraaya.custom.item_group.item_group.before_rename"
 	},
 	"Customer": {
 		"validate": "masar_miraaya.custom.customer.customer.validate"
@@ -154,7 +155,7 @@ doc_events = {
         "on_trash" : "masar_miraaya.custom.file.file.on_trash"
     },
     "Item Attribute": {
-        "before_save" : "masar_miraaya.custom.item_attribute.item_attribute.validate"
+        "validate" : "masar_miraaya.custom.item_attribute.item_attribute.validate"
     },
     "Sales Invoice": {
         "on_submit": "masar_miraaya.custom.sales_invoice.sales_invoice.on_submit"
@@ -170,7 +171,8 @@ doc_events = {
 doctype_js = {
    "Sales Order": "custom/sales_order/sales_order.js",
    "Company": "custom/company/company.js",
-   "Item Alternative": "custom/item_alternative/item_alternative.js"
+   "Item Alternative": "custom/item_alternative/item_alternative.js",
+   "Item Group": "custom/item_group/item_group.js"
 
 }
 # Scheduled Tasks
@@ -361,7 +363,17 @@ fixtures = [
                 "Journal Entry-custom_sales_order",
                 "Item-custom_visibility",
                 "Item Group-custom_disabled",
-                "Customer-custom_lp_balance"
+                "Customer-custom_lp_balance",
+                "Company-custom_ecommerce_accounts",
+                "Company-custom_gift_card_expense_account",
+                "Company-custom_column_break_b728l",
+                "Company-custom_gift_card_deferred_account",
+                "Company-custom_lp_expense_account",
+                "Company-custom_compensation_expense_account",
+                "Company-custom_adjustment_expense_account",
+                "Company-custom_lp_deferred_account",
+                "Company-custom_compensation_deferred_account",
+                "Company-custom_adjustment_deferred_account"
 
             ]
         ]

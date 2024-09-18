@@ -1,51 +1,39 @@
 import frappe
-import json
-import requests
-from masar_miraaya.api import base_data
-
-
-
 def validate(self , method):
-    if self.custom_publish_to_magento:
         magento = frappe.get_doc('Magento Sync')
         if magento.sync == 0 :
             create_new_brand(self)
         else: 
             frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
-        
 
+def before_rename(self , method , old, new, merge ):
+    rename_item_group(self , method , old, new, merge)
 @frappe.whitelist()    
 def create_new_brand(self):
-    try:
-        new_item_group = frappe.new_doc("Item Group")
-        new_item_group.item_group_name = self.name
-        new_item_group.parent_item_group = '404 - Brands'
-        new_item_group.save(ignore_permissions = True)
-        
-        base_url, headers = base_data("magento")
-        url = base_url + f"/rest/V1/categories/0"        
-        
-        data = {
-            "category": {
-                "parent_id": 404,
-                "name": self.name.split(' - ', 1)[-1].strip(),
-                "is_active": True,
-                "position": 1,
-                "include_in_menu": True
-            }
-        }
-            
-        response = requests.put(url, headers=headers, json=data)
-        if response.status_code == 200:
-            json_response = response.json()
-            group_id = json_response['id']
-            new_item_group.custom_item_group_id = group_id
+    # try:
+        item_group = frappe.db.sql("SELECT name FROM `tabItem Group` WHERE custom_item_group_id = '404'" , as_dict = True)
+        if len(item_group) == 0 :
+            frappe.throw(f"There is No Item Group Brands Where the Item Group ID Must be 404"
+                    )
+            return 0 
+        exist_item_group_sql = frappe.db.sql("SELECT name , custom_is_publish  FROM `tabItem Group` WHERE name = %s " , (self.name) , as_dict = True)
+        print(exist_item_group_sql)
+        if len(exist_item_group_sql) == 0 :
+            new_item_group = frappe.new_doc("Item Group")
+            new_item_group.item_group_name = self.name
+            new_item_group.parent_item_group = item_group[0]['name']
+            new_item_group.custom_is_publish = self.custom_publish_to_magento
             new_item_group.save(ignore_permissions = True)
-            frappe.db.set_value("Item Group" ,new_item_group.name , 'custom_is_publish' , 1 )
-            frappe.db.commit()
-            frappe.msgprint("Brand Created Successfully in Magento", alert = True, indicator = 'green')
         else:
-            frappe.throw(f"Failed to Create Brand in Magento: {str(response.text)}")
-                
-    except Exception as e:
-        frappe.throw(f"Failed to create Brand: {str(e)}")
+            is_publish = exist_item_group_sql[0]['name']
+            if is_publish:
+                item_group_doc = frappe.get_doc('Item Group' , exist_item_group_sql[0]['name'])
+                item_group_doc.custom_is_publish = self.custom_publish_to_magento
+                item_group_doc.save(ignore_permissions = True)
+        frappe.msgprint(f"Create Brand in Brands Item Group." , alert=True , indicator=True)       
+    # except Exception as e:
+    #     frappe.throw(f"Failed to create Brand: {str(e)}")
+
+def rename_item_group(self , method , old, new, merge ):
+    frappe.rename_doc('Item Group' , old , new)
+    
