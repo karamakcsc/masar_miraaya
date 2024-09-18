@@ -10,6 +10,11 @@ def validate(self , method):
             update_magento_price(self)
         else: 
             frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
+        if self.price_list:
+            price_list_doc=frappe.get_doc('Price List',self.price_list)
+            if not price_list_doc.custom_magento_selling:
+                frappe.throw("Failed to Update Product Price in Magento Because The Price List Used Isn't the Magento Default ")
+
         
 @frappe.whitelist()    
 def update_magento_price(self):
@@ -18,9 +23,9 @@ def update_magento_price(self):
         if not item_doc.custom_is_publish:
             frappe.throw("The Item Must be Publish to Magento")
             
-        price_list_doc = frappe.get_doc("Price List", self.price_list)
-        if not price_list_doc.custom_is_publish:
-            frappe.throw("The Price List Must be Publish to Magento")
+        # price_list_doc = frappe.get_doc("Price List", self.price_list)
+        # if not price_list_doc.custom_magento_selling:
+        #     frappe.throw("The Price List Must be Publish to Magento")
         
         base_url, headers = base_data("magento")
         url = base_url + "/rest/V1/products/base-prices"
@@ -43,3 +48,4 @@ def update_magento_price(self):
                 
     except Exception as e:
         frappe.throw(f"Failed to Update Item Price: {str(e)}")
+

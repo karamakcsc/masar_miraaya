@@ -128,7 +128,8 @@ doc_events = {
         "before_rename": "masar_miraaya.custom.brand.brand.before_rename"
     },
 	"Item": {
-		"validate": "masar_miraaya.custom.item.item.validate"
+		"validate": "masar_miraaya.custom.item.item.validate",
+        "on_update": "masar_miraaya.custom.item.item.on_update"
 	},
 	"Item Group": {
 		"validate": "masar_miraaya.custom.item_group.item_group.validate",
@@ -165,6 +166,9 @@ doc_events = {
     },
     "Address": {
         "validate": "masar_miraaya.custom.address.address.validate"
+    },
+    "Item Alternative": {
+        "validate": "masar_miraaya.custom.item_alternative.item_alternative.validate"
     }
 }
 
@@ -308,7 +312,6 @@ fixtures = [
                 "Item-custom_country_of_manufacture",
                 "Item-custom_free_from",
                 "Item-custom_key_features",
-                "Item-custom_magento_item_type",
                 "Item Attribute-custom_column_break_7kpvy",
                 "Item Attribute-custom_attribute_code",
                 "Customer-custom_website_id",
@@ -356,7 +359,6 @@ fixtures = [
                 "Item Attribute-custom_publish_to_magento",
                 "Customer-custom_prefix",
                 "Customer-custom_suffix",
-                "Price List-custom_is_publish",
                 "Item Alternative-custom_is_publish",
                 "Customer-custom_delivery_fees",
                 "Sales Order-custom_delivery_fees",

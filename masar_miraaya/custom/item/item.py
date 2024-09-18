@@ -4,14 +4,23 @@ from masar_miraaya.api import base_data
 
         
 def validate(self, method):
-    if self.custom_is_publish:
+    if self.custom_is_publish and not self.variant_of:
         magento = frappe.get_doc('Magento Sync')
         if magento.sync == 0 :
             create_new_item(self)
         else: 
             frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
     
+
+def on_update(self, method):
+    if self.custom_is_publish and self.variant_of:
+        magento = frappe.get_doc('Magento Sync')
+        if magento.sync == 0 :
+            create_new_item(self)
+        else: 
+            frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
     
+
 @frappe.whitelist()
 def get_values(item_code):
     warehouse = frappe.db.get_value(
@@ -39,14 +48,14 @@ def create_new_item(self):
         base_url, headers = base_data("magento")
         url = f"{base_url}/rest/V1/products/{self.item_code}"
 
-        is_active = 1 if self.disabled == 0 else 0
+        is_active = 1 if self.disabled else 2
         
         visibility = {
             'Not Visible Individually': 1,
             'Catalog': 2,
             'Search': 3,
             'Catalog, Search': 4
-        }.get(self.custom_visibility, 1)
+        }.get(self.custom_visibility, 4)
 
         ean = None
         if self.barcodes:
@@ -66,7 +75,7 @@ def create_new_item(self):
                                             INNER JOIN `tabItem Variant Attribute` tiva ON tiav.attribute_value = tiva.attribute_value 
                                             INNER JOIN `tabItem` ti ON ti.name = tiva.parent 
                                             WHERE ti.name = %s and tiva.attribute = tiav.parent
-                                         """, (self.name), as_dict = True)
+                                         """, (self.item_code), as_dict = True)
         size_abbr = 0
         size_ml_abbr = 0
         color_abbr = 0
@@ -85,7 +94,7 @@ def create_new_item(self):
                 
                 
         
-        product_type = "configurable" if self.has_variants else self.custom_magento_item_type.lower()
+        product_type = "configurable" if self.has_variants else "simple"
 
         
         ######### base data payload
@@ -97,7 +106,7 @@ def create_new_item(self):
                 "status": is_active,
                 "visibility": visibility,
                 "type_id": product_type,
-                "attribute_set_id": 4,
+                "attribute_set_id": 16,
                 "extension_attributes": {
                     "website_ids": [1],
                     "category_links": category_links
@@ -152,28 +161,8 @@ def create_new_item(self):
         ######### add custom attributes to payload
         if custom_attributes:    
             data["product"]["custom_attributes"] = custom_attributes
+                        
         
-        
-        ######### add item alternative
-        if self.allow_alternative_item:
-            alt_item_code = frappe.db.sql(" SELECT alternative_item_code FROM `tabItem Alternative` WHERE item_code = %s AND custom_is_publish = 1", (self.item_code), as_dict = True)
-            if alt_item_code and alt_item_code[0] and alt_item_code[0]['alternative_item_code']:
-                releated_products_list = []
-                for alt in alt_item_code:
-                    if alt.get('alternative_item_code'):
-                        releated_products_list.append({
-                            "sku": self.item_code,
-                            "link_type": "related",
-                            "linked_product_sku": alt['alternative_item_code'],
-                            "linked_product_type": "simple",
-                            "position": 0,
-                        })
-                
-                if releated_products_list:    
-                    data["product"]["product_links"] = releated_products_list
-                    
-                    # frappe.throw(str(data))
-                
         ######### if item is template
         if self.has_variants:
             product_options = []
@@ -217,7 +206,11 @@ def create_new_item(self):
         response = requests.put(url, headers=headers, json=data)
         if response.status_code == 200:
             json_response = response.json()
-            self.custom_item_id = json_response['id']
+            frappe.db.set_value('Item', json_response['sku'], 'custom_item_id', json_response['id'])
+            frappe.db.commit
+            # if self.variant_of:
+            #     template_doc = frappe.get_doc("Item", self.variant_of)
+            #     template_doc.save(ignore_permissions=True)
             frappe.msgprint(f"Item Created Successfully in Magento" , alert=True , indicator='green')
             
         else:
