@@ -4,6 +4,7 @@ frappe.ui.form.on('Wallet Top-up', {
     },
 
     onload: function (frm) {
+        setQueryFilters(frm);
         if (frm.doc.customer) {
             update_sales_order_filter(frm);
         }
@@ -12,8 +13,11 @@ frappe.ui.form.on('Wallet Top-up', {
     validate: function (frm) {
         update_sales_order_filter(frm);
     },
-
+    refresh:function(frm){
+        setQueryFilters(frm);
+    },
     setup: function (frm) {
+        setQueryFilters(frm);
         update_sales_order_filter(frm);
     },
 
@@ -61,4 +65,37 @@ function update_sales_order_filter(frm) {
             }
         };
     });
+}
+
+
+function setQueryFilters(frm) {
+    frm.fields_dict['digital_wallet'].get_query = function(frm) {
+        return {
+            filters: {
+                "custom_is_digital_wallet": 1,
+                "is_frozen": 0,
+                "disabled": 0
+            }
+        };
+    };
+    
+    frm.fields_dict['wallet_adjustment_account'].get_query = function(frm) {
+        return {
+            filters: {
+                "is_group": 0
+            }
+        };
+    };
+    
+    frm.fields_dict['customer'].get_query = function(frm) {
+        return {
+            filters: {
+                "custom_is_digital_wallet": 0,
+                "custom_is_payment_channel": 0,
+                "custom_is_delivery": 0,
+                "is_frozen": 0,
+                "disabled": 0
+            }
+        };
+    };
 }

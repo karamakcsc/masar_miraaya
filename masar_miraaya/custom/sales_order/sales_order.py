@@ -14,6 +14,7 @@ def on_submit(self, method):
 
 def validate(self, method):
     calculate_amount(self)
+    validation_payment_channel(self)
     
 def on_change(self, method):
     create_journal_entry(self)
@@ -22,6 +23,7 @@ def on_change(self, method):
     
 def on_cancel(self , method):
     cancel_linked_jv(self)
+    
 def create_sales_invoice(self):
     doclist = make_sales_invoice(self.name, ignore_permissions=True)
     doclist.flags.ignore_mandatory = True
@@ -30,6 +32,19 @@ def create_sales_invoice(self):
     # doclist.submit()
     
 
+def validation_payment_channel(self):
+    p_amount = 0 
+    item_amount =0 
+    for payment in self.custom_payment_channels:
+        p_amount += payment.amount
+    for item in self.items:
+        item_amount += item.amount
+    if item_amount != p_amount:
+        frappe.throw(
+            'The total amount for the item must match the total amount for the payment channels.'
+            , title = _("Validation Error")
+        )
+        
 @frappe.whitelist()
 def create_magento_sales_order(self):
     base_url, headers = base_data("magento")
@@ -153,7 +168,7 @@ def calculate_amount(self):
 @frappe.whitelist()
 def create_journal_entry(self):
     if self.custom_magento_status == 'On the Way' and self.docstatus == 1:
-        linked_jv_sql = frappe.db.sql("SELECT name FROM `tabJournal Entry` WHERE custom_sales_order = %s" , (self.name) , as_dict= True)
+        linked_jv_sql = frappe.db.sql("SELECT name FROM `tabJournal Entry` WHERE custom_reference_doctype = %s" , (self.name) , as_dict= True)
         if (linked_jv_sql and linked_jv_sql[0] and linked_jv_sql[0]['name']):
             frappe.msgprint(f"Journal Entry alerady Created for this Sales Order" ,alert=True , indicator='blue')
             return
@@ -166,21 +181,31 @@ def create_journal_entry(self):
                 frappe.throw(f"Set Debit Account in Company in Default Cost of Delivery." , title=_("Missing Debit Account"))
                 return
             debit_account = debit_account_query[0]['custom_cost_of_delivery']
-            account = frappe.db.sql("""SELECT tpa.account AS `customer_account`, tpa2.account AS `customer_group_account`, tc2.custom_receivable_payment_channel AS `company_account` 
-                                        FROM tabCustomer tc 
-                                        INNER JOIN `tabParty Account` tpa ON tpa.parent = tc.name 
-                                        LEFT JOIN `tabCustomer Group` tcg ON tcg.name = tc.customer_group 
-                                        LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tcg.name 
-                                        LEFT JOIN tabCompany tc2 ON tpa2.company = tc2.name
-                                        WHERE tc.name = %s AND tc.custom_is_delivery = 1""", (self.custom_delivery_company), as_dict = True)
+            if not self.custom_delivery_company:
+                frappe.throw(f"Set Delivery Company." , title=_("Missing Delivery Company"))
+                return
+            account = frappe.db.sql("""SELECT 
+                                    tpa.account AS `customer_account`, 
+                                    tpa2.account AS `customer_group_account`, 
+                                    tc2.custom_receivable_payment_channel AS `company_account` 
+                                FROM tabCustomer tc 
+                                INNER JOIN 
+                                    `tabParty Account` tpa ON tpa.parent = tc.name 
+                                LEFT JOIN 
+                                    `tabCustomer Group` tcg ON tcg.name = tc.customer_group 
+                                LEFT JOIN 
+                                    `tabParty Account` tpa2 ON tpa2.parent = tcg.name 
+                                        
+                                LEFT JOIN 
+                                    tabCompany tc2 ON tpa2.company = tc2.name
+                                        
+                                WHERE 
+                                    tc.name = %s AND tc.custom_is_delivery = 1""", (self.custom_delivery_company), as_dict = True)
             if len(account) != 0:
                 if account and account[0]:
-                    if account[0]['customer_account']:
-                        credit_account = account[0]['customer_account']
-                    elif account[0]['customer_group_account']:
-                        credit_account = account[0]['customer_group_account']
-                    elif account[0]['company_account']:
-                        credit_account = account[0]['company_account']
+                        credit_account = (account[0]['customer_account'] or 
+                          account[0]['customer_group_account'] or 
+                          account[0]['company_account'])
             else:
                 frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")  
                 
@@ -193,7 +218,8 @@ def create_journal_entry(self):
             jv = frappe.new_doc("Journal Entry")
             jv.posting_date = self.transaction_date
             jv.company = self.company
-            jv.custom_sales_order =  self.name
+            jv.custom_reference_document = self.doctype
+            jv.custom_reference_doctype = self.name
             debit_accounts = {
                 "account": debit_account,
                 "debit_in_account_currency": float(delivery_fees),
@@ -208,24 +234,37 @@ def create_journal_entry(self):
                 "party_type": "Customer",
                 "party": self.custom_delivery_company,
                 "cost_center": cost_center,
-                # "cheque_no": "Sales Order",
-                
-                # "reference_due_date": self.transaction_date,
-                # "user_remark": f"{self.name} - {row.channel_name}"
             }
             jv.append("accounts", debit_accounts)
             jv.append("accounts", credit_accounts)
-
-
-            
-            # frappe.throw(str(debit_accounts))
             jv.save(ignore_permissions=True)
             jv.submit()
             frappe.msgprint(f"Journal Entry has been Created Successfully." ,alert=True , indicator='green')
+    # else:
+    #     frappe.msgprint(f'Journal Entry already Created.' , alert=True , indicator='blue')
+    if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
+        exist_sales = frappe.db.sql("""
+                            SELECT 
+                                tsii.sales_order FROM `tabSales Invoice` tsi
+                                INNER JOIN `tabSales Invoice Item` tsii 
+                                ON tsi.name = tsii.parent 
+                                WHERE tsii.sales_order = %s AND tsi.docstatus = 1 
+        """ ,(self.name) ,as_dict = True)
+        if len(exist_sales) == 0:
+            from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice
+            doc = make_sales_invoice(self.name)
+            doc.update_stock =1 
+            if doc.items : 
+                doc.save()
+                doc.submit()
+        else:
+            frappe.msgprint('Sales Invoice alerady Created.' , alert = True , indicator = 'blue')
+
+        
            
 
 def cancel_linked_jv(self):
-    linked_jv_sql = frappe.db.sql("SELECT name FROM `tabJournal Entry` WHERE custom_sales_order = %s" , (self.name) , as_dict= True)
+    linked_jv_sql = frappe.db.sql("SELECT name FROM `tabJournal Entry` WHERE custom_reference_doctype = %s" , (self.name) , as_dict= True)
     msg_linked = list()
     if len(linked_jv_sql) != 0 :
         for linked_jv in linked_jv_sql:

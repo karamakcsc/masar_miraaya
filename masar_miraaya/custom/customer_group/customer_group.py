@@ -1,8 +1,10 @@
 import frappe
 import requests
 from masar_miraaya.api import base_data
+from frappe import _ 
 
 def validate(self, method):
+    checks_validate(self)
     if self.custom_is_publish:
         magento = frappe.get_doc('Magento Sync')
         if magento.sync == 0 :
@@ -78,3 +80,8 @@ def update_customer_group(self):
                         frappe.throw(f"Failed To Updated Customer Group in Magento: {str(response.text)}")
     except Exception as e:
         frappe.throw(f"Failed to rename customer group: {str(e)}")
+        
+        
+def checks_validate(self):
+    if (self.custom_is_delivery + self.custom_is_payment_channel + self.custom_is_digital_wallet) > 1 :
+        frappe.throw("Please select only one option: Delivery, Payment Channel, or Digital Wallet." , title= _("Validation Error"))

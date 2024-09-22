@@ -565,7 +565,7 @@ def create_templete_items(all_simple,all_configurable_links,  all_configurable, 
         add_attributes(new_templete.name, configurable['extension_attributes'].get('configurable_product_options', []))
         add_default_variant_attributes(new_templete.name)
         set_custom_attributes(new_templete.name, configurable.get('custom_attributes', []))
-        upload_media(configurable.get('media_gallery_entries', []), templete_code)
+        # upload_media(configurable.get('media_gallery_entries', []), templete_code)
     get_magento_products_in_enqueue(all_simple, all_configurable_links , altenative_items)
     
 def get_magento_products_in_enqueue(all_simple , all_configurable_links, altenative_items):
@@ -678,7 +678,11 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                         if att_code == "product_description" and att_value:
                             frappe.db.set_value('Item', new_item_.name, 'description', att_value)
                         if att_code == "country_of_manufacture" and att_value:
-                            frappe.db.set_value('Item', new_item_.name, 'custom_country_of_manufacture', att_value)
+                            country_id_sql = frappe.db.sql("SELECT name FROM tabCountry WHERE code = %s" , (att_value.lower()) , as_dict = True)
+                            if country_id_sql and country_id_sql[0] and country_id_sql[0]['name']:
+                                country = country_id_sql[0]['name']
+                            
+                            frappe.db.set_value('Item', new_item_.name, 'custom_country_of_manufacture', country)
 
                         #Handling item attributes for variants
                         if att_code in ['color', 'size_ml', 'shade', 'size']:
@@ -732,20 +736,20 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                                         frappe.db.commit()
 
                     # Process images
-                    try:
+                    # try:
 
-                        for media in item['media_gallery_entries']:
-                            if media['media_type'] == "image":
-                                base_image = 1 if media['types'] else 0
-                                url_file = upload_image_to_item(
-                                    file=media['file'], 
-                                    item_code=item_code,
-                                    base_image=base_image
-                                )
-                                if url_file:
-                                    frappe.db.set_value('Item', new_item_.name, 'image', url_file)
-                    except Exception as ex:
-                        return f"Error While uploading Images to item: {str(ex)}"
+                    #     for media in item['media_gallery_entries']:
+                    #         if media['media_type'] == "image":
+                    #             base_image = 1 if media['types'] else 0
+                    #             url_file = upload_image_to_item(
+                    #                 file=media['file'], 
+                    #                 item_code=item_code,
+                    #                 base_image=base_image
+                    #             )
+                    #             if url_file:
+                    #                 frappe.db.set_value('Item', new_item_.name, 'image', url_file)
+                    # except Exception as ex:
+                    #     return f"Error While uploading Images to item: {str(ex)}"
                     
                     insert_item_price(
                             item_code=new_item_.name ,
@@ -883,7 +887,6 @@ def get_magento_customers():
         return "Customers Created Successfully"
     except Exception as e:
         return f"Error get customers: {e}"
-
     
 @frappe.whitelist()
 def get_customer_group():
@@ -961,8 +964,6 @@ def get_customer_group_name(id):
                 new_tax_group.save(ignore_permissions=True)
         return new_group.name
     
-    
-    
 def create_customer_address(adresses , customer_email):
                 for address in adresses:
                     address_id = address['id']
@@ -1003,4 +1004,3 @@ def create_customer_address(adresses , customer_email):
                                 'link_name': customer
                             })
                     address_doc.save(ignore_permissions = True)
-                    

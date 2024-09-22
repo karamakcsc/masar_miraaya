@@ -75,11 +75,11 @@ def update_item_group_in_magento(self):
             update_in_magento = True
         else:
            new_name =  self.name.split(' - ', 1)[-1].strip() 
-        if bool(json_response['is_active']) != (not bool(self.custom_disabled)) :
-            new_is_active =  bool(self.custom_disabled)
+        if bool(json_response['is_active']) != (not  bool(  self.custom_disabled)) :
+            new_is_active = not  bool( self.custom_disabled)
             update_in_magento = True
         else:
-            new_is_active =  bool(self.custom_disabled)
+            new_is_active = not  bool(  self.custom_disabled)
         if json_response['parent_id'] != self.custom_parent_item_group_id:
                 url_to_update = base_url + f"/rest/V1/categories/{self.custom_item_group_id}/move"
                 data = {
@@ -89,17 +89,16 @@ def update_item_group_in_magento(self):
                 if response.status_code == 200:
                     frappe.msgprint('Perant Item Group Updated Successflly.' , alert=True , indicator='green')
         if update_in_magento:
-            url = base_url + f"/rest/V1/categories/{self.custom_item_group_id}"
+            url = base_url + f"/rest/all/V1/categories/{self.custom_item_group_id}"
             data ={ 
                    "category": {
                     "parent_id": self.custom_parent_item_group_id,
                     "name":new_name,
-                    "is_active": False, ###############################################33
+                    "is_active": new_is_active, ###############################################33
                     "position": 1,
                     "include_in_menu": True
                 }
             }
-            print(data)
             response_update = requests.put(url, headers=headers, json=data)
             if response_update.status_code == 200:
                     json_response = response_update.json()
@@ -110,8 +109,8 @@ def update_item_group_in_magento(self):
         frappe.msgprint('Magento was updated successfully.' , alert=True , indicator='green')
 def remane_in_magento(self, method, old, new, merge):
         base_url, headers = base_data("magento")
-        url = base_url + f"/rest/V1/categories/{self.custom_item_group_id}"
-        check_response = requests.get(url, headers=headers , payload = {})
+        url = base_url + f"/rest/all/V1/categories/{self.custom_item_group_id}"
+        check_response = requests.get(url, headers=headers)
         if check_response.status_code == 200:
             json_response = check_response.json()
         else:
@@ -123,7 +122,7 @@ def remane_in_magento(self, method, old, new, merge):
                    "category": {
                     "parent_id": self.custom_parent_item_group_id,
                     "name":new_name,
-                    "is_active": bool(self.custom_disabled),
+                    "is_active": bool( not self.custom_disabled),
                     "position": 1,
                     "include_in_menu": True
                 }

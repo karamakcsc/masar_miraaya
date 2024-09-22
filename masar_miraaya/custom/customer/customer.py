@@ -2,11 +2,9 @@ import frappe
 import json
 import requests
 from masar_miraaya.api import base_data
-
+from frappe import _
 def validate(self, method):
-    if self.custom_is_delivery and self.custom_is_payment_channel:
-        frappe.throw("Only one of 'Is Delivery' or 'Is Payment Channel' can be checked")
-
+    check_validation(self)
     if self.custom_is_publish:
         magento = frappe.get_doc('Magento Sync')
         if magento.sync == 0 :
@@ -40,8 +38,6 @@ def create_new_customer(self):
                                     """, (self.name), as_dict=True)
         
         address_data = []
-        is_address_billing = 0
-        is_address_shipping = 0
         
         if address_sql:
             for address in address_sql:
@@ -106,3 +102,22 @@ def create_new_customer(self):
             frappe.throw(f"Failed to Create/Update Customer in Magento: {str(response.text)}")
     except Exception as e:
         frappe.throw(f"Failed to create customer: {str(e)}")
+        
+        
+def check_validation(self):
+    total_options_selected = (self.custom_is_delivery + self.custom_is_payment_channel + self.custom_is_digital_wallet)
+    if total_options_selected  > 1:
+        frappe.throw("Please select only one option: Delivery, Payment Channel, or Digital Wallet." , title= _("Validation Error"))
+    elif total_options_selected == 1:
+        if  self.customer_group:
+            group_doc = frappe.get_doc('Customer Group' , self.customer_group)
+            if self.custom_is_delivery:
+                if not group_doc.custom_is_delivery: 
+                    frappe.throw("The selected Customer Group must support Delivery.")
+            elif self.custom_is_payment_channel:
+                if not group_doc.custom_is_payment_channel:
+                    frappe.throw("The selected Customer Group must support Payment Channel.")
+            elif self.custom_is_digital_wallet:
+                if not group_doc.custom_is_digital_wallet:
+                    frappe.throw("The selected Customer Group must support Digital Wallet.")
+                    

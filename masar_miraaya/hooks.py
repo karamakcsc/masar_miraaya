@@ -128,8 +128,8 @@ doc_events = {
         "before_rename": "masar_miraaya.custom.brand.brand.before_rename"
     },
 	"Item": {
-		"validate": "masar_miraaya.custom.item.item.validate",
-        "on_update": "masar_miraaya.custom.item.item.on_update"
+		# "validate": "masar_miraaya.custom.item.item.validate",
+        "validate": "masar_miraaya.custom.item.item.validate"
 	},
 	"Item Group": {
 		"validate": "masar_miraaya.custom.item_group.item_group.validate",
@@ -362,21 +362,19 @@ fixtures = [
                 "Item Alternative-custom_is_publish",
                 "Customer-custom_delivery_fees",
                 "Sales Order-custom_delivery_fees",
-                "Journal Entry-custom_sales_order",
+                "Journal Entry-custom_reference_document",
+                "Journal Entry-custom_reference_doctype",
                 "Item-custom_visibility",
                 "Item Group-custom_disabled",
                 "Customer-custom_lp_balance",
-                "Company-custom_ecommerce_accounts",
-                "Company-custom_gift_card_expense_account",
-                "Company-custom_column_break_b728l",
+                "Customer-custom_is_digital_wallet",
                 "Company-custom_gift_card_deferred_account",
-                "Company-custom_lp_expense_account",
                 "Company-custom_compensation_expense_account",
-                "Company-custom_adjustment_expense_account",
-                "Company-custom_lp_deferred_account",
-                "Company-custom_compensation_deferred_account",
-                "Company-custom_adjustment_deferred_account"
-
+                "Company-custom_lp_expense_account",
+                "custom_digital_wallet_account", 
+                "Customer Group-custom_is_delivery" , 
+                "Customer Group-custom_is_payment_channel",
+                "Customer Group-custom_is_digital_wallet"
             ]
         ]
     ]},

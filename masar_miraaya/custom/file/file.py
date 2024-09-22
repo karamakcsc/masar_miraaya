@@ -2,17 +2,19 @@ import frappe
 import requests
 import base64
 import os
-from masar_miraaya.custom.item.item import  base_data , remove_image_from_magento
+from masar_miraaya.api import base_data
 def validate(self, method):
     if self.attached_to_doctype == 'Item' and self.custom_magento_sync == 0 :
         doc = frappe.get_doc('Item', self.attached_to_name)
-        file_path = self.file_url
-        add_image_to_item(doc, file_path)
+        if doc.custom_is_publish ==1:
+            file_path = self.file_url
+            add_image_to_item(doc, file_path)
 
 def on_trash(self, method):
     if self.attached_to_doctype == 'Item':
         doc = frappe.get_doc('Item', self.attached_to_name)
-        get_magento_image_id(doc, self.file_name)
+        if doc.custom_is_publish ==1:
+            get_magento_image_id(doc, self.file_name)
         
 
 @frappe.whitelist()
@@ -95,3 +97,20 @@ def get_magento_image_id(self, image_path):
             
     except Exception as e:
         return f"Error GET Magento image ID: {e}"
+    
+@frappe.whitelist()
+def remove_image_from_magento(self, entity_id):
+    base_url, headers = base_data("magento")
+    try:
+        url = base_url + f"/rest/V1/products/{self.item_code}/media/{entity_id}"
+        
+        response = requests.delete(url, headers=headers)
+        
+        if response.status_code == 200:
+            frappe.msgprint("Image Deleted Successfully From Magento")
+        else:
+            frappe.throw(f"Error Deleting Image: {response.text}")
+            
+    except Exception as e:
+        frappe.throw(str(f"Error Removing Image from Magento: {e}"))
+    

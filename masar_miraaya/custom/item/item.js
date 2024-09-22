@@ -39,7 +39,7 @@ function GetMaxQty(frm){
         let max_qty = frm.doc.custom_max_qty;
 
         frappe.call({
-            method: "masar_miraaya.custom.item.item.get_values",
+            method: "masar_miraaya.custom.item.item.get_actual_qty_value",
             args: {
                 item_code: frm.doc.name,
             },
