@@ -4,8 +4,8 @@ from erpnext.accounts.general_ledger import make_gl_entries
 
 
 def on_submit(self, method):
-    
-    make_gl(self)
+    pass
+    #make_gl(self)
     
     
 def make_gl(self):
