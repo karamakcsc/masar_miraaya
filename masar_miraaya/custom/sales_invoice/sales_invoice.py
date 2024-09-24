@@ -25,28 +25,40 @@ def make_gl(self):
     if not company_account:
         frappe.throw("Set Default Income Account in Company")
     
+
+    
+    
+    
     for row in sales_order.custom_payment_channels:
-        account = frappe.db.sql("""
-                        SELECT 
-                        tpa.account AS `customer_account`, 
-                        tpa2.account AS `customer_group_account`, 
-                        tc2.custom_receivable_payment_channel AS `company_account` 
-                        FROM tabCustomer tc 
-                        LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
-                        LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
-                        LEFT JOIN tabCompany tc2 ON tpa.company = tc2.name
-                        WHERE tc.name = %s 
+        customer_account = frappe.db.sql("""
+                        SELECT tpa.account AS `customer_account`
+                                FROM `tabCustomer` tc 
+                                INNER JOIN `tabParty Account` tpa ON tc.name = tpa.parent 
+                                WHERE tc.custom_is_digital_wallet = 1 AND tc.name = %s
             """, (row.channel_name), as_dict = True)
-        if len(account) != 0:
-            debit_account = (account[0]['customer_account'] or 
-                          account[0]['customer_group_account'] or 
-                          account[0]['company_account'])
-        else:
-            frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")  
+        if not customer_account:
+            customer_group_account = frappe.db.sql("""
+                                        SELECT tpa.account AS `customer_group_account`
+                                        FROM `tabCustomer` tc 
+                                        INNER JOIN `tabCustomer Group` tcg ON tc.customer_group = tcg.name 
+                                        INNER JOIN `tabParty Account` tpa ON tcg.name = tpa.parent 
+                                        WHERE tc.name = %s
+                                    """,(row.channel_name), as_dict=True)
+        if not customer_group_account:
+            company_account = frappe.db.sql("""
+                                        SELECT custom_receivable_payment_channel AS `company_account`
+                                        FROM `tabCompany`
+                                        WHERE name = %s
+                                    """, (self.company,), as_dict=True)
+
+        debit_account = (customer_account[0]['customer_account'] or 
+                        customer_group_account[0]['customer_group_account'] or 
+                        company_account[0]['company_account'])
+
             
         if debit_account in ['', None]:
             frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")
-        
+    
         gl_entries.append(
             self.get_gl_dict({
                 "account": debit_account,
@@ -59,7 +71,7 @@ def make_gl(self):
                 "voucher_type" : self.doctype , 
                 "voucher_no" : self.name
             }))
-        
+    
             
     gl_entries.append(
     self.get_gl_dict({
