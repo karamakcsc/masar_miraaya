@@ -54,8 +54,6 @@ def make_gl(self):
                 FROM `tabCompany`
                 WHERE name = %s
             """, (self.company,), as_dict=True)
-
-        # Handle missing data more gracefully
         debit_account = (customer_account[0]['customer_account'] if customer_account 
                         else customer_group_account[0]['customer_group_account'] if customer_group_account 
                         else company_account[0]['company_account'] if company_account
@@ -77,8 +75,6 @@ def make_gl(self):
                 "voucher_no": self.name
             })
         )
-
-# Append the final GL entry
     company_account_entry = company_account[0]['company_account'] if company_account else None
     gl_entries.append(
         self.get_gl_dict({
