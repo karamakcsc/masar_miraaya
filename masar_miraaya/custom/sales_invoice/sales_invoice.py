@@ -34,9 +34,9 @@ def make_gl(self):
                         FROM tabCustomer tc 
                         LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
                         LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
-                        LEFT JOIN tabCompany tc2 ON tpa2.company = %s
+                        LEFT JOIN tabCompany tc2 ON tpa2.company = tc2.name
                         WHERE tc.name = %s AND tc.custom_is_payment_channel = 1
-            """, (self.company , row.channel_name), as_dict = True)
+            """, (row.channel_name), as_dict = True)
         if len(account) != 0:
             debit_account = (account[0]['customer_account'] or 
                           account[0]['customer_group_account'] or 
