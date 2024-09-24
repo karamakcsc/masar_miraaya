@@ -4,7 +4,7 @@ from erpnext.accounts.general_ledger import make_gl_entries
 
 
 def on_submit(self, method):
-    #pass
+    
     make_gl(self)
     
     
@@ -25,75 +25,57 @@ def make_gl(self):
     if not company_account:
         frappe.throw("Set Default Income Account in Company")
     
-
-    
-    
-    
     for row in sales_order.custom_payment_channels:
-        customer_account = frappe.db.sql("""
-            SELECT tpa.account AS `customer_account`
-            FROM `tabCustomer` tc 
-            INNER JOIN `tabParty Account` tpa ON tc.name = tpa.parent 
-            WHERE tc.custom_is_digital_wallet = 1 AND tc.name = %s
-        """, (row.channel), as_dict=True)
-
-        customer_group_account = None
-        if not customer_account:
-            customer_group_account = frappe.db.sql("""
-                SELECT tpa.account AS `customer_group_account`
-                FROM `tabCustomer` tc 
-                INNER JOIN `tabCustomer Group` tcg ON tc.customer_group = tcg.name 
-                INNER JOIN `tabParty Account` tpa ON tcg.name = tpa.parent 
-                WHERE tc.name = %s
-            """, (row.channel), as_dict=True)
-
-        company_account = None
-        if not customer_group_account:
-            company_account = frappe.db.sql("""
-                SELECT custom_receivable_payment_channel AS `company_account`
-                FROM `tabCompany`
-                WHERE name = %s
-            """, (self.company,), as_dict=True)
-        debit_account = (customer_account[0]['customer_account'] if customer_account 
-                        else customer_group_account[0]['customer_group_account'] if customer_group_account 
-                        else company_account[0]['company_account'] if company_account
-                        else None)
-
-        if not debit_account:
+        account = frappe.db.sql("""
+                        SELECT 
+                        tpa.account AS `customer_account`, 
+                        tpa2.account AS `customer_group_account`, 
+                        tc2.custom_receivable_payment_channel AS `company_account` 
+                        FROM tabCustomer tc 
+                        LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
+                        LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
+                        LEFT JOIN tabCompany tc2 ON tpa2.company = %s
+                        WHERE tc.name = %s AND tc.custom_is_payment_channel = 1
+            """, (self.company , row.channel), as_dict = True)
+        if len(account) != 0:
+            debit_account = (account[0]['customer_account'] or 
+                          account[0]['customer_group_account'] or 
+                          account[0]['company_account'])
+        else:
+            frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")  
+            
+        if debit_account in ['', None]:
             frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")
-
+        
         gl_entries.append(
             self.get_gl_dict({
                 "account": debit_account,
-                "against": company_account[0]['company_account'] if company_account else None,
+                "against": company_account,
                 "debit_in_account_currency": row.amount,
                 "debit": row.amount,
                 "party_type": "Customer",
                 "party": row.channel,
                 "remarks": row.channel + ' : ' + self.name,
-                "voucher_type": self.doctype,
-                "voucher_no": self.name
-            })
-        )
-    company_account_entry = company_account[0]['company_account'] if company_account else None
+                "voucher_type" : self.doctype , 
+                "voucher_no" : self.name
+            }))
+        
+            
     gl_entries.append(
-        self.get_gl_dict({
-            "account": company_account_entry,
-            "against": debit_account,
-            "credit_in_account_currency": self.grand_total,
-            "credit": self.grand_total,
-            "cost_center": cost_center,
-            "party_type": "Customer",
-            "party": self.customer,
-            "remarks": self.name,
-            "voucher_type": self.doctype,
-            "voucher_no": self.name
-        })
-    )
-
+    self.get_gl_dict({
+        "account": company_account,
+        "against": debit_account,
+        "credit_in_account_currency": self.grand_total,
+        "credit": self.grand_total,
+        "cost_center": cost_center,
+        "party_type": "Customer",
+        "party": self.customer,
+        "remarks": self.name,
+        "voucher_type" : self.doctype , 
+        "voucher_no" : self.name
+    }))
     if gl_entries:
         make_gl_entries(gl_entries, cancel=0, adv_adj=0)
-
 
 def cancel_linked_gl_entries(self):
     gl_entries = frappe.get_all("GL Entry",filters={"voucher_type": self.doctype, "voucher_no": self.name, "docstatus": 1},pluck="parent",distinct=True,)
