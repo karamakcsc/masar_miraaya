@@ -206,8 +206,8 @@ def create_journal_entry(self):
                         credit_account = (account[0]['customer_account'] or 
                           account[0]['customer_group_account'] or 
                           account[0]['company_account'])
-            else:
-                frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")  
+            # else:
+            #     frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")  
                 
             if credit_account in ['', None]:
                 frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")
