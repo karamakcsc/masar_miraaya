@@ -88,9 +88,9 @@ def cancel_linked_gl_entries(self):
         self.set_status(update=True, status="Cancelled")
         self.db_set("error_message", "")
 
-def delete_linked_gl_entries(self):
-    cancelled_doc = frappe.db.sql_list("""select name from tabEmployee Resignation 
-    where docstatus = 2 """)
-    frappe.db.sql("""delete from tabGL Entry 
-                where voucher_type = 'Employee Resignation' and voucher_no in (%s)""" 
-                % (', '.join(['%s']*len(cancelled_doc))), tuple(cancelled_doc))
+# def delete_linked_gl_entries(self):
+#     cancelled_doc = frappe.db.sql_list("""select name from tabEmployee Resignation 
+#     where docstatus = 2 """)
+#     frappe.db.sql("""delete from tabGL Entry 
+#                 where voucher_type = 'Employee Resignation' and voucher_no in (%s)""" 
+#                 % (', '.join(['%s']*len(cancelled_doc))), tuple(cancelled_doc))

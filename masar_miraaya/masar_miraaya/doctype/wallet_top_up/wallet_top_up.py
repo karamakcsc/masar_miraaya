@@ -86,6 +86,7 @@ class WalletTopup(Document):
         cost_center = self.get_accounts_form_company(with_cost_center=True)
         party_type = "Customer"
         party = self.customer
+        user_remarks = self.user_remarks
         dimension_account = self.digital_wallet
         
         if self.transaction_type == 'Gift Card':
@@ -123,7 +124,8 @@ class WalletTopup(Document):
                     "debit_in_account_currency": debit_amount,
                     "debit" : debit_amount,
                     "cost_center": cost_center,
-                    "customer": dimension_account
+                    "customer": dimension_account,
+                    "user_remark": user_remarks
                     }
         debit_account_doc = frappe.get_doc('Account' ,debit_account )
         if debit_account_doc.account_type in ['Receivable', 'Payable']:
@@ -134,7 +136,9 @@ class WalletTopup(Document):
                     "credit_in_account_currency": credit_amount,
                     "credit" :credit_amount,
                     "cost_center": cost_center,
-                    "customer": dimension_account
+                    "customer": dimension_account,
+                    "user_remark": user_remarks
+                    
                 }
         
         creadit_account_doc = frappe.get_doc('Account' ,credit_account )

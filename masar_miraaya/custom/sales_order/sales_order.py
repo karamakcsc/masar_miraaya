@@ -242,23 +242,37 @@ def create_journal_entry(self):
             frappe.msgprint(f"Journal Entry has been Created Successfully." ,alert=True , indicator='green')
     # else:
     #     frappe.msgprint(f'Journal Entry already Created.' , alert=True , indicator='blue')
+    
     if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
         exist_sales = frappe.db.sql("""
-                            SELECT 
-                                tsii.sales_order FROM `tabSales Invoice` tsi
-                                INNER JOIN `tabSales Invoice Item` tsii 
-                                ON tsi.name = tsii.parent 
-                                WHERE tsii.sales_order = %s AND tsi.docstatus = 1 
-        """ ,(self.name) ,as_dict = True)
-        if len(exist_sales) == 0:
+            SELECT 
+                tsi.name, tsi.docstatus FROM `tabSales Invoice` tsi
+            INNER JOIN `tabSales Invoice Item` tsii 
+            ON tsi.name = tsii.parent 
+            WHERE tsii.sales_order = %s
+        """, (self.name), as_dict=True)
+
+        if not exist_sales:
             from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice
             doc = make_sales_invoice(self.name)
-            doc.update_stock =1 
-            if doc.items : 
+            doc.update_stock = 1
+            if doc.items: 
                 doc.save()
                 doc.submit()
+            frappe.msgprint(f'Sales Invoice {doc.name} has been created and submitted.', alert=True, indicator='green')
+        
         else:
-            frappe.msgprint('Sales Invoice alerady Created.' , alert = True , indicator = 'blue')
+            existing_invoice = exist_sales[0]
+            
+            if existing_invoice['docstatus'] == 1:
+                frappe.msgprint(f'Sales Invoice {existing_invoice["name"]} already created and submitted.', alert=True, indicator='blue')
+            
+            elif existing_invoice['docstatus'] == 2:
+                frappe.msgprint(f'Sales Invoice {existing_invoice["name"]} was canceled. No new invoice will be created.', alert=True, indicator='red')
+                        
+    else:
+        frappe.msgprint('The status is not "Delivered" or the document is not submitted.', alert=True, indicator='orange')
+
 
         
            

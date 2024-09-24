@@ -32,6 +32,10 @@
   "items",
   "section_break_tluh",
   "topup_amount",
+  "column_break_emgh",
+  "user_remarks",
+  "section_break_maip",
+  "description",
   "accounts_details_section",
   "gift_card_deferred_account",
   "compensation_expense_account",
@@ -266,6 +270,27 @@
    "fieldtype": "Tab Break",
    "label": "Connections",
    "show_dashboard": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_maip",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "user_remarks",
+   "fieldtype": "Small Text",
+   "label": "User Remarks",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "fieldname": "column_break_emgh",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -277,7 +302,7 @@
    "link_fieldname": "custom_reference_doctype"
   }
  ],
- "modified": "2024-09-22 12:53:55.907711",
+ "modified": "2024-09-25 00:00:33.779746",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Wallet Top-up",
@@ -285,6 +310,8 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -293,6 +320,7 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "select": 1,
    "share": 1,
    "submit": 1,
    "write": 1
