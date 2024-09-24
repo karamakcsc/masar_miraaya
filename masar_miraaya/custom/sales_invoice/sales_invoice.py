@@ -69,8 +69,8 @@ def make_gl(self):
                 "debit_in_account_currency": row.amount,
                 "debit": row.amount,
                 "party_type": "Customer",
-                "party": row.channel_name,
-                "remarks": row.channel_name + ' : ' + self.name,
+                "party": row.channel,
+                "remarks": row.channel + ' : ' + self.name,
                 "voucher_type": self.doctype,
                 "voucher_no": self.name
             })
