@@ -35,7 +35,7 @@ def make_gl(self):
             FROM `tabCustomer` tc 
             INNER JOIN `tabParty Account` tpa ON tc.name = tpa.parent 
             WHERE tc.custom_is_digital_wallet = 1 AND tc.name = %s
-        """, (row.channel_name), as_dict=True)
+        """, (row.channel), as_dict=True)
 
         customer_group_account = None
         if not customer_account:
@@ -45,7 +45,7 @@ def make_gl(self):
                 INNER JOIN `tabCustomer Group` tcg ON tc.customer_group = tcg.name 
                 INNER JOIN `tabParty Account` tpa ON tcg.name = tpa.parent 
                 WHERE tc.name = %s
-            """, (row.channel_name), as_dict=True)
+            """, (row.channel), as_dict=True)
 
         company_account = None
         if not customer_group_account:
