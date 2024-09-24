@@ -32,7 +32,7 @@ def create_new_brand(self):
                 item_group_doc.save(ignore_permissions = True)
         frappe.msgprint(f"Create Brand in Brands Item Group." , alert=True , indicator=True)       
     # except Exception as e:
-    #     frappe.throw(f"Failed to create Brand: {str(e)}")
+    #  #   frappe.throw(f"Failed to create Brand: {str(e)}")
 
 def rename_item_group(self , method , old, new, merge ):
     frappe.rename_doc('Item Group' , old , new)
