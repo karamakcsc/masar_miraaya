@@ -16,7 +16,7 @@ def validate(self, method):
     calculate_amount(self)
     validation_payment_channel(self)
     
-def on_change(self, method):
+def on_update_after_submit(self, method):
     create_journal_entry(self)
     # if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
     #     create_sales_invoice(self)
@@ -240,9 +240,6 @@ def create_journal_entry(self):
             jv.save(ignore_permissions=True)
             jv.submit()
             frappe.msgprint(f"Journal Entry has been Created Successfully." ,alert=True , indicator='green')
-    # else:
-    #     frappe.msgprint(f'Journal Entry already Created.' , alert=True , indicator='blue')
-    
     if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
         exist_sales = frappe.db.sql("""
             SELECT 
@@ -268,7 +265,13 @@ def create_journal_entry(self):
                 frappe.msgprint(f'Sales Invoice {existing_invoice["name"]} already created and submitted.', alert=True, indicator='blue')
             
             elif existing_invoice['docstatus'] == 2:
-                frappe.msgprint(f'Sales Invoice {existing_invoice["name"]} was canceled. No new invoice will be created.', alert=True, indicator='red')
+                from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice
+                doc = make_sales_invoice(self.name)
+                doc.update_stock = 1
+                if doc.items: 
+                    doc.save()
+                    doc.submit()
+                frappe.msgprint(f'Sales Invoice {existing_invoice["name"]} was canceled.New Invoice has been Created.', alert=True, indicator='orange')
                         
     else:
         frappe.msgprint('The status is not "Delivered" or the document is not submitted.', alert=True, indicator='orange')
