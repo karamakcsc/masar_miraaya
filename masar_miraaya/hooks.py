@@ -176,7 +176,8 @@ doctype_js = {
    "Sales Order": "custom/sales_order/sales_order.js",
    "Company": "custom/company/company.js",
    "Item Alternative": "custom/item_alternative/item_alternative.js",
-   "Item Group": "custom/item_group/item_group.js"
+   "Item Group": "custom/item_group/item_group.js",
+   "Customer": "custom/customer/customer.js"
 
 }
 # Scheduled Tasks

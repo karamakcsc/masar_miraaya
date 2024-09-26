@@ -14,7 +14,7 @@ def validate(self, method):
             
 @frappe.whitelist()
 def create_attributes_in_magento(self):
-    try:
+    # try:
         if self.custom_attribute_code == 'color':
             attribute_id = 93   
         elif self.custom_attribute_code == 'shade':
@@ -71,5 +71,5 @@ def create_attributes_in_magento(self):
                                 break
                 else:
                     frappe.throw(f"Failed to Create Attribute in Magento: {str(response.text)}")
-    except Exception as e:
-        frappe.throw(f"Failed to create Attribute: {str(e)}")
+    # except Exception as e:
+    #     frappe.throw(f"Failed to create Attribute: {str(e)}")

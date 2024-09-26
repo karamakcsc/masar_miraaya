@@ -13,7 +13,7 @@ def validate(self, method):
             frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
     
 def create_new_customer(self):
-    try:
+    # try:
         base_url, headers = base_data("magento")
         url = base_url + f"/rest/V1/customers/{self.custom_customer_id}"
             
@@ -76,8 +76,8 @@ def create_new_customer(self):
                 "suffix": self.custom_suffix,
                 "dob": self.custom_date_of_birth,
                 "gender": gender,
-                "store_id": self.custom_store_id,
-                "website_id": self.custom_website_id,
+                "store_id": 1,
+                "website_id": 1,
                 "addresses": address_data,
                 "disable_auto_group_change": 0,
                 "extension_attributes": {
@@ -100,8 +100,8 @@ def create_new_customer(self):
             frappe.msgprint(f"Customer Created/Updated Successfully in Magento", alert = True, indicator = 'green')
         else:
             frappe.throw(f"Failed to Create/Update Customer in Magento: {str(response.text)}")
-    except Exception as e:
-        frappe.throw(f"Failed to create customer: {str(e)}")
+    # except Exception as e:
+    #     frappe.throw(f"Failed to create customer: {str(e)}")
         
         
 def check_validation(self):

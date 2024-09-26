@@ -49,112 +49,112 @@ def validation_payment_channel(self):
 def create_magento_sales_order(self):
     base_url, headers = base_data("magento")
     
-    try:
-        customer_doc = frappe.get_doc('Customer', self.customer)
-        customer_first_name = customer_doc.custom_first_name
-        customer_last_name = customer_doc.custom_last_name
-        customer_email = customer_doc.custom_email
-        customer_id = customer_doc.custom_customer_id
-        customer_store_id = customer_doc.custom_store_id
-        customer_website_id = customer_doc.custom_website_id
-        customer_doc_name = customer_doc.name
-        
-        query = frappe.db.sql(""" 
-                            SELECT 
-                                    ta.address_line1, ta.city, ta.country, ta.pincode,
-                                    ta.phone, ta.custom_country_id, ta.email_id, ta.custom_first_name, ta.custom_last_name 
-                            FROM tabAddress ta 
-                            WHERE custom_customer_id = %s AND is_primary_address = 1 and is_shipping_address = 1
-                            """, (customer_id), as_dict=True)
-        
-        if query and query[0]:
-            for data in query:
-                address_line = data['address_line1']
-                city = data['city']
-                country = data['country']
-                pincode = data['pincode']
-                phone = data['phone']
-                country_id = data['custom_country_id']
-                email_id = data['email_id']
-                first_name = data['custom_first_name']
-                last_name = data['custom_last_name']
-                
-        item_list = []
-        if self.get('items'):
-            for item in self.get('items'):
-                dict_items = {
-                    "name": item.item_name,
-                    "sku": item.item_code,
-                    "qty_ordered": item.qty,
-                    "price": item.amount
-                }
-                item_list.append(dict_items)
-        else:
-            frappe.throw("Please Add Items")
+    # try:
+    customer_doc = frappe.get_doc('Customer', self.customer)
+    customer_first_name = customer_doc.custom_first_name
+    customer_last_name = customer_doc.custom_last_name
+    customer_email = customer_doc.custom_email
+    customer_id = customer_doc.custom_customer_id
+    customer_store_id = customer_doc.custom_store_id
+    customer_website_id = customer_doc.custom_website_id
+    customer_doc_name = customer_doc.name
+    
+    query = frappe.db.sql(""" 
+                        SELECT 
+                                ta.address_line1, ta.city, ta.country, ta.pincode,
+                                ta.phone, ta.custom_country_id, ta.email_id, ta.custom_first_name, ta.custom_last_name 
+                        FROM tabAddress ta 
+                        WHERE custom_customer_id = %s AND is_primary_address = 1 and is_shipping_address = 1
+                        """, (customer_id), as_dict=True)
+    
+    if query and query[0]:
+        for data in query:
+            address_line = data['address_line1']
+            city = data['city']
+            country = data['country']
+            pincode = data['pincode']
+            phone = data['phone']
+            country_id = data['custom_country_id']
+            email_id = data['email_id']
+            first_name = data['custom_first_name']
+            last_name = data['custom_last_name']
             
-        payload = {
-            "entity": {
-                "base_currency_code": self.currency,
-                "base_grand_total": self.total,
-                "created_at": self.transaction_date,
-                "customer_email": customer_email,
-                "customer_firstname": customer_first_name,
-                "customer_lastname": customer_last_name,
-                "grand_total": self.grand_total,
-                "order_currency_code": self.currency,
-                "status": self.custom_sales_order_status.lower(),
-                "store_id": customer_store_id,
-                "subtotal": self.grand_total,
-                "total_qty_ordered": self.total_qty,
-                "updated_at": self.delivery_date,
-                "items": item_list,
-                "billing_address": {
-                "firstname": first_name,
-                "lastname": last_name,
-                "street": [
-                    address_line
-                ],
-                "city": city,
-                "postcode": pincode,
-                "country_id": country_id,
-                "telephone": phone
-                },
-                "payment": {
-                "method": "checkmo"
-                },
-                "extension_attributes": {
-                "shipping_assignments": [
-                    {
-                    "shipping": {
-                        "address": {
-                        "firstname": first_name,
-                        "lastname": last_name,
-                        "street": [
-                            address_line
-                        ],
-                        "city": city,
-                        "postcode": pincode,
-                        "country_id": country_id,
-                        "telephone": phone
-                        },
-                        "method": "flatrate_flatrate"
-                    }
-                    }
-                ]
+    item_list = []
+    if self.get('items'):
+        for item in self.get('items'):
+            dict_items = {
+                "name": item.item_name,
+                "sku": item.item_code,
+                "qty_ordered": item.qty,
+                "price": item.amount
+            }
+            item_list.append(dict_items)
+    else:
+        frappe.throw("Please Add Items")
+        
+    payload = {
+        "entity": {
+            "base_currency_code": self.currency,
+            "base_grand_total": self.total,
+            "created_at": self.transaction_date,
+            "customer_email": customer_email,
+            "customer_firstname": customer_first_name,
+            "customer_lastname": customer_last_name,
+            "grand_total": self.grand_total,
+            "order_currency_code": self.currency,
+            "status": self.custom_sales_order_status.lower(),
+            "store_id": customer_store_id,
+            "subtotal": self.grand_total,
+            "total_qty_ordered": self.total_qty,
+            "updated_at": self.delivery_date,
+            "items": item_list,
+            "billing_address": {
+            "firstname": first_name,
+            "lastname": last_name,
+            "street": [
+                address_line
+            ],
+            "city": city,
+            "postcode": pincode,
+            "country_id": country_id,
+            "telephone": phone
+            },
+            "payment": {
+            "method": "checkmo"
+            },
+            "extension_attributes": {
+            "shipping_assignments": [
+                {
+                "shipping": {
+                    "address": {
+                    "firstname": first_name,
+                    "lastname": last_name,
+                    "street": [
+                        address_line
+                    ],
+                    "city": city,
+                    "postcode": pincode,
+                    "country_id": country_id,
+                    "telephone": phone
+                    },
+                    "method": "flatrate_flatrate"
                 }
+                }
+            ]
             }
-            }
+        }
+        }
 
-        
-        url = f"{base_url}/rest/V1/orders" 
-        
-        response = requests.post(url, headers=headers, json=payload)
-        if response.status_code in [200, 201, 202, 203]:
-            frappe.msgprint("Sales Order Created Successfully in Magento")
-        else:
-            frappe.throw(str(f"Error Creating Sales Order in Magento: {response.text}"))
-    except Exception as e:
-        frappe.throw(str(f"Error Creating Sales Order in Magento: {e}"))
+    
+    url = f"{base_url}/rest/V1/orders" 
+    
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code in [200, 201, 202, 203]:
+        frappe.msgprint("Sales Order Created Successfully in Magento")
+    else:
+        frappe.throw(str(f"Error Creating Sales Order in Magento: {response.text}"))
+    # except Exception as e:
+    #     frappe.throw(str(f"Error Creating Sales Order in Magento: {e}"))
 
 @frappe.whitelist()
 def calculate_amount(self):

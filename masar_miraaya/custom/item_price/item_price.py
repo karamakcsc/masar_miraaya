@@ -14,7 +14,7 @@ def validate(self , method):
         
 @frappe.whitelist()    
 def update_magento_price(self):
-    try:
+    # try:
         item_doc = frappe.get_doc("Item", self.item_code)
         if not item_doc.custom_is_publish:
             frappe.throw("The Item Must be Publish to Magento")
@@ -43,6 +43,6 @@ def update_magento_price(self):
         else:
             frappe.throw(f"Failed to Update Product Price in Magento: {str(response.text)}")
                 
-    except Exception as e:
-        frappe.throw(f"Failed to Update Item Price: {str(e)}")
+    # except Exception as e:
+    #     frappe.throw(f"Failed to Update Item Price: {str(e)}")
 

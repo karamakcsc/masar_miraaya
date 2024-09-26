@@ -19,7 +19,7 @@ def on_trash(self, method):
 
 @frappe.whitelist()
 def add_image_to_item(self, file_path):
-    try:
+    # try:
         image_path = file_path
         if not image_path:
             frappe.throw("Image path is empty. Please ensure the image is attached to the Item.")
@@ -67,14 +67,14 @@ def add_image_to_item(self, file_path):
         else:
             frappe.throw(f"Error Image: {response.text}")
     
-    except Exception as e:
-        frappe.throw(f"Failed to add image to product in Magento: {str(e)}")
+    # except Exception as e:
+    #     frappe.throw(f"Failed to add image to product in Magento: {str(e)}")
 
         
         
 @frappe.whitelist()
 def get_magento_image_id(self, image_path):
-    try:
+    # try:
         base_url, headers = base_data("magento")
         
         url = base_url + f"/rest/default/V1/products/{self.item_code}/media"
@@ -95,22 +95,22 @@ def get_magento_image_id(self, image_path):
             remove_image_from_magento(self, entity_id)    
             
             
-    except Exception as e:
-        return f"Error GET Magento image ID: {e}"
+    # except Exception as e:
+    #     return f"Error GET Magento image ID: {e}"
     
 @frappe.whitelist()
 def remove_image_from_magento(self, entity_id):
     base_url, headers = base_data("magento")
-    try:
-        url = base_url + f"/rest/V1/products/{self.item_code}/media/{entity_id}"
-        
-        response = requests.delete(url, headers=headers)
-        
-        if response.status_code == 200:
-            frappe.msgprint("Image Deleted Successfully From Magento")
-        else:
-            frappe.throw(f"Error Deleting Image: {response.text}")
+    # try:
+    url = base_url + f"/rest/V1/products/{self.item_code}/media/{entity_id}"
+    
+    response = requests.delete(url, headers=headers)
+    
+    if response.status_code == 200:
+        frappe.msgprint("Image Deleted Successfully From Magento")
+    else:
+        frappe.throw(f"Error Deleting Image: {response.text}")
             
-    except Exception as e:
-        frappe.throw(str(f"Error Removing Image from Magento: {e}"))
+    # except Exception as e:
+    #     frappe.throw(str(f"Error Removing Image from Magento: {e}"))
     

@@ -22,7 +22,7 @@ def after_rename(self, method, old, new, merge):
 
 
 def create_new_customer_group(self):
-    try:
+    # try:
         if self.custom_customer_group_id in ['', 0, None, ' ']:
             base_url, headers = base_data("magento")
             get_url = base_url + "/rest/default/V1/customerGroups/search?searchCriteria="
@@ -50,11 +50,11 @@ def create_new_customer_group(self):
                     frappe.msgprint(f"Customer Group Created Successfully in Magento" , alert=True , indicator='green')
                 else:
                     frappe.throw(f"Failed To Create Customer Group in Magento: {str(response.text)}")
-    except Exception as e:
-        frappe.throw(f"Failed to create customer group: {str(e)}")
+    # except Exception as e:
+    #     frappe.throw(f"Failed to create customer group: {str(e)}")
         
 def update_customer_group(self):
-    try:
+    # try:
         base_url, headers = base_data("magento")
         get_url = base_url + "/rest/default/V1/customerGroups/search?searchCriteria="
         get_response = requests.get(get_url, headers=headers)
@@ -78,8 +78,8 @@ def update_customer_group(self):
                         frappe.msgprint(f"Customer Group Updated Successfully in Magento" , alert=True , indicator='green')
                     else:
                         frappe.throw(f"Failed To Updated Customer Group in Magento: {str(response.text)}")
-    except Exception as e:
-        frappe.throw(f"Failed to rename customer group: {str(e)}")
+    # except Exception as e:
+    #     frappe.throw(f"Failed to rename customer group: {str(e)}")
         
         
 def checks_validate(self):
