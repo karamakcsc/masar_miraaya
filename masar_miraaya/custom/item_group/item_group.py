@@ -4,7 +4,8 @@ from masar_miraaya.api import base_data
 
 def validate(self, method):
     # frappe.throw("HHH")
-    if self.custom_is_publish:
+    roles = (frappe.get_roles(frappe.session.user))
+    if (self.custom_is_publish and ('API Integration' not in roles)) or (self.custom_is_publish and frappe.session.user == 'Administrator' ):
         magento = frappe.get_doc('Magento Sync')
         if magento.sync == 0 :  
             item_group_in_magento(self)

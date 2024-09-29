@@ -4,8 +4,9 @@ from masar_miraaya.api import base_data
 from frappe import _ 
 
 def validate(self, method):
-    checks_validate(self)
-    if self.custom_is_publish:
+    # checks_validate(self)
+    roles = (frappe.get_roles(frappe.session.user))
+    if (self.custom_is_publish and ('API Integration' not in roles)) or (self.custom_is_publish and frappe.session.user == 'Administrator' ):
         magento = frappe.get_doc('Magento Sync')
         if magento.sync == 0 :
             create_new_customer_group(self)
@@ -13,7 +14,8 @@ def validate(self, method):
             frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
 
 def after_rename(self, method, old, new, merge):
-    if self.custom_is_publish:
+    roles = (frappe.get_roles(frappe.session.user))
+    if (self.custom_is_publish and ('API Integration' not in roles)) or (self.custom_is_publish and frappe.session.user == 'Administrator' ):
         magento = frappe.get_doc('Magento Sync')
         if magento.sync == 0 :
             update_customer_group(self)

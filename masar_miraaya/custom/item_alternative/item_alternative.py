@@ -4,7 +4,8 @@ from masar_miraaya.api import base_data
 
 
 def validate(self, method):
-    if self.custom_is_publish:
+    roles = (frappe.get_roles(frappe.session.user))
+    if (self.custom_is_publish and ('API Integration' not in roles)) or (self.custom_is_publish and frappe.session.user == 'Administrator' ):
         base_url, headers = base_data("magento")
         data = {
             "product": {

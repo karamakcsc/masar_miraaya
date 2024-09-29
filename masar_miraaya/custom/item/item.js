@@ -1,7 +1,7 @@
 frappe.ui.form.on('Item', {
-    custom_max_qty: function (frm) {
-        GetMaxQty(frm);
-    },
+    // custom_max_qty: function (frm) {
+    //     GetMaxQty(frm);
+    // },
     validate: function (frm) {
         GetMaxQty(frm);
     }, 
@@ -34,10 +34,9 @@ frappe.ui.form.on('Item', {
         };
     }
 });
-function GetMaxQty(frm){
-    if (frm.doc.custom_max_qty) {
-        let max_qty = frm.doc.custom_max_qty;
 
+function GetMaxQty(frm) {
+    if (frm.doc.reorder_levels && frm.doc.reorder_levels.length > 0) {
         frappe.call({
             method: "masar_miraaya.custom.item.item.get_actual_qty_value",
             args: {
@@ -46,9 +45,12 @@ function GetMaxQty(frm){
             callback: function(r) {
                 if (r.message) {
                     let actual_qty = r.message;
-                    let reorder_qty = max_qty - actual_qty;
-
                     frm.doc.reorder_levels.forEach(function(row) {
+                        let max_qty = row.custom_max_qty || 0;
+                        let reorder_qty = max_qty - actual_qty;
+                        if (reorder_qty <= 0) {
+                            reorder_qty = 0;
+                        }
                         frappe.model.set_value(row.doctype, row.name, "warehouse_reorder_qty", reorder_qty);
                     });
 
@@ -56,5 +58,5 @@ function GetMaxQty(frm){
                 }
             }
         });
-}
+    }
 }

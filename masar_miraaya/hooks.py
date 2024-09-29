@@ -177,7 +177,8 @@ doctype_js = {
    "Company": "custom/company/company.js",
    "Item Alternative": "custom/item_alternative/item_alternative.js",
    "Item Group": "custom/item_group/item_group.js",
-   "Customer": "custom/customer/customer.js"
+   "Customer": "custom/customer/customer.js",
+   "Item": "custom/item/item.js"
 
 }
 # Scheduled Tasks
@@ -285,7 +286,6 @@ fixtures = [
     {"dt": "Custom Field", "filters": [
         [
             "name", "in", [
-                "Item-custom_max_qty",
                 "Item Group-custom_item_group_id",
                 "Item Group-custom_parent_item_group_id",
                 "Customer-custom_first_name",
@@ -375,7 +375,8 @@ fixtures = [
                 "custom_digital_wallet_account", 
                 "Customer Group-custom_is_delivery" , 
                 "Customer Group-custom_is_payment_channel",
-                "Customer Group-custom_is_digital_wallet"
+                "Customer Group-custom_is_digital_wallet",
+                "Item Reorder-custom_max_qty"
             ]
         ]
     ]},

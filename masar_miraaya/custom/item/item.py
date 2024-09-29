@@ -5,7 +5,8 @@ from masar_miraaya.api import base_data
 
         
 def validate(self, method):
-    if self.custom_is_publish:
+    roles = (frappe.get_roles(frappe.session.user))
+    if (self.custom_is_publish and ('API Integration' not in roles)) or (self.custom_is_publish and frappe.session.user == 'Administrator' ):
         magento = frappe.get_doc('Magento Sync')
         if magento.sync == 0 :
             frappe.enqueue(
@@ -104,13 +105,13 @@ def custom_attributes_function(self):
                     abbr = frappe.db.sql('SELECT abbr FROM `tabItem Attribute Value` WHERE parent = %s and attribute_value = %s' ,( attributes.attribute ,attributes.attribute_value ) )[0][0]
                     custom_attributes.append ({'attribute_code' :att_doc.custom_attribute_code ,
                                             'value' : abbr})
-        if self.image:
-            custom_images = ['image' , 'small_image' , 'thumbnail' , 'swatch_image']
-            path_image = self.image
-            image_name = os.path.basename(path_image)
-            custom_attributes.append 
-            for image in custom_images:
-                custom_attributes.append ({'attribute_code' :image , 'value' : str(image_name)})
+        # if self.image:
+        #     custom_images = ['image' , 'small_image' , 'thumbnail' , 'swatch_image']
+        #     path_image = self.image
+        #     image_name = os.path.basename(path_image)
+        #     custom_attributes.append 
+        #     for image in custom_images:
+        #         custom_attributes.append ({'attribute_code' :image , 'value' : str(image_name)})
         return custom_attributes
             
 def attribute_set_id_function(self): 
@@ -254,7 +255,6 @@ def get_actual_qty_value(item_code):
         actual_qty = item_actual_qty[0].get('actual_qty', 0)
     else:
         actual_qty = 0
-
     return actual_qty
 
 @frappe.whitelist()
