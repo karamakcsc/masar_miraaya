@@ -60,7 +60,7 @@ def update_customer_address(self):
         "customer_id": customer_id,
         # "region": {
         #     "region_code": "string",
-        # #    "region": "string",
+        #   "region": "string",
         #     "region_id": 0,
         # },
         "street": [self.address_line1],
