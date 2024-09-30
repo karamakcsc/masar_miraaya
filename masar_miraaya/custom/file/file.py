@@ -63,7 +63,7 @@ def add_image_to_item(self, file_path):
         response = requests.post(url, headers=headers, json=data)
         
         if response.status_code == 200:
-            frappe.msgprint("Image Added to Item Successfully")
+            frappe.msgprint("Image Added to Item Successfully", alert = True, indicator = 'green')
         else:
             frappe.throw(f"Error Image: {response.text}")
     
@@ -74,7 +74,6 @@ def add_image_to_item(self, file_path):
         
 @frappe.whitelist()
 def get_magento_image_id(self, image_path):
-    # try:
         base_url, headers = base_data("magento")
         
         url = base_url + f"/rest/default/V1/products/{self.item_code}/media"
@@ -86,31 +85,26 @@ def get_magento_image_id(self, image_path):
         else:
             frappe.throw(f"Error Deleting Image: {response.text}")
         
-
+        entity_id = None
         for data in image_data:
             magento_filename = data['file'].split('/')[-1]
             if magento_filename == image_path:
                 entity_id = data['id']
         if entity_id:
-            remove_image_from_magento(self, entity_id)    
+            remove_image_from_magento(self, entity_id)
+        else:
+            frappe.throw("The image is not found in Magento.")
             
-            
-    # except Exception as e:
-    #     return f"Error GET Magento image ID: {e}"
     
 @frappe.whitelist()
 def remove_image_from_magento(self, entity_id):
     base_url, headers = base_data("magento")
-    # try:
     url = base_url + f"/rest/V1/products/{self.item_code}/media/{entity_id}"
     
     response = requests.delete(url, headers=headers)
     
     if response.status_code == 200:
-        frappe.msgprint("Image Deleted Successfully From Magento")
+        frappe.msgprint("Image Deleted Successfully From Magento", alert = True, indicator = 'green')
     else:
         frappe.throw(f"Error Deleting Image: {response.text}")
-            
-    # except Exception as e:
-    #     frappe.throw(str(f"Error Removing Image from Magento: {e}"))
-    
+                
