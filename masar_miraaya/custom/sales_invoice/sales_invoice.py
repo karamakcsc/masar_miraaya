@@ -30,19 +30,19 @@ def make_gl(self):
                         SELECT 
                         tpa.account AS `customer_account`, 
                         tpa2.account AS `customer_group_account`, 
-                        tc2.custom_receivable_payment_channel AS `company_account` 
                         FROM tabCustomer tc 
                         LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
                         LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
-                        LEFT JOIN tabCompany tc2 ON tpa2.company = %s
                         WHERE tc.name = %s AND tc.custom_is_payment_channel = 1
-            """, (self.company , row.channel), as_dict = True)
+            """, (row.channel), as_dict = True)
         if len(account) != 0:
             debit_account = (account[0]['customer_account'] or 
-                          account[0]['customer_group_account'] or 
-                          account[0]['company_account'])
+                          account[0]['customer_group_account'])
         else:
-            frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")  
+            company_account = frappe.db.sql("""SELECT custom_receivable_payment_channel  AS company_account FROM tabCompany WHERE name = %s
+                               """, (self.company) , as_dict = True )  
+            if len(company_account) != 0 :
+                    debit_account = company_account[0]['company_account']
             
         if debit_account in ['', None]:
             frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")
@@ -65,19 +65,19 @@ def make_gl(self):
                         SELECT 
                         tpa.account AS `customer_account`, 
                         tpa2.account AS `customer_group_account`, 
-                        tc2.custom_receivable_payment_channel AS `company_account` 
                         FROM tabCustomer tc 
                         LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
                         LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
-                        LEFT JOIN tabCompany tc2 ON tpa2.company = %s
                         WHERE tc.name = %s
-            """, (self.company , sales_order.custom_delivery_company), as_dict = True)
+            """, ( sales_order.custom_delivery_company), as_dict = True)
     if len(account_delivery_sql) != 0:
             account_delivery = (account_delivery_sql[0]['customer_account'] or 
-                          account_delivery_sql[0]['customer_group_account'] or 
-                          account_delivery_sql[0]['company_account'])
+                          account_delivery_sql[0]['customer_group_account'] )
     else:
-            frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")  
+            company_account = frappe.db.sql("""SELECT custom_receivable_payment_channel  AS company_account FROM tabCompany WHERE name = %s
+                               """, (self.company) , as_dict = True )  
+            if len(company_account) != 0 :
+                    debit_account = company_account[0]['company_account']
             
     if debit_account in ['', None]:
             frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")
