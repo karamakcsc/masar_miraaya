@@ -2,24 +2,36 @@ frappe.ui.form.on('Sales Order', {
     onload: function (frm) {
         delivery_company(frm);
         payment_channel(frm);
-    },
-
-    validate: function (frm) {
-        delivery_company(frm);
-        payment_channel(frm);
-    },
-    
+    },    
     refresh: function (frm) {
         delivery_company(frm);
         payment_channel(frm);
     },
-    
     setup: function (frm) {
         delivery_company(frm);
         payment_channel(frm);
+    },
+    custom_cash_on_delivery_amount:function(frm){
+        GetTotalAmount(frm);
+    },
+    custom_payment_channel_amount:function(frm){
+        GetTotalAmount(frm);
     }
 });
+frappe.ui.form.on("Payment Channel Details", "amount", function(frm, cdt, cdn) {
+    frappe.call({
+        method : 'masar_miraaya.custom.sales_order.sales_order.get_payment_channel_amount',
+        args: {
+            child: frm.doc.custom_payment_channels
+        },
+        callback: function(r){
+            frm.set_value("custom_payment_channel_amount", r.message);
+            frm.refresh_field("custom_payment_channel_amount");
+        }
 
+    })
+
+});
 function delivery_company(frm) {
     frm.fields_dict['custom_delivery_company'].get_query = function() {
         return {
@@ -48,4 +60,16 @@ function payment_channel(frm) {
             ]
         };
     };
+}
+function GetTotalAmount(frm) {
+    var totalAmount = 0;
+    if (frm.doc.custom_cash_on_delivery_amount) {
+        totalAmount += frm.doc.custom_cash_on_delivery_amount;
+    }
+    if (frm.doc.custom_payment_channel_amount) {
+        totalAmount += frm.doc.custom_payment_channel_amount;
+    }
+    frm.doc.custom_total_amount = totalAmount;
+    frm.set_value("custom_total_amount", totalAmount);
+    frm.refresh_field("custom_total_amount");
 }

@@ -5,7 +5,7 @@ from masar_miraaya.api import base_data
 from frappe import _
 from erpnext.selling.doctype.sales_order.sales_order  import make_sales_invoice 
 from frappe.utils import flt, cint
-
+import json
 
 def on_submit(self, method):
     # create_magento_sales_order(self)
@@ -13,7 +13,7 @@ def on_submit(self, method):
 
 
 def validate(self, method):
-    calculate_amount(self)
+    # calculate_amount(self)
     validation_payment_channel(self)
     
 def on_update_after_submit(self, method):
@@ -33,15 +33,9 @@ def create_sales_invoice(self):
     
 
 def validation_payment_channel(self):
-    p_amount = 0 
-    item_amount =0 
-    for payment in self.custom_payment_channels:
-        p_amount += payment.amount
-    for item in self.items:
-        item_amount += item.amount
-    if item_amount != p_amount:
+    if abs(float(self.custom_total_amount) - float(self.grand_total) ) > 0.001 :
         frappe.throw(
-            'The total amount for the item must match the total amount for the payment channels.'
+            'The total amount for the item must match the total amount for the payment channels with Cash on Delivery.'
             , title = _("Validation Error")
         )
         
@@ -157,12 +151,19 @@ def create_magento_sales_order(self):
     #     frappe.throw(str(f"Error Creating Sales Order in Magento: {e}"))
 
 @frappe.whitelist()
-def calculate_amount(self):
-    total = 0.0
-    for row in self.custom_payment_channels:
-        total += row.amount
+def get_payment_channel_amount(child):
+    payment_chnnel_amount = 0 
+    for row in json.loads(child):
+        payment_chnnel_amount += float(row.get('amount'))
+    return payment_chnnel_amount
+    
+# @frappe.whitelist()
+# def calculate_amount(self):
+#     total = 0.0
+#     for row in self.custom_payment_channels:
+#         total += row.amount
         
-    self.custom_total_amount = total
+#     self.custom_total_amount = total
 
 
 @frappe.whitelist()

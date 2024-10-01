@@ -59,8 +59,41 @@ def make_gl(self):
                 "voucher_type" : self.doctype , 
                 "voucher_no" : self.name
             }))
-        
+     
+     ################## Cash on Delivery 
+    account_delivery_sql = frappe.db.sql("""
+                        SELECT 
+                        tpa.account AS `customer_account`, 
+                        tpa2.account AS `customer_group_account`, 
+                        tc2.custom_receivable_payment_channel AS `company_account` 
+                        FROM tabCustomer tc 
+                        LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
+                        LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
+                        LEFT JOIN tabCompany tc2 ON tpa2.company = %s
+                        WHERE tc.name = %s
+            """, (self.company , sales_order.custom_delivery_company), as_dict = True)
+    if len(account_delivery_sql) != 0:
+            account_delivery = (account_delivery_sql[0]['customer_account'] or 
+                          account_delivery_sql[0]['customer_group_account'] or 
+                          account_delivery_sql[0]['company_account'])
+    else:
+            frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")  
             
+    if debit_account in ['', None]:
+            frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")
+    gl_entries.append(
+            self.get_gl_dict({
+                "account": account_delivery,
+                "against": company_account,
+                "debit_in_account_currency": sales_order.custom_cash_on_delivery_amount,
+                "debit":sales_order.custom_cash_on_delivery_amount,
+                "party_type": "Customer",
+                "party": sales_order.custom_delivery_company , 
+                "remarks": sales_order.custom_delivery_company + ' : ' + self.name,
+                "voucher_type" : self.doctype , 
+                "voucher_no" : self.name
+            })) 
+    ###########      
     gl_entries.append(
     self.get_gl_dict({
         "account": company_account,
