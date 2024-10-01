@@ -39,10 +39,10 @@ def make_gl(self):
             debit_account = (account[0]['customer_account'] or 
                           account[0]['customer_group_account'])
         else:
-            company_account = frappe.db.sql("""SELECT custom_receivable_payment_channel  AS company_account FROM tabCompany WHERE name = %s
+            company_account_sql = frappe.db.sql("""SELECT custom_receivable_payment_channel  AS company_account FROM tabCompany WHERE name = %s
                                """, (self.company) , as_dict = True )  
-            if len(company_account) != 0 :
-                    debit_account = company_account[0]['company_account']
+            if len(company_account_sql) != 0 :
+                    debit_account = company_account_sql[0]['company_account']
             
         if debit_account in ['', None]:
             frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")
@@ -74,10 +74,10 @@ def make_gl(self):
             account_delivery = (account_delivery_sql[0]['customer_account'] or 
                           account_delivery_sql[0]['customer_group_account'] )
     else:
-            company_account = frappe.db.sql("""SELECT custom_receivable_payment_channel  AS company_account FROM tabCompany WHERE name = %s
+            company_account_sql = frappe.db.sql("""SELECT custom_receivable_payment_channel  AS company_account FROM tabCompany WHERE name = %s
                                """, (self.company) , as_dict = True )  
-            if len(company_account) != 0 :
-                    debit_account = company_account[0]['company_account']
+            if len(company_account_sql) != 0 :
+                    debit_account = company_account_sql[0]['company_account']
             
     if debit_account in ['', None]:
             frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")
