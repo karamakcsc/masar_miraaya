@@ -204,12 +204,12 @@ def create_journal_entry(self):
                                 WHERE 
                                     tc.name = %s AND tc.custom_is_delivery = 1""", (self.custom_delivery_company), as_dict = True)
             if len(account) != 0:
-                if account and account[0]:
+                if account and account[0] and (account[0]['customer_account'] or account[0]['customer_group_account']):
                         credit_account = (account[0]['customer_account'] or 
                           account[0]['customer_group_account'])
             else:
                 company_account = frappe.db.sql("""SELECT custom_receivable_payment_channel  AS company_account FROM tabCompany WHERE name = %s
-                               """, (self.company) , as_dict = True )  
+                            """, (self.company) , as_dict = True )  
                 if len(company_account) != 0 :
                     credit_account = company_account[0]['company_account']
             if credit_account in ['', None]:
