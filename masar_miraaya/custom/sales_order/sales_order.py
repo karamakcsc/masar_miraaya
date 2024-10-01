@@ -187,8 +187,7 @@ def create_journal_entry(self):
                 return
             account = frappe.db.sql("""SELECT 
                                     tpa.account AS `customer_account`, 
-                                    tpa2.account AS `customer_group_account`, 
-                                    tc2.custom_receivable_payment_channel AS `company_account` 
+                                    tpa2.account AS `customer_group_account`
                                 FROM tabCustomer tc 
                                 INNER JOIN 
                                     `tabParty Account` tpa ON tpa.parent = tc.name 
@@ -196,20 +195,17 @@ def create_journal_entry(self):
                                     `tabCustomer Group` tcg ON tcg.name = tc.customer_group 
                                 LEFT JOIN 
                                     `tabParty Account` tpa2 ON tpa2.parent = tcg.name 
-                                        
-                                LEFT JOIN 
-                                    tabCompany tc2 ON tc2.name = %s 
-                                        
                                 WHERE 
-                                    tc.name = %s AND tc.custom_is_delivery = 1""", (self.company,self.custom_delivery_company), as_dict = True)
+                                    tc.name = %s AND tc.custom_is_delivery = 1""", (self.custom_delivery_company), as_dict = True)
             if len(account) != 0:
                 if account and account[0]:
                         credit_account = (account[0]['customer_account'] or 
-                          account[0]['customer_group_account'] or 
-                          account[0]['company_account'])
+                          account[0]['customer_group_account'])
             else:
-                frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")  
-                
+                company_account = frappe.db.sql("""SELECT custom_receivable_payment_channel  AS company_account FROM tabCompany WHERE name = %s
+                               """, (self.company) , as_dict = True )  
+                if len(company_account) != 0 :
+                    credit_account = company_account[0]['company_account']
             if credit_account in ['', None]:
                 frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")
             delivery_fees_doc = frappe.get_doc('Customer' ,self.custom_delivery_company)
