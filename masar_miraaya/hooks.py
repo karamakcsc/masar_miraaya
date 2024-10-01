@@ -376,7 +376,12 @@ fixtures = [
                 "Customer Group-custom_is_delivery" , 
                 "Customer Group-custom_is_payment_channel",
                 "Customer Group-custom_is_digital_wallet",
-                "Item Reorder-custom_max_qty"
+                "Item Reorder-custom_max_qty",
+                "Sales Order-custom_payment_channel_amount",
+                "Sales Order-custom_section_break_ztlst" , 
+                "Sales Order-custom_is_cash_on_delivery" , 
+                "Sales Order-custom_cash_on_delivery_amount" , 
+                "Sales Order-custom_column_break_lsta5"
             ]
         ]
     ]},
