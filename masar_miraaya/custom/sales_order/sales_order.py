@@ -198,10 +198,10 @@ def create_journal_entry(self):
                                     `tabParty Account` tpa2 ON tpa2.parent = tcg.name 
                                         
                                 LEFT JOIN 
-                                    tabCompany tc2 ON tpa2.company = tc2.name
+                                    tabCompany tc2 ON tc2.name = %s 
                                         
                                 WHERE 
-                                    tc.name = %s AND tc.custom_is_delivery = 1""", (self.custom_delivery_company), as_dict = True)
+                                    tc.name = %s AND tc.custom_is_delivery = 1""", (self.company,self.custom_delivery_company), as_dict = True)
             if len(account) != 0:
                 if account and account[0]:
                         credit_account = (account[0]['customer_account'] or 
