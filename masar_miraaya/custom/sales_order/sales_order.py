@@ -33,6 +33,12 @@ def create_sales_invoice(self):
     
 
 def validation_payment_channel(self):
+    if self.custom_total_amount is None or self.grand_total is None:
+        frappe.throw(
+            'Total amount or grand total is missing. Please ensure both values are provided.',
+            title=_("Validation Error")
+        )
+        
     if abs(float(self.custom_total_amount) - float(self.grand_total) ) > 0.001 :
         frappe.throw(
             'The total amount for the item must match the total amount for the payment channels with Cash on Delivery.'

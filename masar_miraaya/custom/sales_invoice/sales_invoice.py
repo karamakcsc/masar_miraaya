@@ -29,7 +29,7 @@ def make_gl(self):
         account = frappe.db.sql("""
                         SELECT 
                         tpa.account AS `customer_account`, 
-                        tpa2.account AS `customer_group_account` 
+                        tpa2.account AS `customer_group_account`
                         FROM tabCustomer tc 
                         LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
                         LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
@@ -39,7 +39,7 @@ def make_gl(self):
             debit_account = (account[0]['customer_account'] or 
                           account[0]['customer_group_account'])
         else:
-            debit_account = company_doc.custom_receivable_payment_channel
+            debit_account = frappe.db.get_value('Company',self.company,'custom_receivable_payment_channel')
             
         if debit_account in ['', None]:
             frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")
