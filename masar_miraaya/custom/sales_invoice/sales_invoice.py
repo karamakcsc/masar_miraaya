@@ -29,7 +29,7 @@ def make_gl(self):
         account = frappe.db.sql("""
                         SELECT 
                         tpa.account AS `customer_account`, 
-                        tpa2.account AS `customer_group_account`, 
+                        tpa2.account AS `customer_group_account` 
                         FROM tabCustomer tc 
                         LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
                         LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
@@ -64,7 +64,7 @@ def make_gl(self):
     account_delivery_sql = frappe.db.sql("""
                         SELECT 
                         tpa.account AS `customer_account`, 
-                        tpa2.account AS `customer_group_account`, 
+                        tpa2.account AS `customer_group_account` 
                         FROM tabCustomer tc 
                         LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
                         LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
