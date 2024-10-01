@@ -39,7 +39,10 @@ def make_gl(self):
             debit_account = (account[0]['customer_account'] or 
                           account[0]['customer_group_account'])
         else:
-            debit_account = frappe.db.get_value('Company',self.company,'custom_receivable_payment_channel')
+            debit_account_sql = frappe.db.sql("""SELECT custom_receivable_payment_channel  AS company_account FROM tabCompany WHERE name = %s
+                               """, (self.company) , as_dict = True )  
+            if len(debit_account_sql) != 0 :
+                    debit_account = debit_account_sql[0]['company_account']
             
         if debit_account in ['', None]:
             frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")
@@ -71,10 +74,12 @@ def make_gl(self):
             account_delivery = (account_delivery_sql[0]['customer_account'] or 
                           account_delivery_sql[0]['customer_group_account'] )
     else:
-            account_delivery = company_doc.custom_receivable_payment_channel
-            
+        delivery_sql = frappe.db.sql("""SELECT custom_receivable_payment_channel  AS company_account FROM tabCompany WHERE name = %s
+                               """, (self.company) , as_dict = True )  
+        if len(delivery_sql) != 0 :
+                    account_delivery = delivery_sql[0]['company_account']
     if account_delivery in ['', None]:
-            frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")
+            frappe.throw(f"Set Default Account in Customer: {sales_order.custom_delivery_company}, or Company: {self.company}")
     gl_entries.append(
             self.get_gl_dict({
                 "account": account_delivery,
