@@ -206,7 +206,7 @@ def create_journal_entry(self):
                                 WHERE 
                                     tc.name = %s AND tc.custom_is_delivery = 1""", (self.custom_delivery_company), as_dict = True)
             
-            
+            credit_account = None
             if account:
                 credit_account = account[0]['customer_account'] 
                 if credit_account is None:

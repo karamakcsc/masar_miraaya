@@ -36,6 +36,7 @@ def make_gl(self):
                         LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
                         WHERE tc.name = %s AND tc.custom_is_payment_channel = 1
             """, (row.channel), as_dict = True)
+        debit_account = None
         if account:
             debit_account = account[0]['customer_account']
             if debit_account is None:
@@ -68,7 +69,7 @@ def make_gl(self):
                         LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
                         WHERE tc.name = %s
             """, ( sales_order.custom_delivery_company), as_dict = True)
-
+    account_delivery = None
     if account_delivery_sql:
         account_delivery = account_delivery_sql[0]['customer_account'] 
         if account_delivery is None:
