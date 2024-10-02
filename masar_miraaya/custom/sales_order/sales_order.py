@@ -180,7 +180,9 @@ def create_journal_entry(self):
             frappe.msgprint(f"Journal Entry alerady Created for this Sales Order" ,alert=True , indicator='blue')
             return
         else:
-            debit_account_query = frappe.db.sql("SELECT tc.custom_cost_of_delivery , cost_center FROM tabCompany tc WHERE name = %s", (self.company), as_dict = True)
+            debit_account_query = frappe.db.sql("""SELECT tc.custom_cost_of_delivery , 
+                                        custom_receivable_payment_channel  AS company_account,
+                                        cost_center FROM tabCompany tc WHERE name = %s""", (self.company), as_dict = True)
             cost_center = self.cost_center if self.cost_center else debit_account_query[0]['cost_center']
             if cost_center in [ '' , 0 , None]:
                 frappe.throw("Set Cost Center in Sales Order or in Company as Defualt Cost Center.")
@@ -203,17 +205,18 @@ def create_journal_entry(self):
                                     `tabParty Account` tpa2 ON tpa2.parent = tcg.name 
                                 WHERE 
                                     tc.name = %s AND tc.custom_is_delivery = 1""", (self.custom_delivery_company), as_dict = True)
-            if len(account) != 0:
-                if account and account[0] and (account[0]['customer_account'] or account[0]['customer_group_account']):
-                        credit_account = (account[0]['customer_account'] or 
-                          account[0]['customer_group_account'])
-            else:
-                company_account = frappe.db.sql("""SELECT custom_receivable_payment_channel  AS company_account FROM tabCompany WHERE name = %s
-                            """, (self.company) , as_dict = True )  
-                if len(company_account) != 0 :
-                    credit_account = company_account[0]['company_account']
+            
+            
+            if account:
+                credit_account = account[0]['customer_account'] 
+                if credit_account is None:
+                    credit_account = account[0]['customer_group_account']
+            if  credit_account is None:
+                    credit_account = debit_account_query[0]['company_account']
+                        
             if credit_account in ['', None]:
                 frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")
+                
             delivery_fees_doc = frappe.get_doc('Customer' ,self.custom_delivery_company)
             delivery_fees = delivery_fees_doc.custom_delivery_fees
             if delivery_fees in[0 , None]:
@@ -243,6 +246,7 @@ def create_journal_entry(self):
             jv.save(ignore_permissions=True)
             jv.submit()
             frappe.msgprint(f"Journal Entry has been Created Successfully." ,alert=True , indicator='green')
+            
     if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
         exist_sales = frappe.db.sql("""
             SELECT 

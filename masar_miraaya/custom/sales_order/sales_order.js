@@ -16,6 +16,12 @@ frappe.ui.form.on('Sales Order', {
     },
     custom_payment_channel_amount:function(frm){
         GetTotalAmount(frm);
+    }, 
+    custom_is_cash_on_delivery: function(frm){
+        if (frm.doc.custom_is_cash_on_delivery === 0 ){
+        frm.set_value("custom_cash_on_delivery_amount", 0);
+        frm.refresh_field("custom_cash_on_delivery_amount");
+        }
     }
 });
 frappe.ui.form.on("Payment Channel Details", "amount", function(frm, cdt, cdn) {
