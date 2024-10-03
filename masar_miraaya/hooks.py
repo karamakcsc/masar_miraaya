@@ -407,7 +407,8 @@ fixtures = [
                     "Driver-main-naming_rule",
                     "Driver-naming_series-options",
                     "Driver-naming_series-default",
-                    "Driver-user-depends_on"
+                    "Driver-user-depends_on",
+                    "Sales Order-main-field_order"
                 ]
             ]
         ]
