@@ -181,6 +181,10 @@ doctype_js = {
    "Item": "custom/item/item.js"
 
 }
+
+doctype_list_js = {
+    "Journal Entry": "custom/journal_entry/journal_entry_list.js"
+}
 # Scheduled Tasks
 # ---------------
 
@@ -381,7 +385,11 @@ fixtures = [
                 "Sales Order-custom_section_break_ztlst" , 
                 "Sales Order-custom_is_cash_on_delivery" , 
                 "Sales Order-custom_cash_on_delivery_amount" , 
-                "Sales Order-custom_column_break_lsta5"
+                "Sales Order-custom_column_break_lsta5",
+                "Driver-custom_external_driver",
+                "Driver-custom_delivery_company",
+                "Sales Order-custom_driver",
+                "Sales Order-custom_driver_name"
             ]
         ]
     ]},
@@ -392,7 +400,14 @@ fixtures = [
                 "name",
                 "in",
                 [
-                    "Sales Order-main-links_order"
+                    "Sales Order-main-links_order",
+                    "Driver-transporter-hidden",
+                    "Driver-employee-depends_on",
+                    "Driver-main-field_order",
+                    "Driver-main-naming_rule",
+                    "Driver-naming_series-options",
+                    "Driver-naming_series-default",
+                    "Driver-user-depends_on"
                 ]
             ]
         ]

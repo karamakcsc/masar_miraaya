@@ -49,7 +49,6 @@ def validation_payment_channel(self):
 def create_magento_sales_order(self):
     base_url, headers = base_data("magento")
     
-    # try:
     customer_doc = frappe.get_doc('Customer', self.customer)
     customer_first_name = customer_doc.custom_first_name
     customer_last_name = customer_doc.custom_last_name
@@ -86,7 +85,8 @@ def create_magento_sales_order(self):
                 "name": item.item_name,
                 "sku": item.item_code,
                 "qty_ordered": item.qty,
-                "price": item.amount
+                "price": item.rate,
+                "discount": item.discount_amount
             }
             item_list.append(dict_items)
     else:
@@ -149,12 +149,10 @@ def create_magento_sales_order(self):
     url = f"{base_url}/rest/V1/orders" 
     
     response = requests.post(url, headers=headers, json=payload)
-    if response.status_code in [200, 201, 202, 203]:
-        frappe.msgprint("Sales Order Created Successfully in Magento")
+    if response.status_code == 200:
+        frappe.msgprint("Sales Order Created Successfully in Magento", alert=True , indicator='green')
     else:
-        frappe.throw(str(f"Error Creating Sales Order in Magento: {response.text}"))
-    # except Exception as e:
-    #     frappe.throw(str(f"Error Creating Sales Order in Magento: {e}"))
+        frappe.throw(str(f"Error Creating Sales Order in Magento: {str(response.text)}"))
 
 @frappe.whitelist()
 def get_payment_channel_amount(child):
