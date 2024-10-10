@@ -110,10 +110,10 @@ class WalletTopup(Document):
         elif self.transaction_type == 'Adjustment':
             debit_amount = abs(float(self.adjustment_amount))
             credit_amount = abs(float(self.adjustment_amount))
-            if self.adjustment_amount > 0 :
+            if self.action_type == "Credit":
                 debit_account = adj_account
                 credit_account = wallet_account
-            elif self.adjustment_amount < 0 :
+            elif self.action_type ==  "Debit":
                 credit_account = adj_account
                 debit_account = wallet_account
         jv = frappe.new_doc("Journal Entry")
