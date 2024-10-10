@@ -8,16 +8,17 @@
  "field_order": [
   "customer_information_section",
   "customer",
+  "customer_id",
   "email",
-  "section_break_tbnx",
-  "quantity",
-  "subtotal",
-  "applied_cupon",
-  "column_break_iabh",
-  "created_at",
-  "updated_at",
+  "column_break_nnrp",
+  "posting_date",
   "items_section",
   "items",
+  "section_break_tbnx",
+  "quantity",
+  "column_break_iabh",
+  "subtotal",
+  "applied_cupon",
   "section_break_tair",
   "naming_series"
  ],
@@ -57,17 +58,6 @@
    "label": "Applied Cupon"
   },
   {
-   "default": "Today",
-   "fieldname": "created_at",
-   "fieldtype": "Datetime",
-   "label": "Created At"
-  },
-  {
-   "fieldname": "updated_at",
-   "fieldtype": "Datetime",
-   "label": "Updated At"
-  },
-  {
    "fieldname": "customer_information_section",
    "fieldtype": "Section Break",
    "label": "Customer Information"
@@ -96,11 +86,28 @@
    "hidden": 1,
    "label": "Naming series",
    "options": "ABD_CRT-.MM.-.####"
+  },
+  {
+   "fieldname": "column_break_nnrp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "customer.custom_customer_id",
+   "fieldname": "customer_id",
+   "fieldtype": "Data",
+   "label": "Customer ID",
+   "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-04 12:01:25.854174",
+ "modified": "2024-10-10 13:02:51.966491",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Abandoned Cart",
@@ -116,6 +123,17 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "API Integration",
    "share": 1,
    "write": 1
   }

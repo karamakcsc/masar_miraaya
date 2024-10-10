@@ -17,19 +17,17 @@ def validate(self, method):
     validation_payment_channel(self)
     
 def on_update_after_submit(self, method):
-    create_journal_entry(self)
+    if self.custom_magento_status == 'On the Way' and self.docstatus == 1:
+        create_journal_entry(self)
+        create_stock_entry(self)
+    if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
+        create_sales_invoice(self)
     # if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
     #     create_sales_invoice(self)
     
 def on_cancel(self , method):
     cancel_linked_jv(self)
     
-def create_sales_invoice(self):
-    doclist = make_sales_invoice(self.name, ignore_permissions=True)
-    doclist.flags.ignore_mandatory = True
-    doclist.insert(ignore_permissions = True)
-    # frappe.throw(str(doclist.as_dict()))
-    # doclist.submit()
     
 
 def validation_payment_channel(self):
@@ -172,7 +170,6 @@ def get_payment_channel_amount(child):
 
 @frappe.whitelist()
 def create_journal_entry(self):
-    if self.custom_magento_status == 'On the Way' and self.docstatus == 1:
         linked_jv_sql = frappe.db.sql("SELECT name FROM `tabJournal Entry` WHERE custom_reference_doctype = %s" , (self.name) , as_dict= True)
         if (linked_jv_sql and linked_jv_sql[0] and linked_jv_sql[0]['name']):
             frappe.msgprint(f"Journal Entry alerady Created for this Sales Order" ,alert=True , indicator='blue')
@@ -245,7 +242,7 @@ def create_journal_entry(self):
             jv.submit()
             frappe.msgprint(f"Journal Entry has been Created Successfully." ,alert=True , indicator='green')
             
-    if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
+def create_sales_invoice(self):
         exist_sales = frappe.db.sql("""
             SELECT 
                 tsi.name, tsi.docstatus FROM `tabSales Invoice` tsi
@@ -259,6 +256,9 @@ def create_journal_entry(self):
             doc = make_sales_invoice(self.name)
             doc.update_stock = 1
             if doc.items: 
+                for item in doc.items:
+                    item.to_driver = self.custom_driver
+                    # item.to_delivery_company = self.custom_delivery_company 
                 doc.save()
                 doc.submit()
             frappe.msgprint(f'Sales Invoice {doc.name} has been created and submitted.', alert=True, indicator='green')
@@ -274,16 +274,13 @@ def create_journal_entry(self):
                 doc = make_sales_invoice(self.name)
                 doc.update_stock = 1
                 if doc.items: 
+                    for item in doc.items:
+                        item.to_driver = self.custom_driver
+                        # item.to_delivery_company = self.custom_delivery_company 
                     doc.save()
                     doc.submit()
                 frappe.msgprint(f'Sales Invoice {existing_invoice["name"]} was canceled.New Invoice has been Created.', alert=True, indicator='orange')
-                        
-    else:
-        frappe.msgprint('The status is not "Delivered" or the document is not submitted.', alert=True, indicator='orange')
-
-
-        
-           
+       
 
 def cancel_linked_jv(self):
     linked_jv_sql = frappe.db.sql("SELECT name FROM `tabJournal Entry` WHERE custom_reference_doctype = %s" , (self.name) , as_dict= True)
@@ -299,3 +296,29 @@ def cancel_linked_jv(self):
             msg+=f'<li>Journal Entry : <b>{jv_linked}</b></li>'
         msg+= '</ul>'
         frappe.msgprint(msg , title=_("Linked Journal Entry") , indicator='red')
+
+
+def create_stock_entry(self):
+    se_type = 'Material Transfer'
+    se_target = 'Delivery - KCSC'
+    stock_setting = frappe.get_doc('Stock Settings')
+    setting_source = stock_setting.default_warehouse
+    se = frappe.new_doc('Stock Entry')
+    se.stock_entry_type = se_type
+    for item in self.items:
+        data = {
+            's_warehouse' : item.warehouse if item.warehouse else setting_source , 
+            't_warehouse' : se_target , 
+            'item_code'  : item.item_code , 
+            'item_name' : item.item_name , 
+            'qty' : item.qty , 
+            'uom':item.uom ,
+            'to_driver' :self.custom_driver
+            # 'to_delivery_company' : self.custom_delivery_company 
+        }
+        se.append('items' , data)
+    se.save(ignore_permissions = True)
+    se.submit()
+
+
+

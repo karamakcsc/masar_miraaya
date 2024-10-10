@@ -10,6 +10,7 @@
   "naming_series",
   "customer",
   "customer_name",
+  "customer_id",
   "amended_from",
   "company",
   "column_break_rftt",
@@ -17,6 +18,7 @@
   "transaction_type",
   "digital_wallet",
   "wallet_adjustment_account",
+  "action_type",
   "section_break_fpqy",
   "gift_card_no",
   "lp_balance",
@@ -291,6 +293,22 @@
   {
    "fieldname": "column_break_emgh",
    "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "customer.custom_customer_id",
+   "fieldname": "customer_id",
+   "fieldtype": "Data",
+   "label": "Customer ID",
+   "read_only": 1
+  },
+  {
+   "default": "Credit",
+   "depends_on": "eval: (doc.transaction_type == \"Adjustment\")",
+   "fieldname": "action_type",
+   "fieldtype": "Select",
+   "label": "Action Type",
+   "mandatory_depends_on": "eval: (doc.transaction_type == \"Adjustment\")",
+   "options": "\nCredit\nDebit"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -302,7 +320,7 @@
    "link_fieldname": "custom_reference_doctype"
   }
  ],
- "modified": "2024-09-25 00:00:33.779746",
+ "modified": "2024-10-07 15:59:30.270199",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Wallet Top-up",

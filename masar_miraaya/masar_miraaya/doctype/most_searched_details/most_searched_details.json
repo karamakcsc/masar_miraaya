@@ -1,28 +1,26 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2024-09-04 11:31:34.075838",
+ "creation": "2024-10-10 14:58:30.901777",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "item_code",
+  "item",
   "item_name",
-  "column_break_dgqu",
-  "quantity",
-  "price"
+  "item_id"
  ],
  "fields": [
   {
-   "fieldname": "item_code",
+   "fieldname": "item",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Item Code",
+   "label": "Item",
    "options": "Item",
    "reqd": 1
   },
   {
-   "fetch_from": "item_code.item_name",
+   "fetch_from": "item.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -30,29 +28,20 @@
    "read_only": 1
   },
   {
-   "fieldname": "quantity",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "Quantity Ordered"
-  },
-  {
-   "fieldname": "price",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Price"
-  },
-  {
-   "fieldname": "column_break_dgqu",
-   "fieldtype": "Column Break"
+   "fetch_from": "item.custom_item_id",
+   "fieldname": "item_id",
+   "fieldtype": "Data",
+   "label": "Item ID",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-10 12:35:03.147600",
+ "modified": "2024-10-10 15:02:09.871745",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
- "name": "Abandoned Cart Items",
+ "name": "Most Searched Details",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",

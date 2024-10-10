@@ -1,39 +1,49 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:{item} - {title}",
  "creation": "2024-09-04 11:38:56.693549",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "customer",
+  "customer_id",
   "nickname",
   "column_break_rbtl",
   "item",
+  "item_id",
   "rating",
   "section_break_rtap",
+  "title",
   "summary",
   "review",
-  "review_id",
-  "title",
-  "vote_id"
+  "vote_id",
+  "review_id"
  ],
  "fields": [
   {
    "fieldname": "item",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Item",
-   "options": "Item"
+   "options": "Item",
+   "reqd": 1
   },
   {
    "fieldname": "customer",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Customer",
-   "options": "Customer"
+   "options": "Customer",
+   "reqd": 1
   },
   {
    "fieldname": "rating",
    "fieldtype": "Rating",
-   "label": "Rating"
+   "in_list_view": 1,
+   "label": "Rating",
+   "options": "5",
+   "reqd": 1
   },
   {
    "fieldname": "nickname",
@@ -48,7 +58,8 @@
   {
    "fieldname": "review",
    "fieldtype": "Small Text",
-   "label": "Review"
+   "label": "Review",
+   "reqd": 1
   },
   {
    "fieldname": "review_id",
@@ -58,7 +69,9 @@
   {
    "fieldname": "title",
    "fieldtype": "Data",
-   "label": "Title"
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
   },
   {
    "fieldname": "vote_id",
@@ -72,14 +85,29 @@
   {
    "fieldname": "section_break_rtap",
    "fieldtype": "Section Break"
+  },
+  {
+   "fetch_from": "customer.custom_customer_id",
+   "fieldname": "customer_id",
+   "fieldtype": "Data",
+   "label": "Customer ID",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "item.custom_item_id",
+   "fieldname": "item_id",
+   "fieldtype": "Data",
+   "label": "Item ID",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-04 11:46:07.913534",
+ "modified": "2024-10-10 11:48:06.463949",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Item Reviews",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -91,6 +119,17 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "API Integration",
    "share": 1,
    "write": 1
   }

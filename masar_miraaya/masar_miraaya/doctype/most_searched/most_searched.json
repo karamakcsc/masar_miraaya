@@ -1,0 +1,112 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2024-09-04 11:48:26.801429",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "search_section",
+  "search_term",
+  "search_type",
+  "column_break_fcix",
+  "search_count",
+  "posting_date",
+  "items_section",
+  "items",
+  "section_break_xane",
+  "naming_series"
+ ],
+ "fields": [
+  {
+   "fieldname": "search_section",
+   "fieldtype": "Section Break",
+   "label": "Search"
+  },
+  {
+   "fieldname": "section_break_xane",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "MST-SRCH-.MM.-"
+  },
+  {
+   "fieldname": "search_term",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Search Term",
+   "reqd": 1
+  },
+  {
+   "fieldname": "search_count",
+   "fieldtype": "Int",
+   "label": "Search Count"
+  },
+  {
+   "fieldname": "column_break_fcix",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date"
+  },
+  {
+   "fieldname": "search_type",
+   "fieldtype": "Data",
+   "label": "Search Type"
+  },
+  {
+   "fieldname": "items_section",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Most Searched Details"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-10-10 15:13:59.425972",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Most Searched",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "API Integration",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

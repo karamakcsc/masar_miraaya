@@ -169,6 +169,9 @@ doc_events = {
     },
     "Item Alternative": {
         "validate": "masar_miraaya.custom.item_alternative.item_alternative.validate"
+    },
+    "Purchase Receipt": {
+        "on_submit": "masar_miraaya.custom.purchase_receipt.purchase_receipt.on_submit"
     }
 }
 

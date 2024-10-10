@@ -5,13 +5,16 @@ import frappe
 from masar_miraaya.api import base_data
 from frappe import _
 from frappe.model.document import Document
+import requests
+import json
 
 class WalletTopup(Document):
     def validate(self):
         self.get_digital_wallet_account()
         self.get_accounts_form_company(with_cost_center=False)
     def on_submit(self):
-            self.create_journal_entry()
+        #self.adjust_amount_to_wallet_magento()
+        self.create_journal_entry()
         
     def get_accounts_form_company(self , with_cost_center):
         account = frappe.db.sql("""
@@ -150,3 +153,47 @@ class WalletTopup(Document):
         jv.save(ignore_permissions=True)
         jv.submit()
         frappe.msgprint(f"Journal Entry has been Created Successfully." ,alert=True , indicator='green')
+        
+        
+        
+    def adjust_amount_to_wallet_magento(self):
+        base_url, headers = base_data("magento")
+        url = base_url + "/graphql"
+        
+        action_type = None
+        wallet_amount = 0        
+        
+        if self.transaction_type != "Adjustment":
+            action_type = "credit"
+            wallet_amount = self.topup_amount
+        elif self.transaction_type == "Adjustment":
+            wallet_amount = self.adjustment_amount
+            if self.action_type == "Credit":
+                action_type = "credit"
+            elif self.action_type ==  "Debit":
+                action_type = "debit"
+        
+        payload = {
+            "query": f"""
+            mutation {{
+                adjustamounttowallet(
+                    customerIds: "{self.customer_id}"
+                    walletamount: {wallet_amount}
+                    walletactiontype: "{action_type}"
+                    walletnote: "{self.user_remarks}"
+                ) {{
+                    message
+                }}
+            }}
+            """
+        }
+        
+        response = requests.post(url, headers=headers, json=payload)
+        json_response = response.json()
+        if response.status_code == 200:
+            if 'errors' in json_response:
+                frappe.throw(f"Failed to Update Wallet in Magento.")
+            else:
+                frappe.msgprint(f"Wallet Updated Successfully for Customer: {self.customer} With Amount: {wallet_amount}. in Magento", alert=True, indicator='green')
+        else:
+            frappe.throw(f"Failed to Update Wallet. {str(response.text)}")
