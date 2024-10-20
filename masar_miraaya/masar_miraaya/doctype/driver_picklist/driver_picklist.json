@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-10-17 11:31:01.713257",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sales_order",
+  "column_break_tfzp",
+  "driver",
+  "section_break_bswy",
+  "items",
+  "editor",
+  "section_break_qwki",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_qwki",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Driver Picklist",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "link_filters": "[[\"Sales Order\",\"custom_magento_status\",\"=\",\"On the Way\"],[\"Sales Order\",\"custom_driver\",\"=\",\"eval:doc.driver\"]]",
+   "options": "Sales Order"
+  },
+  {
+   "fieldname": "column_break_tfzp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "driver",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Driver",
+   "options": "Driver",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_bswy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "HTML",
+   "label": "Items",
+   "options": "{{ doc.editor }}"
+  },
+  {
+   "fieldname": "editor",
+   "fieldtype": "HTML Editor",
+   "hidden": 1,
+   "in_preview": 1,
+   "label": "Editor",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-10-17 15:32:53.061350",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Driver Picklist",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

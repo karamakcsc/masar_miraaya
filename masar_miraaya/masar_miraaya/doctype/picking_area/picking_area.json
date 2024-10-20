@@ -1,0 +1,123 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2024-10-16 16:21:56.933737",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "sales_order",
+  "customer_name",
+  "column_break_ncpi",
+  "posting_date",
+  "delivery_company",
+  "driver",
+  "section_break_nlrx",
+  "items",
+  "section_break_wh2k",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_wh2k",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Picking Area",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Sales Order",
+   "link_filters": "[[\"Sales Order\",\"custom_magento_status\",\"=\",\"On the Way\"]]",
+   "options": "Sales Order",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ncpi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "driver",
+   "fieldtype": "Link",
+   "label": "Driver",
+   "link_filters": "[[\"Driver\",\"status\",\"=\",\"Active\"]]",
+   "options": "Driver"
+  },
+  {
+   "fieldname": "section_break_nlrx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Picking Area Item"
+  },
+  {
+   "default": "PA-.YYYY.-.MM.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "PA-.YYYY.-.MM.-"
+  },
+  {
+   "fieldname": "delivery_company",
+   "fieldtype": "Link",
+   "label": "Delivery Company",
+   "link_filters": "[[\"Customer\",\"custom_is_delivery\",\"=\",1]]",
+   "options": "Customer"
+  },
+  {
+   "fetch_from": "sales_order.customer_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-10-16 17:08:46.457545",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Picking Area",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

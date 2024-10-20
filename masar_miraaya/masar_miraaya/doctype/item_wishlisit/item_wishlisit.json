@@ -8,21 +8,25 @@
  "field_order": [
   "customer",
   "posting_date",
+  "wishlist_id",
   "column_break_bfsm",
   "customer_id",
-  "days_in_wishlist",
+  "store_id",
+  "disabled",
   "items_section",
   "items",
   "description_section",
   "description",
   "section_break_mydi",
-  "naming_series"
+  "naming_series",
+  "amended_from"
  ],
  "fields": [
   {
    "fieldname": "customer",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Customer",
    "options": "Customer",
    "reqd": 1
@@ -43,11 +47,6 @@
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "label": "Posting Date"
-  },
-  {
-   "fieldname": "days_in_wishlist",
-   "fieldtype": "Data",
-   "label": "Days in Wishlist"
   },
   {
    "fieldname": "items_section",
@@ -80,11 +79,41 @@
    "hidden": 1,
    "label": "Naming Series",
    "options": "ITEM_WISH-.####"
+  },
+  {
+   "fieldname": "wishlist_id",
+   "fieldtype": "Data",
+   "label": "Magento Wishlist ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Item Wishlisit",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "store_id",
+   "fieldtype": "Data",
+   "label": "Magento Store ID",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2024-10-10 12:53:11.852568",
+ "modified": "2024-10-20 11:49:21.305265",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Item Wishlisit",
