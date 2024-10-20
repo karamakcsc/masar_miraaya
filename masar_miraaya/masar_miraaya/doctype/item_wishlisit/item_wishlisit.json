@@ -113,7 +113,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-20 11:49:21.305265",
+ "modified": "2024-10-20 12:02:53.903924",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Item Wishlisit",
@@ -141,6 +141,7 @@
    "report": 1,
    "role": "API Integration",
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],
