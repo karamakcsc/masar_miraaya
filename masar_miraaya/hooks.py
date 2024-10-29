@@ -368,7 +368,6 @@ fixtures = [
                 "Customer-custom_prefix",
                 "Customer-custom_suffix",
                 "Item Alternative-custom_is_publish",
-                "Customer-custom_delivery_fees",
                 "Sales Order-custom_delivery_fees",
                 "Journal Entry-custom_reference_document",
                 "Journal Entry-custom_reference_doctype",
@@ -392,7 +391,10 @@ fixtures = [
                 "Driver-custom_external_driver",
                 "Driver-custom_delivery_company",
                 "Sales Order-custom_driver",
-                "Sales Order-custom_driver_name"
+                "Sales Order-custom_driver_name",
+                "Sales Order-custom_delivery_time",
+                "Customer-custom_delivery_cost",
+                "Sales Order-custom_delivery_cost"
             ]
         ]
     ]},

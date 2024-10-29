@@ -212,10 +212,10 @@ def create_journal_entry(self):
             if credit_account in ['', None]:
                 frappe.throw(f"Set Default Account in Customer: {self.custom_delivery_company}, or Company: {self.company}")
                 
-            delivery_fees_doc = frappe.get_doc('Customer' ,self.custom_delivery_company)
-            delivery_fees = delivery_fees_doc.custom_delivery_fees
-            if delivery_fees in[0 , None]:
-                frappe.throw(f"Set Delivery Fees in Customer:{self.custom_delivery_company}")
+            delivery_cost_doc = frappe.get_doc('Customer' ,self.custom_delivery_company)
+            delivery_cost = delivery_cost_doc.custom_delivery_cost
+            if delivery_cost in[0 , None]:
+                frappe.throw(f"Set Delivery Cost in Customer:{self.custom_delivery_company}")
             jv = frappe.new_doc("Journal Entry")
             jv.posting_date = self.transaction_date
             jv.company = self.company
@@ -223,15 +223,15 @@ def create_journal_entry(self):
             jv.custom_reference_doctype = self.name
             debit_accounts = {
                 "account": debit_account,
-                "debit_in_account_currency": float(delivery_fees),
-                "debit" : float(delivery_fees),
+                "debit_in_account_currency": float(delivery_cost),
+                "debit" : float(delivery_cost),
                 "cost_center": cost_center,
                 "is_advance": "Yes"
             }
             credit_accounts = {
                 "account": credit_account,
-                "credit_in_account_currency": float(delivery_fees),
-                "credit" : float(delivery_fees),
+                "credit_in_account_currency": float(delivery_cost),
+                "credit" : float(delivery_cost),
                 "party_type": "Customer",
                 "party": self.custom_delivery_company,
                 "cost_center": cost_center,
@@ -300,7 +300,8 @@ def cancel_linked_jv(self):
 
 def create_stock_entry(self):
     se_type = 'Material Transfer'
-    se_target = 'Delivery - KCSC'
+    warehouse = frappe.db.sql(" SELECT name FROM tabWarehouse WHERE warehouse_type = 'Transit' ", as_dict=True)
+    se_target = warehouse[0]['name']
     stock_setting = frappe.get_doc('Stock Settings')
     setting_source = stock_setting.default_warehouse
     se = frappe.new_doc('Stock Entry')
