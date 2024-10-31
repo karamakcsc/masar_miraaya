@@ -59,38 +59,39 @@ def make_gl(self):
                 "voucher_no" : self.name
             }))
      
-     ################## Cash on Delivery 
-    account_delivery_sql = frappe.db.sql("""
-                        SELECT 
-                        tpa.account AS `customer_account`, 
-                        tpa2.account AS `customer_group_account` 
-                        FROM tabCustomer tc 
-                        LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
-                        LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
-                        WHERE tc.name = %s
-            """, ( sales_order.custom_delivery_company), as_dict = True)
-    account_delivery = None
-    if account_delivery_sql:
-        account_delivery = account_delivery_sql[0]['customer_account'] 
-        if account_delivery is None:
-            account_delivery = account_delivery_sql[0]['customer_group_account'] 
-    if account_delivery is None :
-         account_delivery = ch_acc_sql[0]['company_account']
-               
-    if account_delivery in ['', None]:
-            frappe.throw(f"Set Default Account in Customer: {sales_order.custom_delivery_company}, or Company: {self.company}")
-    gl_entries.append(
-            self.get_gl_dict({
-                "account": account_delivery,
-                "against": company_account,
-                "debit_in_account_currency": sales_order.custom_cash_on_delivery_amount,
-                "debit":sales_order.custom_cash_on_delivery_amount,
-                "party_type": "Customer",
-                "party": sales_order.custom_delivery_company , 
-                "remarks": sales_order.custom_delivery_company + ' : ' + self.name,
-                "voucher_type" : self.doctype , 
-                "voucher_no" : self.name
-            })) 
+     ################## Cash on Delivery
+    if sales_order.custom_is_cash_on_delivery:
+        account_delivery_sql = frappe.db.sql("""
+                            SELECT 
+                            tpa.account AS `customer_account`, 
+                            tpa2.account AS `customer_group_account` 
+                            FROM tabCustomer tc 
+                            LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
+                            LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
+                            WHERE tc.name = %s
+                """, ( sales_order.custom_delivery_company), as_dict = True)
+        account_delivery = None
+        if account_delivery_sql:
+            account_delivery = account_delivery_sql[0]['customer_account'] 
+            if account_delivery is None:
+                account_delivery = account_delivery_sql[0]['customer_group_account'] 
+        if account_delivery is None :
+            account_delivery = ch_acc_sql[0]['company_account']
+                
+        if account_delivery in ['', None]:
+                frappe.throw(f"Set Default Account in Customer: {sales_order.custom_delivery_company}, or Company: {self.company}")
+        gl_entries.append(
+                self.get_gl_dict({
+                    "account": account_delivery,
+                    "against": company_account,
+                    "debit_in_account_currency": sales_order.custom_cash_on_delivery_amount,
+                    "debit":sales_order.custom_cash_on_delivery_amount,
+                    "party_type": "Customer",
+                    "party": sales_order.custom_delivery_company , 
+                    "remarks": sales_order.custom_delivery_company + ' : ' + self.name,
+                    "voucher_type" : self.doctype , 
+                    "voucher_no" : self.name
+                })) 
     ###########      
     gl_entries.append(
     self.get_gl_dict({

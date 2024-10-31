@@ -4,6 +4,7 @@ from datetime import date
 from masar_miraaya.api import base_data
 from frappe import _
 from erpnext.selling.doctype.sales_order.sales_order  import make_sales_invoice 
+from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_sales_return
 from frappe.utils import flt, cint
 import json
 
@@ -17,18 +18,38 @@ def validate(self, method):
     validation_payment_channel(self)
     
 def on_update_after_submit(self, method):
-    if self.custom_magento_status == 'On the Way' and self.docstatus == 1:
-        create_journal_entry(self)
-        create_stock_entry(self)
-    if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
-        create_sales_invoice(self)
-    # if self.custom_magento_status == 'Delivered' and self.docstatus == 1:
-    #     create_sales_invoice(self)
+    if  self.docstatus == 1:
+        # if self.custom_magento_status == 'Fullfilled':
+        #     create_material_request(self)
+        if self.custom_magento_status == 'On the Way':
+            create_journal_entry(self)
+            create_stock_entry(self)
+        if self.custom_magento_status == 'Delivered':
+            create_sales_invoice(self)
+        # if self.custom_magento_status == 'Cancelled' :
+        #     return_sales_invoice(self)
     
 def on_cancel(self , method):
     cancel_linked_jv(self)
-    
-    
+
+def return_sales_invoice(self):
+    sii = frappe.qb.DocType('Sales Invoice Item')
+    si = frappe.qb.DocType('Sales Invoice')
+    exist_si = (frappe.qb.from_(si)
+                .join(sii).on(sii.parent == si.name)
+                .select(si.name)
+                .where(sii.sales_order == self.name)
+                .where(si.docstatus == 1 )
+            ).run(as_dict = True)
+    lst_si = [si_loop.name for si_loop in exist_si if si_loop.name]
+    return_set = set(lst_si)
+    # frappe.throw(str(return_set))
+    for return_si in list(return_set):
+        cr_note = make_sales_return(return_si)
+        if cr_note:
+            cr_note.save()
+            cr_note.submit()
+
 
 def validation_payment_channel(self):
     if self.custom_total_amount is None or self.grand_total is None:
@@ -323,3 +344,55 @@ def create_stock_entry(self):
 
 
 
+def create_material_request(self):
+    tmr = frappe.qb.DocType('Material Request')
+    tmri = frappe.qb.DocType('Material Request Item')
+    exist_material_request = (
+        frappe.qb.from_(tmr)
+        .join(tmri).on(tmr.name == tmri.parent)
+        .where(tmri.sales_order == self.name)
+        .where(tmr.docstatus == 1 )
+        .select(tmr.name)
+    ).run()
+    if exist_material_request and len(exist_material_request) !=0 :
+        frappe.msgprint(f'Material Request already created and submitted.', alert=True, indicator='blue')
+        return
+    warehouse = frappe.db.sql(" SELECT name FROM tabWarehouse WHERE warehouse_type = 'Transit' ", as_dict=True)
+    target_warehouse = warehouse[0]['name']
+    mr = frappe.new_doc('Material Request')
+    mr.material_request_type = 'Material Transfer'
+    schedule_date = self.transaction_date
+    mr.transaction_date = self.transaction_date
+    mr.schedule_date = schedule_date
+    conversion_factor = 1 
+    for r in self.items: 
+        item = frappe.get_doc('Item' ,r.item_code )
+        if len(item.uoms) !=0:
+            for uom in item.uoms:
+                if uom.uom == r.uom:
+                    conversion_factor = uom.conversion_factor
+        if len(item.item_defaults) !=0 : 
+            item_defaults = (item.item_defaults)[0].as_dict()
+            source_warehouse = item_defaults['default_warehouse']
+        else:
+            stock_setting = frappe.get_doc('Stock Settings')
+            source_warehouse = stock_setting.default_warehouse
+        data = {
+            'item_code' : r.item_code,
+            'item_name': r.item_name,
+            'schedule_date':schedule_date,
+            'description': r.description, 
+            'qty' : r.qty,
+            'uom': r.uom, 
+            'conversion_factor' : conversion_factor , 
+            'stock_qty' : r.qty * conversion_factor,
+            'from_warehouse' : source_warehouse , 
+            'warehouse' : target_warehouse,
+            'rate' : r.rate , 
+            'amount' : r.rate * r.qty ,
+            'sales_order' : self.name
+        }
+        mr.append('items' , data)
+    mr.save(ignore_permissions = True)
+    mr.submit()
+    

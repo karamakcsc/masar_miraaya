@@ -9,16 +9,20 @@
   "customer",
   "customer_id",
   "nickname",
+  "title",
   "column_break_rbtl",
   "item",
+  "item_name",
   "item_id",
   "rating",
   "section_break_rtap",
-  "title",
   "summary",
   "review",
+  "section_break_sqtz",
   "vote_id",
-  "review_id"
+  "column_break_tnhb",
+  "review_id",
+  "amended_from"
  ],
  "fields": [
   {
@@ -84,7 +88,8 @@
   },
   {
    "fieldname": "section_break_rtap",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Comments"
   },
   {
    "fetch_from": "customer.custom_customer_id",
@@ -99,11 +104,37 @@
    "fieldtype": "Data",
    "label": "Item ID",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_sqtz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_tnhb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Item Reviews",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "item.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2024-10-10 11:48:06.463949",
+ "modified": "2024-10-30 10:50:16.964793",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Item Reviews",
