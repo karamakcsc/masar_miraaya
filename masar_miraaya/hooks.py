@@ -146,7 +146,7 @@ doc_events = {
         "validate" : "masar_miraaya.custom.price_list.price_list.validate"
     },
     "Sales Order": {
-        "on_submit": "masar_miraaya.custom.sales_order.sales_order.on_submit",
+        # "on_submit": "masar_miraaya.custom.sales_order.sales_order.on_submit",
         "validate" : "masar_miraaya.custom.sales_order.sales_order.validate",
         "on_update_after_submit": "masar_miraaya.custom.sales_order.sales_order.on_update_after_submit", 
         "on_cancel": "masar_miraaya.custom.sales_order.sales_order.on_cancel"
@@ -172,6 +172,9 @@ doc_events = {
     },
     "Purchase Receipt": {
         "on_submit": "masar_miraaya.custom.purchase_receipt.purchase_receipt.on_submit"
+    },
+    "Delivery Note": { 
+        "on_submit": "masar_miraaya.custom.delivery_note.delivery_note.on_submit"
     }
 }
 
@@ -364,6 +367,7 @@ fixtures = [
                 "Company-custom_gift_card_deferred_account",
                 "Company-custom_compensation_expense_account",
                 "Company-custom_lp_expense_account",
+                "Company-custom_default_cash_on_delivery_account",
                 "custom_digital_wallet_account", 
                 "Customer Group-custom_is_delivery" , 
                 "Customer Group-custom_is_payment_channel",
