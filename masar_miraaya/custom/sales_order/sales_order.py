@@ -8,7 +8,7 @@ import json
 def get_payment_channel_amount(child):
     payment_chnnel_amount = 0 
     for row in json.loads(child):
-        payment_chnnel_amount += float(row.get('amount'))
+        payment_chnnel_amount += float(row.get('amount') if ( row.get('amount') and row.get('amount') is not None ) else 0 )
     return payment_chnnel_amount
 
 def validate(self, method):
