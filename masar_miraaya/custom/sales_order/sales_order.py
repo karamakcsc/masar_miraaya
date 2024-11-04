@@ -187,13 +187,12 @@ def create_sales_invoice(self):
                 )
 
 
-
-
+def on_submit(self, method):
+    create_payment_channel_jv(self)
+    create_sales_invoice(self)
+    
 def on_update_after_submit(self, method):
         if  self.docstatus == 1:
-            if self.custom_magento_status == 'New':
-                create_payment_channel_jv(self)
-                create_sales_invoice(self)
             if self.custom_magento_status == 'On the Way':
                 create_delivery_company_jv(self)
             if self.custom_magento_status == 'Fullfilled':

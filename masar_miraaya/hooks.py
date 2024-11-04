@@ -146,10 +146,10 @@ doc_events = {
         "validate" : "masar_miraaya.custom.price_list.price_list.validate"
     },
     "Sales Order": {
-        # "on_submit": "masar_miraaya.custom.sales_order.sales_order.on_submit",
+        "on_submit": "masar_miraaya.custom.sales_order.sales_order.on_submit",
         "validate" : "masar_miraaya.custom.sales_order.sales_order.validate",
         "on_update_after_submit": "masar_miraaya.custom.sales_order.sales_order.on_update_after_submit", 
-        "on_cancel": "masar_miraaya.custom.sales_order.sales_order.on_cancel"
+        # "on_cancel": "masar_miraaya.custom.sales_order.sales_order.on_cancel"
     },
     "File": { 
         "validate" : "masar_miraaya.custom.file.file.validate",
