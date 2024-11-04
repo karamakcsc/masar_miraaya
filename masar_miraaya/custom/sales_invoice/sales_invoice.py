@@ -132,6 +132,8 @@ def make_gl(self):
                         "debit_in_account_currency":abs(sales_order.custom_cash_on_delivery_amount),
                         "debit": abs(sales_order.custom_cash_on_delivery_amount),
                         "cost_center": cost_center,
+                        "party_type": "Customer",
+                        "party": self.customer,
                         "remarks": self.name,
                         "voucher_type" : self.doctype , 
                         "voucher_no" : self.name
