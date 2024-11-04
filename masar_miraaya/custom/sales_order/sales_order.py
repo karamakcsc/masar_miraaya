@@ -1,6 +1,7 @@
 import frappe
 from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice , make_delivery_note , update_status
 from erpnext.controllers.sales_and_purchase_return import make_return_doc
+from erpnext.accounts.doctype.journal_entry.journal_entry import make_reverse_journal_entry
 import json
 
 
@@ -202,7 +203,7 @@ def on_update_after_submit(self, method):
             if self.custom_magento_status == 'Cancelled':
                 return_sales_invoice(self)
                 return_delivery_note(self)
-                cancel_jv(self)
+                reverse_journal_entry(self)
                 # update_status(self.name , "Closed")
 
 def create_delivery_company_jv(self):
@@ -288,7 +289,7 @@ def return_delivery_note(self):
             if doc : 
                 doc.save().submit()
     
-def cancel_jv(self):
+def reverse_journal_entry(self):
     je = frappe.qb.DocType('Journal Entry')
     linked_jv = (
         frappe.qb.from_(je)
@@ -298,9 +299,9 @@ def cancel_jv(self):
     ).run(as_dict = True)
     if len(linked_jv) != 0 :
         for jv in linked_jv:
-            jv_doc = frappe.get_doc('Journal Entry' , jv.name)
-            jv_doc.run_method('cancel')
-
+            doc = make_reverse_journal_entry(jv.name)
+            doc.posting_date = self.transaction_date
+            doc.save().submit()
 def create_material_request(self):
     tmr = frappe.qb.DocType('Material Request')
     tmri = frappe.qb.DocType('Material Request Item')
