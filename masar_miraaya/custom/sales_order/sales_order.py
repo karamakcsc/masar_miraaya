@@ -38,7 +38,7 @@ def cash_on_delivery_account(self):
             return None
         return company_doc.custom_default_cash_on_delivery_account
 
-def get_account(company , customer): 
+def get_account(company , customer , with_company= True): 
         account = None
         pc_doc = frappe.get_doc('Customer' , customer) 
         if len(pc_doc.accounts) != 0 :
@@ -53,7 +53,7 @@ def get_account(company , customer):
                     if group.company == company : 
                         account = group.account
                         break
-        if account is None : 
+        if account is None and with_company == True : 
             company_doc = frappe.get_doc('Company' , company)        
             account = company_doc.custom_receivable_payment_channel if company_doc.custom_receivable_payment_channel else None 
         if account is None:
@@ -101,7 +101,7 @@ def create_payment_channel_jv(self):
                 'Set Default Cash on Delivery Account in Company {company}'
                 .format(company = frappe.utils.get_link_to_form("Company", self.company)
                 ), 
-                titlae = frappe._("Missing Account"))
+                title = frappe._("Missing Account"))
         else : 
             added_row =  {
                 'account' : cash_on_delivery_acc, 
@@ -196,6 +196,8 @@ def on_update_after_submit(self, method):
                 create_sales_invoice(self)
             if self.custom_magento_status == 'On the Way':
                 create_delivery_company_jv(self)
+            if self.custom_magento_status == 'Fullfilled':
+                create_material_request(self)
             if self.custom_magento_status == 'Delivered':
                 create_delivery_note(self)
             if self.custom_magento_status == 'Cancelled':
@@ -299,3 +301,51 @@ def cancel_jv(self):
         for jv in linked_jv:
             jv_doc = frappe.get_doc('Journal Entry' , jv.name)
             jv_doc.run_method('cancel')
+
+def create_material_request(self):
+    tmr = frappe.qb.DocType('Material Request')
+    tmri = frappe.qb.DocType('Material Request Item')
+    exist_material_request = (
+        frappe.qb.from_(tmr)
+        .join(tmri).on(tmr.name == tmri.parent).where(tmri.sales_order == self.name)
+        .where(tmr.docstatus == 1 ).select(tmr.name)
+    ).run()
+    if exist_material_request and len(exist_material_request) !=0 :
+        frappe.msgprint(
+            f'Material Request already created and submitted.', 
+            alert=True, 
+            indicator='blue'
+        )
+        return
+    w = frappe.qb.DocType('Warehouse')
+    warehouse = (frappe.qb.from_(w).where(w.warehouse_type == 'Transit').select(w.name)).run(as_dict= True)
+    target_warehouse = warehouse[0]['name']
+    mr = frappe.new_doc('Material Request')
+    mr.material_request_type = 'Material Transfer'
+    schedule_date = self.transaction_date
+    mr.transaction_date = self.transaction_date
+    mr.schedule_date = schedule_date
+    conversion_factor = 1 
+    for r in self.items: 
+        item = frappe.get_doc('Item' ,r.item_code )
+        if len(item.uoms) !=0:
+            for uom in item.uoms:
+                if uom.uom == r.uom:
+                    conversion_factor = uom.conversion_factor
+        if len(item.item_defaults) !=0 : 
+            item_defaults = (item.item_defaults)[0].as_dict()
+            source_warehouse = item_defaults['default_warehouse']
+        else:
+            stock_setting = frappe.get_doc('Stock Settings')
+            source_warehouse = stock_setting.default_warehouse
+        data = {
+            'item_code' : r.item_code,'item_name': r.item_name,
+            'schedule_date':schedule_date,'description': r.description, 
+            'qty' : r.qty,'uom': r.uom, 'conversion_factor' : conversion_factor , 
+            'stock_qty' : r.qty * conversion_factor,'from_warehouse' : source_warehouse , 
+            'warehouse' : target_warehouse,'rate' : r.rate ,'amount' : r.rate * r.qty ,
+            'sales_order' : self.name
+        }
+        mr.append('items' , data)
+    mr.save(ignore_permissions = True)
+    mr.submit()

@@ -6,17 +6,14 @@ def on_submit(self, method) :
     make_gl(self)
 
 
-
-
 def make_gl(self):
     gl_entries = []
     for item in self.items:
         if item.against_sales_order:
             sales_order = frappe.get_doc("Sales Order", item.against_sales_order)
-        
     if sales_order: 
         company_doc = frappe.get_doc("Company", self.company)
-        sales_account = company_doc.default_receivable_account
+        sales_account = company_doc.default_income_account
         company_cost_center = company_doc.cost_center
         cost_center = self.cost_center if self.cost_center else company_cost_center
         if cost_center in [ '' , 0 , None]:
@@ -41,7 +38,8 @@ def make_gl(self):
                             "party": row.channel,
                             "remarks": row.channel + ' : ' + self.name,
                             "voucher_type" : self.doctype , 
-                            "voucher_no" : self.name
+                            "voucher_no" : self.name,
+                            "cost_center":cost_center
                         }))
                 elif self.is_return == 1: 
                     gl_entries.append(
@@ -54,7 +52,8 @@ def make_gl(self):
                             "party": row.channel,
                             "remarks": row.channel + ' : ' + self.name,
                             "voucher_type" : self.doctype , 
-                            "voucher_no" : self.name
+                            "voucher_no" : self.name,
+                            "cost_center":cost_center
                         }))
         if self.is_return == 0 : 
             gl_entries.append(
@@ -67,7 +66,8 @@ def make_gl(self):
                             "party": row.channel,
                             "remarks": row.channel + ' : ' + self.name,
                             "voucher_type" : self.doctype , 
-                            "voucher_no" : self.name
+                            "voucher_no" : self.name,
+                            "cost_center":cost_center
             }))
         elif self.is_return == 1 : 
             gl_entries.append(
@@ -80,18 +80,8 @@ def make_gl(self):
                             "party": row.channel,
                             "remarks": row.channel + ' : ' + self.name,
                             "voucher_type" : self.doctype , 
-                            "voucher_no" : self.name
+                            "voucher_no" : self.name,
+                            "cost_center":cost_center
             }))
     if gl_entries:
             make_gl_entries(gl_entries, cancel=0, adv_adj=0)
-
-def cancel_linked_gl_entries(self):
-    gl_entries = frappe.get_all("GL Entry",filters={"voucher_type": self.doctype, "voucher_no": self.name, "docstatus": 1},pluck="parent",distinct=True,)
-    for gl_entry in gl_entries:
-        gl_entry_doc = frappe.get_doc("GL Entry", gl_entry.name)
-        gl_entry_doc.docstatus = 2
-        gl_entry_doc.save()
-        self.db_set("gl_entries_created", 0)
-        self.db_set("gl_entries_submitted", 0)
-        self.set_status(update=True, status="Cancelled")
-        self.db_set("error_message", "")

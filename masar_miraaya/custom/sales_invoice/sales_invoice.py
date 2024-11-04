@@ -1,10 +1,9 @@
 import frappe
 import json
 from erpnext.accounts.general_ledger import make_gl_entries
-
+from masar_miraaya.custom.sales_order.sales_order import get_account , cash_on_delivery_account
 
 def on_submit(self, method):
-    
     make_gl(self)
     
     
@@ -13,150 +12,130 @@ def make_gl(self):
     for item in self.items:
         if item.sales_order:
             sales_order = frappe.get_doc("Sales Order", item.sales_order)
-        
-
     if sales_order: 
         company_doc = frappe.get_doc("Company", self.company)
-        company_account = company_doc.default_receivable_account
+        main_customer_account = get_account(company=self.company , customer=self.customer , with_company=False)
+        if main_customer_account is None: 
+            main_customer_account = company_doc.default_receivable_account
         company_cost_center = company_doc.cost_center
         cost_center = self.cost_center if self.cost_center else company_cost_center
         if cost_center in [ '' , 0 , None]:
             frappe.throw("Set Cost Center in Sales Order or in Company as Defualt Cost Center.")
-        if not company_account:
-            frappe.throw("Set Default Income Account in Company")
-        ch_acc_sql = frappe.db.sql("""SELECT custom_receivable_payment_channel  AS company_account FROM tabCompany WHERE name = %s
-                                    """, (self.company) , as_dict = True )  
-        for row in sales_order.custom_payment_channels:
-            account = frappe.db.sql("""
-                            SELECT 
-                            tpa.account AS `customer_account`, 
-                            tpa2.account AS `customer_group_account`
-                            FROM tabCustomer tc 
-                            LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
-                            LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
-                            WHERE tc.name = %s AND tc.custom_is_payment_channel = 1
-                """, (row.channel), as_dict = True)
-            debit_account = None
-            if account:
-                debit_account = account[0]['customer_account']
-                if debit_account is None:
-                    debit_account = account[0]['customer_group_account']
-            if debit_account is None:
-                debit_account = ch_acc_sql[0]['company_account']
-            if debit_account in ['', None]:
-                frappe.throw(f"Set Default Account in Customer: {row.channel_name}, or Company: {self.company}")
+        for r in sales_order.custom_payment_channels:
+            account = get_account(company=self.company , customer=r.channel)
+
             if self.is_return == 0 :
                 gl_entries.append(
                     self.get_gl_dict({
-                        "account": debit_account,
-                        "against": company_account ,
-                        "debit_in_account_currency": abs(row.amount),
-                        "debit": abs(row.amount),
+                        "account": account,
+                        "against": main_customer_account ,
+                        "cost_center": cost_center,
+                        "debit_in_account_currency": abs(r.amount),
+                        "debit": abs(r.amount),
                         "party_type": "Customer",
-                        "party": row.channel,
-                        "remarks": row.channel + ' : ' + self.name,
+                        "party": r.channel,
+                        "remarks": r.channel + ' : ' + self.name,
                         "voucher_type" : self.doctype , 
                         "voucher_no" : self.name
                     }))
             elif self.is_return == 1 : 
                 gl_entries.append(
                     self.get_gl_dict({
-                        "account": debit_account,
-                        "against": company_account ,
-                        "credit_in_account_currency":abs( row.amount),
-                        "credit": abs(row.amount),
+                        "account": account,
+                        "against": main_customer_account ,
+                        "cost_center": cost_center,
+                        "credit_in_account_currency":abs( r.amount),
+                        "credit": abs(r.amount),
                         "party_type": "Customer",
-                        "party": row.channel,
-                        "remarks": row.channel + ' : ' + self.name,
+                        "party": r.channel,
+                        "remarks": r.channel + ' : ' + self.name,
                         "voucher_type" : self.doctype , 
                         "voucher_no" : self.name
                     }))
         ################## Cash on Delivery
-        if sales_order.custom_is_cash_on_delivery:
-            account_delivery_sql = frappe.db.sql("""
-                                SELECT 
-                                tpa.account AS `customer_account`, 
-                                tpa2.account AS `customer_group_account` 
-                                FROM tabCustomer tc 
-                                LEFT JOIN `tabParty Account` tpa  ON tpa.parent =tc.name
-                                LEFT JOIN `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group
-                                WHERE tc.name = %s
-                    """, ( sales_order.custom_delivery_company), as_dict = True)
-            account_delivery = None
-            if account_delivery_sql:
-                account_delivery = account_delivery_sql[0]['customer_account'] 
-                if account_delivery is None:
-                    account_delivery = account_delivery_sql[0]['customer_group_account'] 
-            if account_delivery is None :
-                account_delivery = ch_acc_sql[0]['company_account']
-                    
-            if account_delivery in ['', None]:
-                    frappe.throw(f"Set Default Account in Customer: {sales_order.custom_delivery_company}, or Company: {self.company}")
+        if self.is_return == 0 : 
+            gl_entries.append(
+                self.get_gl_dict({
+                    "account": main_customer_account,
+                    "against": account,
+                    "credit_in_account_currency": abs(sales_order.custom_payment_channel_amount),
+                    "credit": abs(sales_order.custom_payment_channel_amount),
+                    "cost_center": cost_center,
+                    "party_type": "Customer",
+                    "party": self.customer,
+                    "remarks": self.name,
+                    "voucher_type" : self.doctype , 
+                    "voucher_no" : self.name
+                }))
+        elif self.is_return == 1 : 
+            gl_entries.append(
+                self.get_gl_dict({
+                    "account": main_customer_account,
+                    "against": account,
+                    "debit_in_account_currency":abs(sales_order.custom_payment_channel_amount),
+                    "debit": abs(sales_order.custom_payment_channel_amount),
+                    "cost_center": cost_center,
+                    "party_type": "Customer",
+                    "party": self.customer,
+                    "remarks": self.name,
+                    "voucher_type" : self.doctype , 
+                    "voucher_no" : self.name
+                }))
+        if sales_order.custom_is_cash_on_delivery and sales_order.custom_cash_on_delivery_amount != 0 :
+            cash_on_delivery_acc = cash_on_delivery_account(self)
+            if cash_on_delivery_acc is None:
+                frappe.throw(
+                    'Set Default Cash on Delivery Account in Company {company}'
+                    .format(company = frappe.utils.get_link_to_form("Company", self.company)
+                    ), 
+                    title = frappe._("Missing Account"))
             if self.is_return == 0 : 
                 gl_entries.append(
                     self.get_gl_dict({
-                        "account": account_delivery,
-                        "against": company_account,
+                        "account": cash_on_delivery_acc,
+                        "against": main_customer_account,
+                        "cost_center": cost_center,
                         "debit_in_account_currency": abs(sales_order.custom_cash_on_delivery_amount),
                         "debit":abs(sales_order.custom_cash_on_delivery_amount),
-                        "party_type": "Customer",
-                        "party": sales_order.custom_delivery_company , 
-                        "remarks": sales_order.custom_delivery_company + ' : ' + self.name,
                         "voucher_type" : self.doctype , 
                         "voucher_no" : self.name
                     })) 
+                gl_entries.append(
+                self.get_gl_dict({
+                    "account": main_customer_account,
+                    "against": cash_on_delivery_acc,
+                    "credit_in_account_currency": abs(sales_order.custom_cash_on_delivery_amount),
+                    "credit": abs(sales_order.custom_cash_on_delivery_amount),
+                    "cost_center": cost_center,
+                    "remarks": self.name,
+                    "party_type": "Customer",
+                    "party": self.customer,
+                    "voucher_type" : self.doctype , 
+                    "voucher_no" : self.name
+                }))
             elif self.is_return == 1 : 
                 gl_entries.append(
                     self.get_gl_dict({
-                        "account": account_delivery,
-                        "against": company_account,
+                        "account": cash_on_delivery_acc,
+                        "against": main_customer_account,
+                        "cost_center": cost_center,
                         "credit_in_account_currency": abs(sales_order.custom_cash_on_delivery_amount),
                         "credit":abs(sales_order.custom_cash_on_delivery_amount),
-                        "party_type": "Customer",
-                        "party": sales_order.custom_delivery_company , 
-                        "remarks": sales_order.custom_delivery_company + ' : ' + self.name,
                         "voucher_type" : self.doctype , 
                         "voucher_no" : self.name
-                    })) 
+                    }))
+                
+                gl_entries.append(
+                    self.get_gl_dict({
+                        "account": main_customer_account,
+                        "against": cash_on_delivery_acc,
+                        "debit_in_account_currency":abs(sales_order.custom_cash_on_delivery_amount),
+                        "debit": abs(sales_order.custom_cash_on_delivery_amount),
+                        "cost_center": cost_center,
+                        "remarks": self.name,
+                        "voucher_type" : self.doctype , 
+                        "voucher_no" : self.name
+                    }))
         ###########   
-        if self.is_return == 0 : 
-            gl_entries.append(
-        self.get_gl_dict({
-            "account": company_account,
-            "against": debit_account,
-            "credit_in_account_currency": abs(self.grand_total),
-            "credit": abs(self.grand_total),
-            "cost_center": cost_center,
-            "party_type": "Customer",
-            "party": self.customer,
-            "remarks": self.name,
-            "voucher_type" : self.doctype , 
-            "voucher_no" : self.name
-        }))
-        elif self.is_return == 1 : 
-                    gl_entries.append(
-        self.get_gl_dict({
-            "account": company_account,
-            "against": debit_account,
-            "debit_in_account_currency":abs(self.grand_total),
-            "debit": abs(self.grand_total),
-            "cost_center": cost_center,
-            "party_type": "Customer",
-            "party": self.customer,
-            "remarks": self.name,
-            "voucher_type" : self.doctype , 
-            "voucher_no" : self.name
-        }))
         if gl_entries:
             make_gl_entries(gl_entries, cancel=0, adv_adj=0)
-
-def cancel_linked_gl_entries(self):
-    gl_entries = frappe.get_all("GL Entry",filters={"voucher_type": self.doctype, "voucher_no": self.name, "docstatus": 1},pluck="parent",distinct=True,)
-    for gl_entry in gl_entries:
-        gl_entry_doc = frappe.get_doc("GL Entry", gl_entry.name)
-        gl_entry_doc.docstatus = 2
-        gl_entry_doc.save()
-        self.db_set("gl_entries_created", 0)
-        self.db_set("gl_entries_submitted", 0)
-        self.set_status(update=True, status="Cancelled")
-        self.db_set("error_message", "")

@@ -384,7 +384,15 @@ fixtures = [
                 "Sales Order-custom_driver_name",
                 "Sales Order-custom_delivery_time",
                 "Customer-custom_delivery_cost",
-                "Sales Order-custom_delivery_cost"
+                "Sales Order-custom_delivery_cost", 
+                "Sales Invoice-custom_payment_channel", 
+                "Sales Invoice-custom_payment_channels", 
+                "Sales Invoice-custom_section_break_cwxyo", 
+                "Sales Invoice-custom_is_cash_on_delivery",
+                "Sales Invoice-custom_cash_on_delivery_amount",
+                "Sales Invoice-custom_column_break_4rcad", 
+                "Sales Invoice-custom_payment_channel_amount",
+                "Sales Invoice-custom_total_amount"
             ]
         ]
     ]},
