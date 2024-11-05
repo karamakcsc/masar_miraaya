@@ -212,14 +212,15 @@ def create_sales_invoice(self):
 def on_submit(self, method):
     create_payment_channel_jv(self)
     create_sales_invoice(self)
+    create_material_request(self)
     
 def on_update_after_submit(self, method):
         if  self.docstatus == 1:
             if self.custom_magento_status == 'On the Way':
                 cost_of_delivery_jv(self)
                 create_delivery_company_jv(self)
-            if self.custom_magento_status == 'Fullfilled':
-                create_material_request(self)
+            # if self.custom_magento_status == 'Fullfilled':
+            #     create_material_request(self)
             if self.custom_magento_status == 'Delivered':
                 create_delivery_note(self)
             if self.custom_magento_status == 'Cancelled':
@@ -418,7 +419,7 @@ def cost_of_delivery_jv(self):
     cr_row = { 
         'account': cr_account,'credit_in_account_currency' : float(delivery_cost),
         'credit' : float(delivery_cost),'party_type': 'Customer',
-        'party': self.customer,'cost_center': cost_center,
+        'party': self.custom_delivery_company,'cost_center': cost_center,
         'driver' : self.custom_driver
     }
     jv.append("accounts", cr_row)
