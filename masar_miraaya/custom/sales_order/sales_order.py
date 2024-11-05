@@ -195,6 +195,7 @@ def on_submit(self, method):
 def on_update_after_submit(self, method):
         if  self.docstatus == 1:
             if self.custom_magento_status == 'On the Way':
+                cost_of_delivery_jv(self)
                 create_delivery_company_jv(self)
             if self.custom_magento_status == 'Fullfilled':
                 create_material_request(self)
@@ -204,7 +205,7 @@ def on_update_after_submit(self, method):
                 return_sales_invoice(self)
                 return_delivery_note(self)
                 reverse_journal_entry(self)
-                # update_status(self.name , "Closed")
+                update_status(self.name , "Closed")
 
 def create_delivery_company_jv(self):
     if self.custom_is_cash_on_delivery and self.custom_cash_on_delivery_amount != 0 : 
@@ -349,3 +350,55 @@ def create_material_request(self):
         mr.append('items' , data)
     mr.save(ignore_permissions = True)
     mr.submit()
+
+def cost_of_delivery_jv(self):
+    company_doc = frappe.get_oc('Company' , self.company)
+    dc_doc = frappe.get_doc('Customer' , self.custom_delivery_company)
+    cost_center = get_cost_center(self)
+    cr_account = get_account(company=self.company , customer=self.custom_delivery_company , with_company=False)
+    if cr_account is None:
+        cr_account = company_doc.default_receivable_account
+    if cr_account is None :
+        frappe.throw('Delivary Company {dc} Not Have Receivable Account or Define a Defulat Account in Group {dc_group} or in Company {comp}'
+                        .format(
+                            dc = frappe.utils.get_link_to_form("Customer", self.custom_delivery_company),
+                            dc_group =frappe.utils.get_link_to_form("Customer Group", dc_doc.customer_group),
+                            comp = frappe.utils.get_link_to_form("Company", self.company) 
+                        )
+                        , title = frappe._('Missing Account')
+                        )
+    dr_account = company_doc.custom_cost_of_delivery
+    if dr_account is None:
+        frappe.throw('Set Default Cost of Delivery Account in Company {comp}'
+                     .format(
+                        comp = frappe.utils.get_link_to_form("Company", self.company) 
+                     )
+                     , title = frappe._('Missing Account')
+        )
+    delivery_cost = dc_doc.custom_delivery_cost
+    if delivery_cost in [None , 0]:
+        frappe.throw('Set Delivary Cost of Delivery Company {dc}.'
+                     .format(dc = frappe.utils.get_link_to_form("Customer", self.custom_delivery_company))
+                     , 
+                     title = frappe._("Missing Delivery Cost")
+        )
+    jv = frappe.new_doc("Journal Entry")
+    jv.posting_date = self.transaction_date
+    jv.company = self.company
+    jv.custom_reference_document = self.doctype
+    jv.custom_reference_doctype = self.name
+    dr_row = { 
+            'account': dr_account, 'debit_in_account_currency' : float(delivery_cost),
+            'debit' : float(delivery_cost),'party_type': 'Customer',
+            'party': self.custom_delivery_company,'cost_center': cost_center,
+            'driver' : self.custom_driver
+        }
+    jv.append("accounts", dr_row)
+    cr_row = { 
+        'account': cr_account,'credit_in_account_currency' : float(delivery_cost),
+        'credit' : float(delivery_cost),'party_type': 'Customer',
+        'party': self.customer,'cost_center': cost_center,
+    }
+    jv.append("accounts", cr_row)
+    jv.save(ignore_permissions=True)
+    jv.submit()
