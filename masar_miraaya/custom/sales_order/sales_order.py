@@ -146,9 +146,20 @@ def create_payment_channel_jv(self):
         alert=True , 
         indicator='green'
     )
-
+def deferred_revenue_account(company):
+    comp_doc = frappe.get_doc('Company' , company)
+    if comp_doc.default_deferred_revenue_account is None:
+        frappe.throw('Set Default Deferred Revenue Account in Company {comp}'
+                     .format(comp = frappe.utils.get_link_to_form("Company", company) ))
+        return None
+    return comp_doc.default_deferred_revenue_account 
 
 def create_sales_invoice(self):
+        deferred_revenue_acc = deferred_revenue_account(company= self.company)
+        if deferred_revenue_acc is None :
+                    frappe.throw('Set Default Deferred Revenue Account in Company {comp}'
+                     .format(comp = frappe.utils.get_link_to_form("Company", self.company) ))
+            
         si = frappe.qb.DocType('Sales Invoice')
         sii = frappe.qb.DocType('Sales Invoice Item')
         exist_sales = (
@@ -160,9 +171,14 @@ def create_sales_invoice(self):
 
         if not exist_sales:
             doc = make_sales_invoice(self.name)
-            if doc.items: 
-                doc.save()
-                doc.submit()
+            # if doc.items: 
+            for item in doc.items: 
+                item.enable_deferred_revenue = 1 
+                item.deferred_revenue_account = deferred_revenue_acc
+                item.service_start_date = self.transaction_date
+                item.service_end_date = self.transaction_date
+            doc.save()
+            doc.submit()
             frappe.msgprint(
                 f'Sales Invoice {doc.name} has been created and submitted.', 
                 alert=True, 
@@ -179,6 +195,11 @@ def create_sales_invoice(self):
             elif existing_invoice['docstatus'] == 2:
                 doc = make_sales_invoice(self.name)
                 if doc.items:
+                    for item in doc.items: 
+                        item.enable_deferred_revenue = 1 
+                        item.deferred_revenue_account = deferred_revenue_acc
+                        item.service_start_date = self.transaction_date
+                        item.service_end_date = self.transaction_date
                     doc.save()
                     doc.submit()
                 frappe.msgprint(
