@@ -205,7 +205,7 @@ def on_update_after_submit(self, method):
                 return_sales_invoice(self)
                 return_delivery_note(self)
                 reverse_journal_entry(self)
-                update_status(self.name , "Closed")
+                # update_status(self.name , "Closed")
 
 def create_delivery_company_jv(self):
     if self.custom_is_cash_on_delivery and self.custom_cash_on_delivery_amount != 0 : 
