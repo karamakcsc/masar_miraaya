@@ -398,6 +398,7 @@ def cost_of_delivery_jv(self):
         'account': cr_account,'credit_in_account_currency' : float(delivery_cost),
         'credit' : float(delivery_cost),'party_type': 'Customer',
         'party': self.customer,'cost_center': cost_center,
+        'driver' : self.custom_driver
     }
     jv.append("accounts", cr_row)
     jv.save(ignore_permissions=True)
