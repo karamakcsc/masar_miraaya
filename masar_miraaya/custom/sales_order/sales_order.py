@@ -352,7 +352,7 @@ def create_material_request(self):
     mr.submit()
 
 def cost_of_delivery_jv(self):
-    company_doc = frappe.get_oc('Company' , self.company)
+    company_doc = frappe.get_doc('Company' , self.company)
     dc_doc = frappe.get_doc('Customer' , self.custom_delivery_company)
     cost_center = get_cost_center(self)
     cr_account = get_account(company=self.company , customer=self.custom_delivery_company , with_company=False)
