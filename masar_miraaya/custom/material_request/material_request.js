@@ -25,6 +25,7 @@ function create_picked_button(frm) {
                 },
                 callback: function(r) {
                     frm.refresh_field("custom_assigned_to");
+                    frm.reload_doc();
                 }
             })
             
