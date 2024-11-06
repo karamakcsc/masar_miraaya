@@ -14,9 +14,10 @@ frappe.ui.form.on('Pick List', {
 function hide_create_button(frm) {
     setTimeout(() => {
         frm.page.wrapper.find('.inner-group-button[data-label="Create"]').hide();
-        frm.page.wrapper.find('.btn btn-default ellipsis[data-label="Update Current Stock"]').hide();
+        frm.page.wrapper.find('.btn.btn-default.ellipsis[data-label="Update%20Current%20Stock"]').hide();
     }, 5);
 }
+
 
 
 function create_picked_button(frm) {

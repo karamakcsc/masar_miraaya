@@ -6,4 +6,5 @@ import json
 def new_stock_entry(pick_list):
     dict_ = json.dumps(create_stock_entry(pick_list))
     if bool(dict_) == True and str(dict_) != 'null':
+        #
         frappe.new_doc('Stock Entry').update(json.loads(dict_)).save().submit()
