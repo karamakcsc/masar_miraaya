@@ -210,7 +210,7 @@ def create_sales_invoice(self):
 
 
 def on_submit(self, method):
-    create_payment_channel_jv(self)
+    # create_payment_channel_jv(self)
     create_sales_invoice(self)
     create_material_request(self)
     
@@ -219,12 +219,12 @@ def on_update_after_submit(self, method):
             if self.custom_magento_status == 'On the Way':
                 cost_of_delivery_jv(self)
                 create_delivery_company_jv(self)
-            # if self.custom_magento_status == 'Fullfilled':
-            #     create_material_request(self)
             if self.custom_magento_status == 'Delivered':
-                create_delivery_note(self)
+                delivery_note = create_delivery_note(self)
+                delivery_note_jv(self , delivery_note=delivery_note)
             if self.custom_magento_status == 'Cancelled':
                 return_sales_invoice(self)
+                # reverse_delivery_note_jv(self)
                 return_delivery_note(self)
                 reverse_journal_entry(self)
                 # update_status(self.name , "Closed")
@@ -277,7 +277,43 @@ def create_delivery_company_jv(self):
 def create_delivery_note(self):
     target = make_delivery_note(self.name) 
     target.save().submit()
+    return target.name
 
+def delivery_note_jv(self , delivery_note):
+    delivery_note = frappe.get_doc('Delivery Note' ,delivery_note )
+    company_doc = frappe.get_doc("Company", self.company)
+    sales_account = company_doc.default_income_account
+    revenue_account =deferred_revenue_account(company=self.company)
+    cost_center = get_cost_center(self)
+    if not sales_account:
+                frappe.throw(
+                'Set Defualt Income Account Account in Company {company}'
+                .format(company = frappe.utils.get_link_to_form("Company", self.company)
+                ), 
+                titlae = frappe._("Missing Account")
+                )
+    jv = frappe.new_doc("Journal Entry")
+    jv.posting_date = self.transaction_date
+    jv.company = self.company
+    jv.custom_reference_document = self.doctype
+    jv.custom_reference_doctype = self.name
+    dr_row = { 
+            'account': revenue_account,
+            'debit_in_account_currency' : float(self.custom_total_amount),
+            'debit' : float(self.custom_total_amount),
+            'cost_center': cost_center,
+        }
+    jv.append("accounts", dr_row)
+    cr_row = { 
+                'account' : sales_account, 
+                'credit_in_account_currency' :float(self.custom_total_amount),
+                'credit' : float(self.custom_total_amount), 
+                'cost_center' : cost_center
+    }
+    jv.append("accounts", cr_row)
+    jv.save().submit()
+
+    
 def return_sales_invoice(self):
     sii = frappe.qb.DocType('Sales Invoice Item')
     si = frappe.qb.DocType('Sales Invoice')
@@ -294,7 +330,31 @@ def return_sales_invoice(self):
         if cr_note:
             cr_note.save()
             cr_note.submit()
-
+def reverse_delivery_note_jv(self): 
+    dn = frappe.qb.DocType('Delivery Note')
+    dni = frappe.qb.DocType('Delivery Note Item')
+    exist_dn = (
+        frappe.qb.from_(dn)
+        .join(dni).on(dn.name == dni.parent)
+        .where(dni.against_sales_order == self.name)
+        .where(dn.docstatus ==1 )
+        .select(dn.name)
+        ).run(as_dict = True)
+    lst_dn = [dn.name for dn in exist_dn if dn.name]
+    return_set = set(lst_dn)
+    for dn in list(return_set):
+        je = frappe.qb.DocType('Journal Entry')
+        linked_jv = (
+            frappe.qb.from_(je)
+            .select(je.name)
+            .where(je.docstatus ==1 )
+            .where(je.custom_reference_doctype == dn)
+        ).run(as_dict = True)
+        if len(linked_jv) != 0 :
+            for jv in linked_jv:
+                doc = make_reverse_journal_entry(jv.name)
+                doc.posting_date = self.transaction_date
+                doc.save().submit()
 def return_delivery_note(self): 
     dn = frappe.qb.DocType('Delivery Note')
     dni = frappe.qb.DocType('Delivery Note Item')
