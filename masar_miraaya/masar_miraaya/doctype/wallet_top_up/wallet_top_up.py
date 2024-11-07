@@ -97,7 +97,7 @@ class WalletTopup(Document):
             credit_account = wallet_account
             debit_amount = float(self.topup_amount)
             credit_amount = float(self.topup_amount)
-        elif self.transaction_type == 'Loyalty Program (LP)':    
+        elif self.transaction_type == 'Loyality Program (LP)':    
             debit_account = lp_account
             credit_account = wallet_account
             debit_amount = float(self.topup_amount)

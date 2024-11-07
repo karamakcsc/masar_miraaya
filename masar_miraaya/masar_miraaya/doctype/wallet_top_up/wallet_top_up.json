@@ -93,7 +93,7 @@
    "fieldtype": "Select",
    "label": "Transaction Type",
    "mandatory_depends_on": "customer",
-   "options": "\nGift Card\nLoyalty Program (LP)\nCompensation\nAdjustment"
+   "options": "\nGift Card\nLoyality Program (LP)\nCompensation\nAdjustment"
   },
   {
    "fieldname": "section_break_fpqy",
@@ -320,7 +320,7 @@
    "link_fieldname": "custom_reference_doctype"
   }
  ],
- "modified": "2024-10-07 15:59:30.270199",
+ "modified": "2024-11-07 16:12:15.364735",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Wallet Top-up",
