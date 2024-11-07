@@ -227,6 +227,7 @@ def on_update_after_submit(self, method):
                 # reverse_delivery_note_jv(self)
                 return_delivery_note(self)
                 reverse_journal_entry(self)
+                cancelled_material_request(self)
                 # update_status(self.name , "Closed")
 
 def create_delivery_company_jv(self):
@@ -297,6 +298,7 @@ def delivery_note_jv(self , delivery_note):
     jv.company = self.company
     jv.custom_reference_document = self.doctype
     jv.custom_reference_doctype = self.name
+    jv.custom_not_to_reverse = 1 
     dr_row = { 
             'account': revenue_account,
             'debit_in_account_currency' : float(self.custom_total_amount),
@@ -379,12 +381,26 @@ def reverse_journal_entry(self):
         .select(je.name)
         .where(je.docstatus ==1 )
         .where(je.custom_reference_doctype == self.name)
+        .where(je.custom_not_to_reverse == 0 )
     ).run(as_dict = True)
     if len(linked_jv) != 0 :
         for jv in linked_jv:
             doc = make_reverse_journal_entry(jv.name)
             doc.posting_date = self.transaction_date
             doc.save().submit()
+
+@frappe.whitelist()
+def delivery_warehouse():
+    w = frappe.qb.DocType('Warehouse')
+    warehouse = (frappe.qb.from_(w).where(w.warehouse_type == 'Transit').select(w.name)).run(as_dict= True)
+    if warehouse and warehouse[0] and  warehouse[0]['name']:
+         return  warehouse[0]['name']
+    else:
+        frappe.throw(
+              'Set a lesat One Transit Warehouse.',
+              title = frappe._('Missing Transit Warehouse')
+         )
+        return None
 def create_material_request(self):
     tmr = frappe.qb.DocType('Material Request')
     tmri = frappe.qb.DocType('Material Request Item')
@@ -400,9 +416,7 @@ def create_material_request(self):
             indicator='blue'
         )
         return
-    w = frappe.qb.DocType('Warehouse')
-    warehouse = (frappe.qb.from_(w).where(w.warehouse_type == 'Transit').select(w.name)).run(as_dict= True)
-    target_warehouse = warehouse[0]['name']
+    target_warehouse = delivery_warehouse()
     mr = frappe.new_doc('Material Request')
     mr.material_request_type = 'Material Transfer'
     schedule_date = self.transaction_date
@@ -485,3 +499,34 @@ def cost_of_delivery_jv(self):
     jv.append("accounts", cr_row)
     jv.save(ignore_permissions=True)
     jv.submit()
+
+def cancelled_material_request(self): 
+    mri = frappe.qb.DocType('Material Request Item')
+    pli = frappe.qb.DocType('Pick List Item')
+    se = frappe.qb.DocType('Stock Entry')
+    material_request = (
+        frappe.qb.from_(mri)
+        .select(mri.parent)
+        .where(mri.sales_order == self.name)
+        .groupby(mri.parent)
+    ).run(as_dict=True)
+    for mr in material_request: 
+        pick_list =   (
+            frappe.qb.from_(pli)
+            .select(pli.parent)
+            .where(pli.sales_order == self.name)
+            .groupby(pli.parent)
+        ).run(as_dict=True)
+        if len(pick_list) != 0: 
+            for pl in pick_list:
+                stock_entry = (
+                    frappe.qb.from_(se).select(se.name).where(se.pick_list ==pl.parent )
+                ).run(as_dict=True)
+                if len(stock_entry) !=0:
+                    for loop in stock_entry:
+                        se_doc = frappe.get_doc('Stock Entry' , loop.name)
+                        se_doc.run_method('cancel')
+                pl_doc= frappe.get_doc('Pick List' , pl.parent)
+                pl_doc.run_method('cancel')
+        mr_doc = frappe.get_doc('Material Request' ,mr.parent )
+        mr_doc.run_method('cancel')

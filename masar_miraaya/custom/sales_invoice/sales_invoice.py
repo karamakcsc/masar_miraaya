@@ -21,6 +21,8 @@ def make_gl(self):
         cost_center = self.cost_center if self.cost_center else company_cost_center
         if cost_center in [ '' , 0 , None]:
             frappe.throw("Set Cost Center in Sales Order or in Company as Defualt Cost Center.")
+            
+        account = None 
         for r in sales_order.custom_payment_channels:
             account = get_account(company=self.company , customer=r.channel)
 

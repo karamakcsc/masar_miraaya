@@ -4,6 +4,7 @@ import requests
 from io import BytesIO
 import base64
 from urllib.parse import urlparse
+from frappe.query_builder import Order
 ###
 def magento_admin_details():
     setting = frappe.get_doc("Magento Setting")
@@ -65,6 +66,18 @@ def get_available_qty(item=None, warehouse=None):
         WHERE tb.item_code = %s AND tb.warehouse = %s
         ORDER BY tb.creation DESC;""",
         (item,warehouse),as_dict=True)
+
+@frappe.whitelist(allow_guest=True)
+def get_delivery_company():
+    c = frappe.qb.DocType('Customer')
+    return (frappe.qb.from_(c)
+            .where(c.custom_is_delivery == 1 )
+            .where(c.disabled == 0 )
+            .orderby("creation", order=Order.desc)
+            .select(
+                (c.name) , (c.customer_name) , (c.customer_group) 
+            )
+            ).run(as_dict =True)
     
 def validate_url(url):
     base_url , headers = base_data("magento")
