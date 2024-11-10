@@ -22,7 +22,7 @@ def stock_entry_method(self):
                     created = stock_entry_creation(self , delivery_company , driver)
                     if created:
                         return True
-
+##
 
 def assigned_to_me_vaildation(self):
     if self.custom_assigned_to is None :
