@@ -472,6 +472,9 @@ def cost_of_delivery_jv(self):
                      , title = frappe._('Missing Account')
         )
     delivery_cost = dc_doc.custom_delivery_cost
+    if delivery_cost in [ None , 0 ]: 
+        delivery_company_doc = frappe.get_doc('Customer' , self.custom_delivery_company )
+        delivery_cost = delivery_company_doc.custom_delivery_cost
     if delivery_cost in [None , 0]:
         frappe.throw('Set Delivary Cost of Delivery Company {dc}.'
                      .format(dc = frappe.utils.get_link_to_form("Customer", self.custom_delivery_company))

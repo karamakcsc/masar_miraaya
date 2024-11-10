@@ -30,8 +30,20 @@ function hide_create_button(frm) {
         })
 }
 function create_picked_button(frm) {
-    if(frm.doc.docstatus === 1 && frm.doc.status !=='Completed') { 
-        frm.add_custom_button(__('Picking'), function() {
+    if(frm.doc.docstatus === 1 && frm.doc.custom_packed === 0 ) { 
+        frm.add_custom_button(__('Packing'), function() {
+           frappe.call({
+            method:'masar_miraaya.custom.pick_list.pick_list.packing', 
+            args:{self: frm.doc},
+            callback:function(r){
+                frm.refresh_field("custom_packed");
+                frm.reload_doc();
+            }
+           })
+        });
+    }
+    if(frm.doc.docstatus === 1 && frm.doc.status !=='Completed' && frm.doc.custom_packed === 1 ) { 
+        frm.add_custom_button(__('Transfer'), function() {
             frappe
 			.xcall("masar_miraaya.custom.pick_list.pick_list.stock_entry_method", {
 				self: frm.doc,

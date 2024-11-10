@@ -3,6 +3,11 @@ from erpnext.stock.doctype.pick_list.pick_list import create_stock_entry
 import json
 
 @frappe.whitelist()
+def packing(self):
+    self = frappe._dict(json.loads(self))
+    frappe.db.set_value(self.doctype , self.name , 'custom_packed' ,1)
+    return 1 
+@frappe.whitelist()
 def stock_entry_method(self):
     self = frappe._dict(json.loads(self))
     mr_doc = frappe.get_doc('Material Request' , self.material_request)

@@ -399,7 +399,8 @@ fixtures = [
                 "Sales Invoice-custom_payment_channel_amount",
                 "Sales Invoice-custom_total_amount",
                 "Material Request-custom_assigned_to",
-                "Journal Entry-custom_not_to_reverse"
+                "Journal Entry-custom_not_to_reverse", 
+                "Pick List-custom_packed"
             ]
         ]
     ]},
