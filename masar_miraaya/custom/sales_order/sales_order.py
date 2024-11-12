@@ -161,10 +161,10 @@ def on_update_after_submit(self, method):
                 delivery_note = create_delivery_note(self)
                 delivery_note_jv(self , delivery_note=delivery_note)
             if self.custom_magento_status == 'Cancelled':
+                cancelled_pick_list(self)
                 return_sales_invoice(self)
                 return_delivery_note(self)
                 reverse_journal_entry(self)
-                cancelled_pick_list(self)
                 change_magento_status_to_cancelled(self.custom_magento_id)
                 # update_status(self.name , "Closed")
 
