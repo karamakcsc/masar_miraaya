@@ -173,9 +173,12 @@ doc_events = {
     "Purchase Receipt": {
         "on_submit": "masar_miraaya.custom.purchase_receipt.purchase_receipt.on_submit"
     },
-    # "Material Request": {
-    #     "validate": "masar_miraaya.custom.material_request.material_request.validate"
-    # }
+    "Stock Entry": {
+        "on_submit": "masar_miraaya.custom.stock_entry.stock_entry.on_submit"
+    },
+    "Pick List": {
+        "on_submit": "masar_miraaya.custom.pick_list.pick_list.on_submit"
+    }
     # "Delivery Note": { 
     #     "on_submit": "masar_miraaya.custom.delivery_note.delivery_note.on_submit"
     # }
@@ -189,7 +192,7 @@ doctype_js = {
    "Customer": "custom/customer/customer.js",
    "Item": "custom/item/item.js",
    "Pick List": "custom/pick_list/pick_list.js",
-   "Material Request": "custom/material_request/material_request.js"
+#    "Material Request": "custom/material_request/material_request.js"
 
 }
 
@@ -400,7 +403,8 @@ fixtures = [
                 "Sales Invoice-custom_total_amount",
                 "Material Request-custom_assigned_to",
                 "Journal Entry-custom_not_to_reverse", 
-                "Pick List-custom_packed"
+                "Pick List-custom_packed",
+                "Pick List-custom_assigned_to"
             ]
         ]
     ]},

@@ -5,6 +5,7 @@ from io import BytesIO
 import base64
 from urllib.parse import urlparse
 from frappe.query_builder import Order
+import json
 ###
 def magento_admin_details():
     setting = frappe.get_doc("Magento Setting")
@@ -36,7 +37,32 @@ def create_magento_auth():
     frappe.db.commit()
     return auth
 
+@frappe.whitelist(allow_guest=True)
+def get_payment_channel():
+    c = frappe.qb.DocType('Customer')
+    return (frappe.qb.from_(c)
+            .where(c.custom_is_payment_channel == 1 )
+            .where(c.disabled == 0 )
+            .orderby("creation", order=Order.desc)
+            .select(
+                (c.name) , (c.customer_name) , (c.customer_group) 
+            )
+            ).run(as_dict =True)
 
+@frappe.whitelist(allow_guest=True)
+def get_digital_wallet():
+    c = frappe.qb.DocType('Customer')
+    return (frappe.qb.from_(c)
+            .where(c.custom_is_digital_wallet == 1)
+            .where(c.custom_is_payment_channel == 1 )
+            .where(c.disabled == 0 )
+            .orderby("creation", order=Order.desc)
+            .select(
+                (c.name) , (c.customer_name) , (c.customer_group) 
+            )
+            ).run(as_dict =True)
+    
+    
 @frappe.whitelist()
 def get_item_details():
 	return frappe.db.sql("""  SELECT *
@@ -233,6 +259,15 @@ def base_data(request_in):
             "Content-Type": "application/json"
         }
         return base_url , headers
+    elif request_in == "webhook":
+        base_url = 'https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp'
+        headers = {
+                'Accept': '*/*',
+                'Authorization': 'Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU=',
+                'Content-Type': 'application/json'
+            }
+        return base_url , headers
+
 def insert_item_price(
         item_code ,
         brand,
@@ -1017,3 +1052,98 @@ def create_customer_address(adresses , customer_email):
                                 'link_name': customer
                             })
                     address_doc.save(ignore_permissions = True)
+                    
+                    
+### Update Stock                    
+def get_warehouse_code_magento():
+    base_url, headers = base_data("magento")
+    url = base_url + "/rest/V1/inventory/sources"
+    
+    response = requests.get(url, headers=headers)
+    json_response = response.json()
+    if response.status_code == 200:
+        return json_response
+    else:
+        frappe.throw(f"Error in Getting Warehouse Code. {str(response.text)}")
+
+
+def get_magento_item_stock(item_code):
+    base_url, headers = base_data("magento")
+    url = base_url + f"/rest/V1/stockItems/{item_code}"
+    response = requests.get(url, headers=headers)
+    json_response = response.json()
+    if response.status_code == 200:
+        return json_response
+    else:
+        frappe.throw(f"Error in Getting Item Stock. {str(response.text)}")
+
+
+def update_stock_magento(self):
+    base_url, headers = base_data("magento")
+    url = base_url + "/rest/V1/inventory/source-items"
+    
+    warehouse_codes = get_warehouse_code_magento() ## GET Warehouse Codes (source_code) from Magento
+    
+    item_list = []
+    for row in self.items:
+        sku = row.item_code
+        qty = row.qty
+        # warehouse = row.warehouse
+        
+        item_stock = get_magento_item_stock(sku) ## GET Item Stock
+        stock_qty = item_stock.get('qty')
+        stock = stock_qty + qty  ## Add Existing qty with new qty
+        
+        item_list.append({
+            "sku": sku,
+            "source_code": "default",
+            "quantity": stock,
+            "status": 1 ## if 1 in stock , 0 out of stock
+        })
+        
+    payload = {
+        "sourceItems": item_list
+    }
+    
+    # frappe.throw(str(payload))
+    
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        frappe.msgprint("Item Stock Updated Successfully in Magento", alert=True , indicator='green')
+    else:
+        frappe.throw(f"Failed to Update Item Stock in Magento: {str(response.text)}")
+
+
+
+                    
+@frappe.whitelist()
+def get_customer_address(customer):
+    return frappe.db.sql("""select ta.*
+        from tabAddress ta 
+        inner join `tabDynamic Link` tdl on tdl.parent = ta.name 
+        where tdl.link_name =%s
+                                """, (customer) , as_dict = True)
+    
+@frappe.whitelist()
+def get_customer_contact(customer):
+    return frappe.db.sql("""select tc.*
+        from tabContact tc
+        inner join `tabDynamic Link` tdl on tdl.parent = tc.name 
+        where tdl.link_name  =%s
+                                """, (customer) , as_dict = True)
+
+
+def change_magento_status_to_fullfilled(so_name):
+    base_url, headers = base_data("webhook")
+    url = base_url + '/order/updateStatus/{so_name}'.format(so_name = so_name)
+    payload = json.dumps({
+            "order_status": "Fulfilled"
+            })
+    response = requests.request("PUT", url, headers=headers, data=payload)
+    return response.text , response.status_code
+
+def change_magento_status_to_cancelled(so_magento_id):
+    base_url, headers = base_data("webhook")
+    url = base_url + '/order/cancel/{so_magento_id}'.format(so_magento_id = so_magento_id)
+    response = requests.request("PUT", url, headers=headers)
+    return response.text , response.status_code ## returns: Order (magento id) has been successfully cancelled

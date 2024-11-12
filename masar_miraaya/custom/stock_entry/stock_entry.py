@@ -3,9 +3,5 @@ from masar_miraaya.api import update_stock_magento
 
 
 def on_submit(self, method):
-    update_stock(self)
-
-
-def update_stock(self):
-    if self.docstatus == 1:
+    if self.docstatus == 1 and self.stock_entry_type == 'Material Issue':
         update_stock_magento(self)

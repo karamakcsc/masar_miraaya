@@ -1,10 +1,12 @@
 import frappe
-from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice , make_delivery_note , update_status
+from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice , make_delivery_note , update_status , create_pick_list
 from erpnext.controllers.sales_and_purchase_return import make_return_doc
 from erpnext.accounts.doctype.journal_entry.journal_entry import make_reverse_journal_entry
 import json
-
-
+from erpnext.stock.doctype.pick_list.pick_list import ( 
+                validate_item_locations,     stock_entry_exists ,   update_stock_entry_based_on_work_order,
+                update_stock_entry_based_on_material_request ,update_stock_entry_items_with_no_reference )
+from masar_miraaya.api import change_magento_status_to_cancelled
 @frappe.whitelist()
 def get_payment_channel_amount(child):
     payment_chnnel_amount = 0 
@@ -79,73 +81,9 @@ def get_cost_center(self):
                 'Set Cost Center or Default Cost Center in Company.',
                 title = frappe._("Missing Cost Center"))
         return cost_center
-def create_payment_channel_jv(self):
-    added_row = None
-    cost_center  = get_cost_center(self)
-    je  = frappe.qb.DocType('Journal Entry')
-    exist_check = (
-                    frappe.qb.from_(je)
-                    .where(je.custom_reference_doctype == self.name)
-                    .select(je.name)
-                   ).run(as_dict = True)
-    if exist_check and exist_check[0] and exist_check[0]['name']:
-        frappe.msgprint(
-            f'Journal Entry alerady Created.',
-            alert = True , 
-            indicator='blue'
-        )
-        return 
-    if self.custom_is_cash_on_delivery and self.custom_cash_on_delivery_amount != 0 : 
-        cash_on_delivery_acc = cash_on_delivery_account(self)
-        if cash_on_delivery_acc is None:
-            frappe.throw(
-                'Set Default Cash on Delivery Account in Company {company}'
-                .format(company = frappe.utils.get_link_to_form("Company", self.company)
-                ), 
-                title = frappe._("Missing Account"))
-        else : 
-            added_row =  {
-                'account' : cash_on_delivery_acc, 
-                'debit_in_account_currency' : self.custom_cash_on_delivery_amount,
-                'debit' : self.custom_cash_on_delivery_amount, 
-                'cost_center' : cost_center
-            }
-    jv = frappe.new_doc("Journal Entry")
-    jv.posting_date = self.transaction_date
-    jv.company = self.company
-    jv.custom_reference_document = self.doctype
-    jv.custom_reference_doctype = self.name
-    for pc in self.custom_payment_channels:
-        dr_account = get_account(company= self.company  ,customer= pc.channel)
-        dr_row = { 
-            'account' : dr_account, 
-            'debit_in_account_currency' : pc.amount,
-            'debit' : pc.amount, 
-            'party_type':'Customer',
-            'party': pc.channel,
-            'cost_center' : cost_center
-        }
-        jv.append("accounts", dr_row)
-    if added_row is not None : 
-        jv.append("accounts", added_row)
-    ######### Credit Part 
-    cr_account = get_account(company= self.company  ,customer= self.customer)
-    cr_row = { 
-        'account': cr_account,
-        'credit_in_account_currency' : float(self.custom_total_amount),
-        'credit' : float(self.custom_total_amount),
-        'party_type': 'Customer',
-        'party': self.customer,
-        'cost_center': cost_center,
-    }
-    jv.append("accounts", cr_row)
-    jv.save(ignore_permissions=True)
-    jv.submit()
-    frappe.msgprint(
-        f"Journal Entry has been Created Successfully." ,
-        alert=True , 
-        indicator='green'
-    )
+
+
+
 def deferred_revenue_account(company):
     comp_doc = frappe.get_doc('Company' , company)
     if comp_doc.default_deferred_revenue_account is None:
@@ -171,7 +109,6 @@ def create_sales_invoice(self):
 
         if not exist_sales:
             doc = make_sales_invoice(self.name)
-            # if doc.items: 
             for item in doc.items: 
                 item.enable_deferred_revenue = 1 
                 item.deferred_revenue_account = deferred_revenue_acc
@@ -210,26 +147,123 @@ def create_sales_invoice(self):
 
 
 def on_submit(self, method):
-    # create_payment_channel_jv(self)
     create_sales_invoice(self)
-    create_material_request(self)
+    create_draft_pick_list(self)
     
 def on_update_after_submit(self, method):
         if  self.docstatus == 1:
             if self.custom_magento_status == 'On the Way':
                 cost_of_delivery_jv(self)
                 create_delivery_company_jv(self)
+                stock_entry_method(self)
             if self.custom_magento_status == 'Delivered':
+                cancel_stock_reservation_entry(self)
                 delivery_note = create_delivery_note(self)
                 delivery_note_jv(self , delivery_note=delivery_note)
             if self.custom_magento_status == 'Cancelled':
                 return_sales_invoice(self)
-                # reverse_delivery_note_jv(self)
                 return_delivery_note(self)
                 reverse_journal_entry(self)
-                cancelled_material_request(self)
+                cancelled_pick_list(self)
+                change_magento_status_to_cancelled(self.custom_magento_id)
                 # update_status(self.name , "Closed")
 
+
+
+def create_draft_pick_list(self):
+    doc = create_pick_list(self.name)
+    doc.save()
+
+
+@frappe.whitelist()
+def stock_entry_method(self):
+    allow_to_cerate_stock_entry  , delivery_company , driver = delivery_company_validation(self)
+    if allow_to_cerate_stock_entry:
+        created = stock_entry_creation(self , delivery_company , driver)
+        if created:
+            return True
+
+def delivery_company_validation(self):
+        if self.custom_magento_status == 'Cancelled':
+            frappe.throw(
+                'The Sales Order has been cancelled. You cannot pick the items.'
+                , title = frappe._('Cancelled Sales Order')
+                )
+            return False, None , None 
+        if self.custom_delivery_company  is None or self.custom_driver is None : 
+            frappe.throw(
+                'Delivery Company and Driver are not selected in the Sales Order. The Pick List is not ready for Picking.',
+                title=frappe._('Missing Delivery Information')
+            )
+            return False , None , None 
+        return True  , self.custom_delivery_company , self.custom_driver 
+
+
+def stock_entry_creation(self , delivery_company , driver):
+    pl = frappe.qb.DocType('Pick List')
+    pli = frappe.qb.DocType('Pick List Item')
+    so = frappe.qb.DocType(self.doctype)
+    soi = frappe.qb.DocType('Sales Order Item')
+    pick_list = (
+        frappe.qb.from_(pl)
+        .join(pli).on(pl.name == pli.parent)
+        .select((pl.name).as_('pl_name'))
+        .where(pl.docstatus == 1 )
+        .where(pli.sales_order == self.name)
+        .groupby(pl.name)
+        ).run(as_dict = True)
+    for loop in pick_list:
+        pl_doc = frappe.get_doc('Pick List' , loop.pl_name)
+        dict_ = create_stock_entry((pl_doc.as_dict()))
+        if bool(dict_) == True and str(dict_) != 'null':
+            dict_['stock_entry_type'] = 'Material Transfer'
+            for r in dict_['items']:
+                warehouse  = (
+                    frappe.qb.from_(soi).select((soi.warehouse).as_('target'))
+                              .where(soi.item_code == r['item_code'])
+                              .where(soi.parent == self.name)
+                              ).run(as_dict = True)
+                t_warehouse = None 
+                if warehouse and warehouse[0] and warehouse[0]['target']:
+                    t_warehouse = warehouse[0]['target']
+                    
+            dict_['to_warehouse'] = t_warehouse
+            se_doc = (
+                frappe.new_doc('Stock Entry')
+                .update(dict_)
+                .save()
+            )
+            for row in se_doc.items:
+                row.driver = driver
+                row.delivery_company = delivery_company
+            se_doc.save().submit()
+            return True
+
+@frappe.whitelist()
+def create_stock_entry(pick_list):
+	validate_item_locations(pick_list)
+
+	if stock_entry_exists(pick_list.get("name")):
+		return frappe.msgprint(_("Stock Entry has been already created against this Pick List"))
+
+	stock_entry = frappe.new_doc("Stock Entry")
+	stock_entry.pick_list = pick_list.get("name")
+	stock_entry.purpose = pick_list.get("purpose")
+	stock_entry.set_stock_entry_type()
+
+	if pick_list.get("work_order"):
+		stock_entry = update_stock_entry_based_on_work_order(pick_list, stock_entry)
+	elif pick_list.get("material_request"):
+		stock_entry = update_stock_entry_based_on_material_request(pick_list, stock_entry)
+	else:
+		stock_entry = update_stock_entry_items_with_no_reference(pick_list, stock_entry)
+
+	stock_entry.set_missing_values()
+
+	return stock_entry.as_dict()
+
+   
+########################################################
 def create_delivery_company_jv(self):
     if self.custom_is_cash_on_delivery and self.custom_cash_on_delivery_amount != 0 : 
 
@@ -502,34 +536,38 @@ def cost_of_delivery_jv(self):
     jv.append("accounts", cr_row)
     jv.save(ignore_permissions=True)
     jv.submit()
-
-def cancelled_material_request(self): 
-    mri = frappe.qb.DocType('Material Request Item')
+def cancel_stock_reservation_entry(self):
+    sre = frappe.qb.DocType('Stock Reservation Entry')
+    sre_lst = (frappe.qb.from_(sre).select(sre.name).where(sre.voucher_no == self.name ).where(sre.docstatus ==1 )
+               ).run(as_dict = True)
+    if len(sre_lst) != 0 : 
+        for sre_loop in sre_lst: 
+            sre_doc = frappe.get_doc('Stock Reservation Entry' , sre_loop.name)
+            sre_doc.run_method('cancel')
+def cancelled_pick_list(self): 
+    pl = frappe.qb.DocType('Pick List')
     pli = frappe.qb.DocType('Pick List Item')
     se = frappe.qb.DocType('Stock Entry')
-    material_request = (
-        frappe.qb.from_(mri)
-        .select(mri.parent)
-        .where(mri.sales_order == self.name)
-        .groupby(mri.parent)
-    ).run(as_dict=True)
-    for mr in material_request: 
-        pick_list =   (
-            frappe.qb.from_(pli)
-            .select(pli.parent)
+    cancel_stock_reservation_entry(self)
+    pick_list =   (
+            frappe.qb.from_(pl)
+            .join(pli).on(pl.name == pli.parent)
+            .select(pl.name)
             .where(pli.sales_order == self.name)
-            .groupby(pli.parent)
+            .where(pl.docstatus == 1 )
+            .groupby(pl.name)
         ).run(as_dict=True)
-        if len(pick_list) != 0: 
-            for pl in pick_list:
+    if len(pick_list) != 0: 
+            for pl_loop in pick_list:
                 stock_entry = (
-                    frappe.qb.from_(se).select(se.name).where(se.pick_list ==pl.parent )
+                    frappe.qb.from_(se).select(se.name)
+                    .where(se.pick_list ==pl_loop.name )
+                    .where(se.docstatus ==1 )
                 ).run(as_dict=True)
                 if len(stock_entry) !=0:
                     for loop in stock_entry:
                         se_doc = frappe.get_doc('Stock Entry' , loop.name)
                         se_doc.run_method('cancel')
-                pl_doc= frappe.get_doc('Pick List' , pl.parent)
+                pl_doc= frappe.get_doc('Pick List' , pl_loop.name)
                 pl_doc.run_method('cancel')
-        mr_doc = frappe.get_doc('Material Request' ,mr.parent )
-        mr_doc.run_method('cancel')
+    

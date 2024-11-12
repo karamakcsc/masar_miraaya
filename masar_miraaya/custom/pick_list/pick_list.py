@@ -1,96 +1,91 @@
 import frappe
-from erpnext.stock.doctype.pick_list.pick_list import create_stock_entry
+from erpnext.stock.doctype.pick_list.pick_list import  PickList
 import json
+from masar_miraaya.api import change_magento_status_to_fullfilled
 
-@frappe.whitelist()
-def packing(self):
-    self = frappe._dict(json.loads(self))
-    frappe.db.set_value(self.doctype , self.name , 'custom_packed' ,1)
-    return 1 
-@frappe.whitelist()
-def stock_entry_method(self):
-    self = frappe._dict(json.loads(self))
-    mr_doc = frappe.get_doc('Material Request' , self.material_request)
-    assigned_to = assigned_to_me_vaildation(mr_doc)
-    if assigned_to: 
-        continue_to_role = user_vaildation(assigned_to)
-        if continue_to_role:
-            allowed_role = role_permission(assigned_to)
-            if allowed_role:
-                allow_to_cerate_stock_entry  , delivery_company , driver = delivery_company_validation(self)
-                if allow_to_cerate_stock_entry:
-                    created = stock_entry_creation(self , delivery_company , driver)
-                    if created:
-                        return True
-##
-
-def assigned_to_me_vaildation(self):
-    if self.custom_assigned_to is None :
-            frappe.throw(
-                'The Material Request is not assigned to anyone. You must assign this request to yourself.',
-                title=frappe._('Assignment Missing')
-            )
-            return False
-    return self.custom_assigned_to
-
-
-def user_vaildation(assigned_to):
-    if frappe.session.user != assigned_to: 
+def on_submit(self , method):
+    assigned_to_validate(self)
+    user_vaildation(self)
+    
+    
+def assigned_to_validate(self): 
+    if self.custom_assigned_to is None: 
         frappe.throw(
-                'The Material Request is already assigned to {assigned_to}. You cannot assign this request to yourself.'
-                .format(assigned_to=assigned_to), 
+            '''Please ensure that you click the "Assign To Me" button before submitting. 
+            This step is necessary to assign this pick to yourself.''', 
+            title = frappe._('Assign Validation')
+        )
+def user_vaildation(self):
+    if frappe.session.user != self.custom_assigned_to: 
+        frappe.throw(
+                'Pick List is already assigned to {assigned_to}. You cannot assign this request to yourself.'
+                .format(assigned_to=self.custom_assigned_to), 
                 title=frappe._('Assigned to Another User')
             )
         return False
     return True 
+@frappe.whitelist()
+def packing(self):
+    self = frappe._dict(json.loads(self))
+    linked_so = get_linked_so(self)
+    error , continue_ = change_magento_status(linked_so)
+    if continue_:
+        change_so_status(linked_so)
+        PickList.create_stock_reservation_entries(self= frappe.get_doc(self.doctype , self.name) , notify=True)
+        frappe.db.set_value(self.doctype , self.name , 'custom_packed' ,1)
+        return 1 
+    else : 
+        frappe.throw('Error Magento Connection : {error}'.format(error = error))
 
+def change_magento_status(linked_so): 
+    text = 'Magento ID is None or Sales Order is Not Submitted.' 
+    for so in linked_so:
+        so_doc = frappe.get_doc('Sales Order' , so.so_name)
+        if so_doc.docstatus == 1 and so_doc.custom_magento_id is not None:  
+            text , status_code = change_magento_status_to_fullfilled(so_doc.custom_magento_id)
+            if status_code  in [200 , 201]:
+                return  text , True
+    return text , False
 
-def role_permission(user):
+def change_so_status(linked_so):
+    if len(linked_so) != 0 : 
+        for so in linked_so:
+            so_doc = frappe.get_doc('Sales Order' , so.so_name)
+            if so_doc.docstatus == 1:
+                so_doc.custom_magento_status = 'Fullfilled'
+                so_doc.save() 
+
+def get_linked_so(self):
+    pl = frappe.qb.DocType(self.doctype)
+    pli = frappe.qb.DocType('Pick List Item')
+    linked_so = (
+        frappe.qb.from_(pl)
+        .join(pli).on(pl.name == pli.parent)
+        .select((pli.sales_order).as_('so_name'))
+        .where(pl.name == self.name)
+        .groupby(pli.sales_order)
+    ).run(as_dict = True)
+    return linked_so
+                
+@frappe.whitelist()
+def assign_to_me(self):
+    self = frappe._dict(json.loads(self))
+    user = frappe.session.user
     role = frappe.get_roles(user)
     if 'Fulfillment User' not in role:
-        frappe.throw(
-            'You must have the <b>Fulfillment User</b> Role to perform this action.',
-            title= frappe._('Role Permission')
-        )
-        return False
-    return True
-
-
-def delivery_company_validation(self):
-    so = None
-    for r in self.locations:
-        r = frappe._dict(r)
-        if hasattr(r ,'sales_order'):
-            so = r.sales_order
-            break 
-    if so: 
-        so_doc = frappe.get_doc("Sales Order", so)
-        if so_doc.custom_magento_status == 'Cancelled':
             frappe.throw(
-                'The Sales Order has been cancelled. You cannot pick the items.'
-                , title = frappe._('Cancelled Sales Order')
+                'User {user} does not have the "Fulfillment User" role assigned and therefore cannot be assigned the Material Request.'
+                .format(user = user),
+                title = frappe._('Role Validation')
                 )
-            return False, None , None 
-        if so_doc.custom_delivery_company  is None or so_doc.custom_driver is None : 
+            return None
+    if self.custom_assigned_to is not None : 
             frappe.throw(
-                'Delivery Company and Driver are not selected in the Sales Order. The Pick List is not ready for Picking.',
-                title=frappe._('Missing Delivery Information')
+                'The Material Request is already assigned to {assigned_to}. You cannot assign this request to yourself.'
+                .format(assigned_to=self.custom_assigned_to), 
+                title=frappe._('Assigned to Another User')
             )
-            return False , None , None 
-        return True  , so_doc.custom_delivery_company , so_doc.custom_driver 
-    return False , None , None 
-
-
-def stock_entry_creation(self , delivery_company , driver):
-    dict_ = json.dumps(create_stock_entry(json.dumps(self)))
-    if bool(dict_) == True and str(dict_) != 'null':
-        se_doc = (
-            frappe.new_doc('Stock Entry')
-            .update(json.loads(dict_))
-            .save()
-        )
-        for row in se_doc.items:
-            row.driver = driver
-            row.delivery_company = delivery_company
-        se_doc.save().submit()
-        return True 
+            return None 
+    frappe.db.set_value(self.doctype, self.name, "custom_assigned_to", user)
+    frappe.db.commit()
+    return user

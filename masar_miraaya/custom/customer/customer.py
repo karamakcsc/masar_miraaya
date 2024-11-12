@@ -4,7 +4,7 @@ import requests
 from masar_miraaya.api import base_data
 from frappe import _
 def validate(self, method):
-    # check_validation(self)
+    check_validation(self)
     roles = (frappe.get_roles(frappe.session.user))
     if (self.custom_is_publish and ('API Integration' not in roles)) or (self.custom_is_publish and frappe.session.user == 'Administrator' ):
         magento = frappe.get_doc('Magento Sync')
@@ -106,19 +106,24 @@ def create_new_customer(self):
         
         
 def check_validation(self):
-    total_options_selected = (self.custom_is_delivery + self.custom_is_payment_channel + self.custom_is_digital_wallet)
-    if total_options_selected  > 1:
-        frappe.throw("Please select only one option: Delivery, Payment Channel, or Digital Wallet." , title= _("Validation Error"))
-    elif total_options_selected == 1:
-        if  self.customer_group:
-            group_doc = frappe.get_doc('Customer Group' , self.customer_group)
-            if self.custom_is_delivery:
-                if not group_doc.custom_is_delivery: 
-                    frappe.throw("The selected Customer Group must support Delivery.")
-            elif self.custom_is_payment_channel:
-                if not group_doc.custom_is_payment_channel:
-                    frappe.throw("The selected Customer Group must support Payment Channel.")
-            elif self.custom_is_digital_wallet:
-                if not group_doc.custom_is_digital_wallet:
-                    frappe.throw("The selected Customer Group must support Digital Wallet.")
-                    
+    # total_options_selected = (self.custom_is_delivery + self.custom_is_payment_channel + self.custom_is_digital_wallet)
+    # if total_options_selected  > 1:
+    #     frappe.throw("Please select only one option: Delivery, Payment Channel, or Digital Wallet." , title= _("Validation Error"))
+    # elif total_options_selected == 1:
+    #     if  self.customer_group:
+    #         group_doc = frappe.get_doc('Customer Group' , self.customer_group)
+    #         if self.custom_is_delivery:
+    #             if not group_doc.custom_is_delivery: 
+    #                 frappe.throw("The selected Customer Group must support Delivery.")
+    #         elif self.custom_is_payment_channel:
+    #             if not group_doc.custom_is_payment_channel:
+    #                 frappe.throw("The selected Customer Group must support Payment Channel.")
+    #         elif self.custom_is_digital_wallet:
+    #             if not group_doc.custom_is_digital_wallet:
+    #                 frappe.throw("The selected Customer Group must support Digital Wallet.")
+    
+    if self.custom_is_delivery and (self.custom_is_payment_channel or self.custom_is_digital_wallet):
+        frappe.throw("Please select Either: Delivery or Payment Channel or Digital Wallet." , title= _("Validation Error"))
+    
+    if self.custom_is_digital_wallet and not self.custom_is_payment_channel:
+        self.custom_is_payment_channel = 1
