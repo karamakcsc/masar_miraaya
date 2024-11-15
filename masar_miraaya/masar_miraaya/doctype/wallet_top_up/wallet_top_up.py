@@ -13,7 +13,9 @@ class WalletTopup(Document):
         self.get_digital_wallet_account()
         self.get_accounts_form_company(with_cost_center=False)
     def on_submit(self):
-        self.adjust_amount_to_wallet_magento()
+        roles = (frappe.get_roles(frappe.session.user))
+        if ('API Integration' not in roles) or frappe.session.user == 'Administrator':
+            self.adjust_amount_to_wallet_magento()
         self.create_journal_entry()
         
     def get_accounts_form_company(self , with_cost_center):
@@ -157,7 +159,7 @@ class WalletTopup(Document):
         
         
     def adjust_amount_to_wallet_magento(self):
-        base_url, headers = base_data("magento")
+        base_url, headers = base_data("magento_wallet")
         url = base_url + "/graphql"
         
         action_type = None

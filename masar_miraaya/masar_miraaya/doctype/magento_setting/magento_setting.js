@@ -12,19 +12,32 @@ frappe.ui.form.on('Magento Setting', {
             }
         });
     },
+    create_mag_auth_wallet: function (frm) {
+        frappe.call({
+            method: "masar_miraaya.api.create_magento_auth_wallet",
+            callback: function(r) {
+                if (r.message) {
+                    frm.set_value('auth_wallet', r.message);
+                }
+            }
+        });
+    },
     onload: function (frm) {
         if(frappe.session.user != 'Administrator') {
             frm.toggle_display("magento_admin_details_section", false);
+            frm.toggle_display("magento_wallet_details_section", false);
         }
     },
     setup: function (frm) {
         if(frappe.session.user != 'Administrator') {
             frm.toggle_display("magento_admin_details_section", false);
+            frm.toggle_display("magento_wallet_details_section", false);
         }
     },
     refresh: function (frm) {
         if(frappe.session.user != 'Administrator') {
             frm.toggle_display("magento_admin_details_section", false);
+            frm.toggle_display("magento_wallet_details_section", false);
         }
     }
 });

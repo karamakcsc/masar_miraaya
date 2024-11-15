@@ -7,6 +7,7 @@ from erpnext.stock.doctype.pick_list.pick_list import (
                 validate_item_locations,     stock_entry_exists ,   update_stock_entry_based_on_work_order,
                 update_stock_entry_based_on_material_request ,update_stock_entry_items_with_no_reference )
 from masar_miraaya.api import change_magento_status_to_cancelled
+from datetime import datetime
 @frappe.whitelist()
 def get_payment_channel_amount(child):
     payment_chnnel_amount = 0 
@@ -161,17 +162,125 @@ def on_update_after_submit(self, method):
                 delivery_note = create_delivery_note(self)
                 delivery_note_jv(self , delivery_note=delivery_note)
             if self.custom_magento_status == 'Cancelled':
-                # cancelled_pick_list(self)
                 return_sales_invoice(self)
-                return_delivery_note(self)
                 reverse_journal_entry(self)
+                pl_lsts = pick_list_known(self)
+                if len(pl_lsts['draft'])!=0:
+                    delete_pl_draft(self = self ,draft=pl_lsts['draft'] )
+                if len(pl_lsts['submit']) !=0 : 
+                    pl_sudimtted(self = self ,submit = pl_lsts['submit'] )
                 change_magento_status_to_cancelled(self.custom_magento_id)
-                # update_status(self.name , "Closed")
+            if self.custom_magento_status =='Reorder': 
+                cancelled_pick_list(self)
+                create_amend_so(self)
 
+def create_amend_so(self): 
+    new_so = frappe.copy_doc(self)
+    new_so.amended_from = self.name  
+    new_so.status = "Draft"   
+    new_so.custom_magento_status = "New"
+    new_so.name  = None
+    new_so.per_delivered = 0 
+    new_so.per_billed = 100
+    new_so.per_picked =0 
+    new_so.insert()
+    delivery_date = datetime.now().date()
+    for item in new_so.items:
+        item.delivery_date = delivery_date
+    new_so.payment_schedule = list()
+    new_so.delivery_date = delivery_date
+    new_so.transaction_date = delivery_date
+    new_so.run_method('save')
+    new_so.run_method('submit')
+
+
+def delete_pl_draft(self , draft = list() ):
+    for d in draft:
+        frappe.delete_doc("Pick List", d)
+        
+def pl_sudimtted(self ,submit ):
+    'check Delivery Note to cancel Pick List or Not '
+    dn = frappe.qb.DocType('Delivery Note')
+    dni = frappe.qb.DocType('Delivery Note Item')
+    exist_dn = (
+        frappe.qb.from_(dn)
+        .join(dni).on(dn.name == dni.parent)
+        .where(dni.against_sales_order == self.name)
+        .where(dn.docstatus == 1 )
+        .select(dn.name)
+        ).run(as_dict = True)
+    if len(exist_dn) == 0 : 
+        cancelled_pick_list(self)
+    else : 
+        return_delivery_note(self)
+    
+        
+        
+        
+def pick_list_known(self): 
+    pl = frappe.qb.DocType('Pick List')
+    pli = frappe.qb.DocType('Pick List Item')
+    pick_list =   (
+            frappe.qb.from_(pl)
+            .join(pli).on(pl.name == pli.parent)
+            .select((pl.docstatus) , 
+                    (pl.name) 
+                    )
+            .where(pli.sales_order == self.name )
+            .groupby(pl.name)
+        ).run(as_dict=True)
+    draft_pl , submitted_pl = list() , list()
+    for p in pick_list: 
+        if p.docstatus == 0 : 
+            draft_pl.append(p.name)
+        elif p.docstatus ==1 : 
+            submitted_pl.append(p.name)
+            
+    return {
+        'draft' : draft_pl , 
+        'submit' : submitted_pl
+    }
+    
+    
+            
 
 
 def create_draft_pick_list(self):
     doc = create_pick_list(self.name)
+    use_serial_batch_fields = frappe.db.get_single_value("Stock Settings", "use_serial_batch_fields")
+    soi = frappe.qb.DocType('Sales Order Item')
+    i = frappe.qb.DocType('Item')
+    items = (
+        frappe.qb.from_(soi)
+        .left_join(i).on(i.name == soi.item_code)
+        .select(
+            (soi.item_code) , (soi.item_name) , (soi.item_group),
+            (soi.description) , (soi.qty) , (soi.stock_qty) , (soi.stock_reserved_qty), 
+            (soi.uom) , (soi.conversion_factor) , (soi.stock_uom) ,
+            (soi.name.as_('sales_order_item')) 
+        )
+        .where(i.is_stock_item ==1 )
+        .where(soi.parent == self.name)
+    ).run(as_dict = True)
+    # frappe.throw(str(items))
+    doc.locations = list()
+    for i in items: 
+        row = { 
+                    "item_code": i.item_code,
+                    "item_name": i.item_name,
+                    "description":i.description,
+                    "item_group": i.item_group,
+                    "qty": i.qty,
+                    "stock_qty": i.stock_qty,
+                    "stock_reserved_qty": i.stock_reserved_qty,
+                    "uom": i.uom,
+                    "conversion_factor": i.conversion_factor,
+                    "stock_uom":i.stock_uom ,
+                    "use_serial_batch_fields": use_serial_batch_fields,
+                    "sales_order": self.name,
+                    "sales_order_item":i.sales_order_item,
+        }
+        doc.append('locations' , row)
     doc.save()
 
 
@@ -244,7 +353,7 @@ def create_stock_entry(pick_list):
 	validate_item_locations(pick_list)
 
 	if stock_entry_exists(pick_list.get("name")):
-		return frappe.msgprint(_("Stock Entry has been already created against this Pick List"))
+		return frappe.msgprint(frappe._("Stock Entry has been already created against this Pick List"))
 
 	stock_entry = frappe.new_doc("Stock Entry")
 	stock_entry.pick_list = pick_list.get("name")
@@ -548,7 +657,6 @@ def cancelled_pick_list(self):
     pl = frappe.qb.DocType('Pick List')
     pli = frappe.qb.DocType('Pick List Item')
     se = frappe.qb.DocType('Stock Entry')
-    cancel_stock_reservation_entry(self)
     pick_list =   (
             frappe.qb.from_(pl)
             .join(pli).on(pl.name == pli.parent)
@@ -565,9 +673,8 @@ def cancelled_pick_list(self):
                     .where(se.docstatus ==1 )
                 ).run(as_dict=True)
                 if len(stock_entry) !=0:
-                    for loop in stock_entry:
-                        se_doc = frappe.get_doc('Stock Entry' , loop.name)
-                        se_doc.run_method('cancel')
+                    for se_loop in stock_entry:
+                        frappe.db.set_value('Stock Entry' , se_loop.name , 'pick_list' , None)
+                cancel_stock_reservation_entry(self)
                 pl_doc= frappe.get_doc('Pick List' , pl_loop.name)
                 pl_doc.run_method('cancel')
-    

@@ -3,7 +3,9 @@ import requests
 from masar_miraaya.api import base_data
 
 def validate(self, method):
-    update_customer_address(self)
+    roles = (frappe.get_roles(frappe.session.user))
+    if ('API Integration' not in roles) or frappe.session.user == 'Administrator':
+        update_customer_address(self)
 
 def update_customer_address(self):
     customer_name = None

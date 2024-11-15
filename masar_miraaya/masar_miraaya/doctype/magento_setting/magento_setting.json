@@ -14,10 +14,19 @@
   "column_break_nxpo",
   "create_magento_auth",
   "magento_auth",
+  "magento_wallet_auth_section",
+  "url_wallet",
+  "column_break_oxhn",
+  "create_mag_auth_wallet",
+  "auth_wallet",
   "magento_admin_details_section",
   "username",
   "column_break_uajd",
-  "password"
+  "password",
+  "magento_wallet_details_section",
+  "mag_wallet_user",
+  "column_break_vktr",
+  "mag_wallet_pass"
  ],
  "fields": [
   {
@@ -81,12 +90,55 @@
    "fieldname": "password",
    "fieldtype": "Data",
    "label": "Password"
+  },
+  {
+   "fieldname": "magento_wallet_auth_section",
+   "fieldtype": "Section Break",
+   "label": "Magento Wallet Auth"
+  },
+  {
+   "fieldname": "url_wallet",
+   "fieldtype": "Small Text",
+   "label": "URL"
+  },
+  {
+   "fieldname": "column_break_oxhn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "create_mag_auth_wallet",
+   "fieldtype": "Button",
+   "label": "Create Magento Auth"
+  },
+  {
+   "fieldname": "auth_wallet",
+   "fieldtype": "Small Text",
+   "label": "Authorization"
+  },
+  {
+   "fieldname": "magento_wallet_details_section",
+   "fieldtype": "Section Break",
+   "label": "Magento Wallet Details"
+  },
+  {
+   "fieldname": "mag_wallet_user",
+   "fieldtype": "Data",
+   "label": "Username"
+  },
+  {
+   "fieldname": "column_break_vktr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mag_wallet_pass",
+   "fieldtype": "Data",
+   "label": "Password"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-08-28 11:05:04.911067",
+ "modified": "2024-11-14 17:27:08.244482",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Magento Setting",

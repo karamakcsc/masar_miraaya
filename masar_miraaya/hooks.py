@@ -220,7 +220,8 @@ scheduler_events = {
 	# ],
 	"cron": {
         "*/30 * * * *": [
-            "masar_miraaya.api.create_magento_auth"
+            "masar_miraaya.api.create_magento_auth",
+            "masar_miraaya.api.create_magento_auth_wallet"
         ]
     }
 }

@@ -13,6 +13,12 @@ def magento_admin_details():
     password = str(setting.password)
     
     return username, password
+def magento_wallet_details():
+    setting = frappe.get_doc("Magento Setting")
+    username = str(setting.mag_wallet_user)
+    password = str(setting.mag_wallet_pass)
+    
+    return username, password
 @frappe.whitelist()
 def create_magento_auth():
     base_url, headers = base_data("magento")
@@ -27,6 +33,30 @@ def create_magento_auth():
     auth = response.text.strip('"')
     setting = frappe.get_doc("Magento Setting")
     setting.magento_auth = auth
+    setting.save()
+    
+    query = frappe.db.sql("SELECT name FROM `tabWebhook Header` WHERE `key` = 'Authorization'", as_dict=True)
+    webhook_auth = f"Bearer {auth}"
+    
+    for header in query:
+        frappe.db.set_value("Webhook Header", header['name'], 'value', webhook_auth)
+    frappe.db.commit()
+    return auth
+
+@frappe.whitelist()
+def create_magento_auth_wallet():
+    base_url, headers = base_data("magento")
+    username, password = magento_wallet_details()
+    url = f"{base_url}/rest/V1/integration/customer/token"
+    payload = {
+        "username": username,
+        "password": password
+    }
+    
+    response = requests.post(url, json=payload)
+    auth = response.text.strip('"')
+    setting = frappe.get_doc("Magento Setting")
+    setting.auth_wallet = auth
     setting.save()
     
     query = frappe.db.sql("SELECT name FROM `tabWebhook Header` WHERE `key` = 'Authorization'", as_dict=True)
@@ -248,6 +278,14 @@ def base_data(request_in):
         base_url = str(setting.magento_url).strip()
         headers = {
             "Authorization": f"Bearer {str(setting.magento_auth).strip()}",
+            "Content-Type": "application/json"
+        }
+        return base_url , headers
+    elif request_in == "magento_wallet":
+        setting = frappe.get_doc("Magento Setting")
+        base_url = str(setting.url_wallet).strip()
+        headers = {
+            "Authorization": f"Bearer {str(setting.auth_wallet).strip()}",
             "Content-Type": "application/json"
         }
         return base_url , headers
@@ -1078,7 +1116,7 @@ def get_magento_item_stock(item_code):
         frappe.throw(f"Error in Getting Item Stock. {str(response.text)}")
 
 
-def update_stock_magento(self):
+def update_stock_magento_pr(self):
     base_url, headers = base_data("magento")
     url = base_url + "/rest/V1/inventory/source-items"
     
@@ -1105,15 +1143,46 @@ def update_stock_magento(self):
         "sourceItems": item_list
     }
     
-    # frappe.throw(str(payload))
-    
     response = requests.post(url, headers=headers, json=payload)
     if response.status_code == 200:
         frappe.msgprint("Item Stock Updated Successfully in Magento", alert=True , indicator='green')
     else:
         frappe.throw(f"Failed to Update Item Stock in Magento: {str(response.text)}")
 
-
+def update_stock_magento_stock_entry(self):
+    base_url, headers = base_data("magento")
+    url = base_url + "/rest/V1/inventory/source-items"
+    
+    warehouse_codes = get_warehouse_code_magento() ## GET Warehouse Codes (source_code) from Magento
+    
+    item_list = []
+    for row in self.items:
+        sku = row.item_code
+        qty = row.qty
+        # warehouse = row.warehouse
+        
+        item_stock = get_magento_item_stock(sku) ## GET Item Stock
+        stock_qty = item_stock.get('qty')
+        if stock_qty < qty:
+            frappe.throw(f"The Material Issue Qty: {qty}, is More than the Stock Qty in Magento: {stock_qty}")
+        stock = stock_qty - qty  ## Subtract Existing qty with new qty
+        
+        item_list.append({
+            "sku": sku,
+            "source_code": "default",
+            "quantity": stock,
+            "status": 1 ## if 1 in stock , 0 out of stock
+        })
+        
+    payload = {
+        "sourceItems": item_list
+    }
+    
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        frappe.msgprint("Item Stock Updated Successfully in Magento", alert=True , indicator='green')
+    else:
+        frappe.throw(f"Failed to Update Item Stock in Magento: {str(response.text)}")
 
                     
 @frappe.whitelist()
