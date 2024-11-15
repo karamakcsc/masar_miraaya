@@ -108,7 +108,7 @@
   {
    "fieldname": "create_mag_auth_wallet",
    "fieldtype": "Button",
-   "label": "Create Magento Auth"
+   "label": "Create Magento Auth for Wallet"
   },
   {
    "fieldname": "auth_wallet",
@@ -138,7 +138,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-14 17:27:08.244482",
+ "modified": "2024-11-15 15:30:40.040987",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Magento Setting",

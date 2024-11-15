@@ -9,62 +9,103 @@ import json
 ###
 def magento_admin_details():
     setting = frappe.get_doc("Magento Setting")
-    username = str(setting.username)
-    password = str(setting.password)
+    username = str(setting.username) #admintoken
+    password = str(setting.password) #token1@3$
     
     return username, password
 def magento_wallet_details():
     setting = frappe.get_doc("Magento Setting")
-    username = str(setting.mag_wallet_user)
-    password = str(setting.mag_wallet_pass)
+    username = str(setting.mag_wallet_user) # prasanth@theapprender.com
+    password = str(setting.mag_wallet_pass) # Password123$
     
     return username, password
+# @frappe.whitelist()
+# def create_magento_auth():
+#     base_url, headers = base_data("magento")
+#     username, password = magento_admin_details()
+#     url = f"{base_url}/rest/V1/integration/admin/token"
+#     payload = {
+#         "username": username,
+#         "password": password
+#     }
+    
+#     response = requests.post(url, json=payload)
+#     auth = response.text.strip('"')
+#     setting = frappe.get_doc("Magento Setting")
+#     setting.magento_auth = auth
+#     setting.save()
+    
+#     query = frappe.db.sql("SELECT name FROM `tabWebhook Header` WHERE `key` = 'Authorization'", as_dict=True)
+#     webhook_auth = f"Bearer {auth}"
+    
+#     for header in query:
+#         frappe.db.set_value("Webhook Header", header['name'], 'value', webhook_auth)
+#     frappe.db.commit()
+#     return auth
+
 @frappe.whitelist()
 def create_magento_auth():
-    base_url, headers = base_data("magento")
-    username, password = magento_admin_details()
-    url = f"{base_url}/rest/V1/integration/admin/token"
-    payload = {
-        "username": username,
-        "password": password
+    # base_url, headers = base_data("magento")
+    # username, password = magento_admin_details()
+    url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/admin/token"
+    headers = {
+        "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
     }
+    # payload = {
+    #     "username": username,
+    #     "password": password
+    # }
     
-    response = requests.post(url, json=payload)
-    auth = response.text.strip('"')
+    response = requests.get(url, headers=headers)
+    auth = response.text.split('"adminToken":"')[1].rstrip('"}')
     setting = frappe.get_doc("Magento Setting")
     setting.magento_auth = auth
     setting.save()
-    
-    query = frappe.db.sql("SELECT name FROM `tabWebhook Header` WHERE `key` = 'Authorization'", as_dict=True)
-    webhook_auth = f"Bearer {auth}"
-    
-    for header in query:
-        frappe.db.set_value("Webhook Header", header['name'], 'value', webhook_auth)
-    frappe.db.commit()
     return auth
+
+# @frappe.whitelist()
+# def create_magento_auth_wallet():
+#     base_url, headers = base_data("magento")
+#     username, password = magento_wallet_details()
+#     url = f"{base_url}/rest/V1/integration/customer/token"
+#     payload = {
+#         "username": username,
+#         "password": password
+#     }
+    
+#     response = requests.post(url, json=payload)
+#     auth = response.text.strip('"')
+#     setting = frappe.get_doc("Magento Setting")
+#     setting.auth_wallet = auth
+#     setting.save()
+    
+#     query = frappe.db.sql("SELECT name FROM `tabWebhook Header` WHERE `key` = 'Authorization'", as_dict=True)
+#     webhook_auth = f"Bearer {auth}"
+    
+#     for header in query:
+#         frappe.db.set_value("Webhook Header", header['name'], 'value', webhook_auth)
+#     frappe.db.commit()
+#     return auth
 
 @frappe.whitelist()
 def create_magento_auth_wallet():
-    base_url, headers = base_data("magento")
-    username, password = magento_wallet_details()
-    url = f"{base_url}/rest/V1/integration/customer/token"
-    payload = {
-        "username": username,
-        "password": password
+    # base_url, headers = base_data("magento")
+    # username, password = magento_wallet_details()
+    url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/user/token"
+    headers = {
+        "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
     }
+    # payload = {
+    #     "username": username,
+    #     "password": password
+    # }
     
-    response = requests.post(url, json=payload)
+    response = requests.get(url, headers=headers)
     auth = response.text.strip('"')
     setting = frappe.get_doc("Magento Setting")
     setting.auth_wallet = auth
     setting.save()
     
-    query = frappe.db.sql("SELECT name FROM `tabWebhook Header` WHERE `key` = 'Authorization'", as_dict=True)
-    webhook_auth = f"Bearer {auth}"
-    
-    for header in query:
-        frappe.db.set_value("Webhook Header", header['name'], 'value', webhook_auth)
-    frappe.db.commit()
     return auth
 
 @frappe.whitelist(allow_guest=True)
