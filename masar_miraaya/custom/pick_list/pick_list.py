@@ -2,12 +2,87 @@ import frappe
 from erpnext.stock.doctype.pick_list.pick_list import  PickList
 import json
 from masar_miraaya.api import change_magento_status_to_fullfilled
-
+from frappe.query_builder.functions import  Sum
 def on_submit(self , method):
+    items_validation(self)
+    qty_validation(self)
     assigned_to_validate(self)
     user_vaildation(self)
     
-    
+def items_validation(self):
+    linked_so = get_linked_so(self)
+    soi = frappe.qb.DocType('Sales Order Item')
+    i =  frappe.qb.DocType('Item')
+    for so in linked_so:
+        if so.so_name:
+            sql = (
+                    frappe.qb.from_(soi)
+                    .join(i)
+                    .on(soi.item_code == i.name)
+                    .select(
+                        (i.name).as_('item_code'),
+                            (soi.name).as_('row_id'), (soi.idx))
+                    .where(soi.parent == so.so_name)
+                    .where(i.is_stock_item ==1 )
+                    ).run(as_dict = True)
+            item_lst = [loop.item_code for loop in sql]
+            row_lst = [loop.row_id for loop in sql]
+            for location in self.locations:
+                if location.item_code not in item_lst: # or location.sales_order_item not in row_lst:
+                    frappe.throw(
+                        'The item {item} is currently part of a sales order and must be picked along with other items.'
+                        .format(item = location.item_code), 
+                        title=frappe._('Item Pickup Notice')
+                    )
+            items_lst = list()
+            for l in self.locations: 
+                items_lst.append(l.sales_order_item)
+            for r in sql:
+                if r.row_id not in items_lst:
+                    frappe.throw(
+                        'Item {item} at index {idx} in the Sales Order is missing or not found.'
+                        .format(item = r.item_code , idx=r.idx),
+                        title=frappe._('Sales Order Item Missing')
+                    )
+            
+            
+            
+def qty_validation(self): 
+    linked_so = get_linked_so(self)
+    soi = frappe.qb.DocType('Sales Order Item')
+    i =  frappe.qb.DocType('Item')
+    pli = frappe.qb.DocType('Pick List Item')
+    for so in linked_so:
+        if so.so_name:
+            items = (
+                    frappe.qb.from_(soi)
+                    .join(i).on(soi.item_code == i.name)
+                    .select(
+                        (i.name) , 
+                        Sum(soi.qty).as_('qty') , 
+                    )
+                    .where(soi.parent == so.so_name)
+                    .where(i.is_stock_item ==1 )
+                    .groupby(soi.item_code)
+                    ).run(as_dict = True)
+            for item in items: 
+                qty = (frappe.qb.from_(pli)
+                    .select(Sum(pli.qty).as_('qty')
+                            , Sum(soi.picked_qty).as_('picked_qty'))
+                    .where(pli.parent == self.name)
+                    .where(pli.item_code == item.name)
+                    .groupby(pli.item_code)
+                ).run(as_dict = True)[0]
+                if qty['qty'] != item.qty or qty['picked_qty'] != item.qty:
+                    
+                    frappe.throw(
+                        '''The quantity for item {item} does not match the sales order quantity, 
+                        or the picked quantity does not match the sales order quantity. 
+                        Both quantities must be equal.'''
+                        .format(item = item.name),
+                    title=frappe._('Quantity Mismatch Error')
+                    )      
+        
 def assigned_to_validate(self): 
     if self.custom_assigned_to is None: 
         frappe.throw(

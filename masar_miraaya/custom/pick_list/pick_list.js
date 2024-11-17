@@ -18,6 +18,9 @@ frappe.ui.form.on('Pick List', {
 
 
 function create_assigned_button(frm) {
+    frm.set_df_property("locations", "cannot_add_rows", true);
+	frm.set_df_property("locations", "cannot_delete_rows", true);
+    
     if(frm.doc.docstatus === 0) { 
         frm.add_custom_button(__('Assign To Me'), function() {
             frappe.call({

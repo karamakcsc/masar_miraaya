@@ -420,7 +420,13 @@ def create_delivery_company_jv(self):
 
 def create_delivery_note(self):
     target = make_delivery_note(self.name) 
-    target.save().submit()
+    target.save()
+    for item in target.items: 
+        item_doc= frappe.get_doc('Item' , item.item_code)
+        if item_doc.is_stock_item ==0 :
+            target.items.remove(item)
+    target.save()
+    target.submit()
     return target.name
 
 def delivery_note_jv(self , delivery_note):

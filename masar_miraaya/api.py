@@ -19,88 +19,55 @@ def magento_wallet_details():
     password = str(setting.mag_wallet_pass) # Password123$
     
     return username, password
-# @frappe.whitelist()
-# def create_magento_auth():
-#     base_url, headers = base_data("magento")
-#     username, password = magento_admin_details()
-#     url = f"{base_url}/rest/V1/integration/admin/token"
-#     payload = {
-#         "username": username,
-#         "password": password
-#     }
-    
-#     response = requests.post(url, json=payload)
-#     auth = response.text.strip('"')
-#     setting = frappe.get_doc("Magento Setting")
-#     setting.magento_auth = auth
-#     setting.save()
-    
-#     query = frappe.db.sql("SELECT name FROM `tabWebhook Header` WHERE `key` = 'Authorization'", as_dict=True)
-#     webhook_auth = f"Bearer {auth}"
-    
-#     for header in query:
-#         frappe.db.set_value("Webhook Header", header['name'], 'value', webhook_auth)
-#     frappe.db.commit()
-#     return auth
-
 @frappe.whitelist()
 def create_magento_auth():
-    # base_url, headers = base_data("magento")
-    # username, password = magento_admin_details()
-    url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/admin/token"
-    headers = {
-        "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
+    base_url, headers = base_data("magento")
+    username, password = magento_admin_details()
+    url = f"{base_url}/rest/V1/integration/admin/token"
+    payload = {
+        "username": username,
+        "password": password
     }
-    # payload = {
-    #     "username": username,
-    #     "password": password
-    # }
     
-    response = requests.get(url, headers=headers)
-    auth = response.text.split('"adminToken":"')[1].rstrip('"}')
+    response = requests.post(url, json=payload)
+    auth = response.text.strip('"')
     setting = frappe.get_doc("Magento Setting")
     setting.magento_auth = auth
     setting.save()
+    
     return auth
 
 # @frappe.whitelist()
-# def create_magento_auth_wallet():
-#     base_url, headers = base_data("magento")
-#     username, password = magento_wallet_details()
-#     url = f"{base_url}/rest/V1/integration/customer/token"
-#     payload = {
-#         "username": username,
-#         "password": password
+# def create_magento_auth():
+#     # base_url, headers = base_data("magento")
+#     # username, password = magento_admin_details()
+#     url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/admin/token"
+#     headers = {
+#         "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
 #     }
+#     # payload = {
+#     #     "username": username,
+#     #     "password": password
+#     # }
     
-#     response = requests.post(url, json=payload)
-#     auth = response.text.strip('"')
+#     response = requests.get(url, headers=headers)
+#     auth = response.text.split('"adminToken":"')[1].rstrip('"}')
 #     setting = frappe.get_doc("Magento Setting")
-#     setting.auth_wallet = auth
+#     setting.magento_auth = auth
 #     setting.save()
-    
-#     query = frappe.db.sql("SELECT name FROM `tabWebhook Header` WHERE `key` = 'Authorization'", as_dict=True)
-#     webhook_auth = f"Bearer {auth}"
-    
-#     for header in query:
-#         frappe.db.set_value("Webhook Header", header['name'], 'value', webhook_auth)
-#     frappe.db.commit()
 #     return auth
 
 @frappe.whitelist()
 def create_magento_auth_wallet():
-    # base_url, headers = base_data("magento")
-    # username, password = magento_wallet_details()
-    url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/user/token"
-    headers = {
-        "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
+    base_url, headers = base_data("magento")
+    username, password = magento_wallet_details()
+    url = f"{base_url}/rest/V1/integration/customer/token"
+    payload = {
+        "username": username,
+        "password": password
     }
-    # payload = {
-    #     "username": username,
-    #     "password": password
-    # }
     
-    response = requests.get(url, headers=headers)
+    response = requests.post(url, json=payload)
     auth = response.text.strip('"')
     setting = frappe.get_doc("Magento Setting")
     setting.auth_wallet = auth
@@ -108,6 +75,26 @@ def create_magento_auth_wallet():
     
     return auth
 
+# @frappe.whitelist()
+# def create_magento_auth_wallet():
+#     # base_url, headers = base_data("magento")
+#     # username, password = magento_wallet_details()
+#     url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/user/token"
+#     headers = {
+#         "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
+#     }
+#     # payload = {
+#     #     "username": username,
+#     #     "password": password
+#     # }
+    
+    # response = requests.get(url, headers=headers)
+    # auth = response.text.strip('"')
+    # setting = frappe.get_doc("Magento Setting")
+    # setting.auth_wallet = auth
+    # setting.save()
+    
+    # return auth
 @frappe.whitelist(allow_guest=True)
 def get_payment_channel():
     c = frappe.qb.DocType('Customer')
@@ -980,28 +967,28 @@ def get_magento_customers():
                 new_customer.custom_default_shipping_id = customer_default_shipping_id
                 new_customer.save(ignore_permissions=True)
                 addresses = customer['addresses']
-                for address in addresses:
-                    address_id = address['id']
-                    address_line = address['street'][0]
-                    country = address['region']['region']
-                    country_id = address['country_id']
-                    city = address['city']
-                    pincode = address['postcode']
-                    phone = address['telephone']
-                    first_name = address.get('firstname', "")
-                    last_name = address.get('lastname', "")
-                    new_customer.custom_address_id = address_id
-                    new_customer.custom_street = address_line
-                    new_customer.custom_country = country
-                    new_customer.custom_country_id = country_id
-                    new_customer.custom_city = city
-                    new_customer.custom_pincode = pincode
-                    new_customer.custom_phone = phone
-                    new_customer.custom_address_first_name = first_name
-                    new_customer.custom_address_last_name = last_name if last_name not in [None, "", '', 0, ' ', " "] else "Test"
-                    new_customer.custom_is_shipping_address = 1
-                    new_customer.custom_is_primary_address = 1
-                new_customer.save(ignore_permissions=True)
+                # for address in addresses:
+                #     address_id = address['id']
+                #     address_line = address['street'][0]
+                #     country = address['region']['region']
+                #     country_id = address['country_id']
+                #     city = address['city']
+                #     pincode = address['postcode']
+                #     phone = address['telephone']
+                #     first_name = address.get('firstname', "")
+                #     last_name = address.get('lastname', "")
+                    # new_customer.custom_address_id = address_id
+                    # new_customer.custom_street = address_line
+                    # new_customer.custom_country = country
+                    # new_customer.custom_country_id = country_id
+                    # new_customer.custom_city = city
+                    # new_customer.custom_pincode = pincode
+                    # new_customer.custom_phone = phone
+                    # new_customer.custom_address_first_name = first_name
+                    # new_customer.custom_address_last_name = last_name if last_name not in [None, "", '', 0, ' ', " "] else "Test"
+                    # new_customer.custom_is_shipping_address = 1
+                    # new_customer.custom_is_primary_address = 1
+                # new_customer.save(ignore_permissions=True)
                 frappe.db.set_value("Customer" ,new_customer.name , 'custom_is_publish' , 1 )
                 
             if len(customer['addresses']) != 0 :   

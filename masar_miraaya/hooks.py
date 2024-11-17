@@ -325,7 +325,7 @@ fixtures = [
                 "Sales Order-custom_address_id",
                 "Price List-custom_magento_selling",
                 "Item-custom_item_id",
-                "custom_tax_category_id",
+                # "custom_tax_category_id",
                 "Item-custom_ingredients",
                 "Item-custom_how_to_use",
                 "Item-custom_formulation", 
@@ -377,7 +377,6 @@ fixtures = [
                 "Company-custom_compensation_expense_account",
                 "Company-custom_lp_expense_account",
                 "Company-custom_default_cash_on_delivery_account",
-                "custom_digital_wallet_account", 
                 "Customer Group-custom_is_delivery" , 
                 "Customer Group-custom_is_payment_channel",
                 "Customer Group-custom_is_digital_wallet",
@@ -405,7 +404,8 @@ fixtures = [
                 "Material Request-custom_assigned_to",
                 "Journal Entry-custom_not_to_reverse", 
                 "Pick List-custom_packed",
-                "Pick List-custom_assigned_to"
+                "Pick List-custom_assigned_to",
+                "Company-custom_digital_wallet_account"
             ]
         ]
     ]},
