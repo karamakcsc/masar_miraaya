@@ -10,7 +10,7 @@ def before_rename(self , method , old, new, merge ):
     rename_item_group(self , method , old, new, merge)
 @frappe.whitelist()    
 def create_new_brand(self):
-    # try:
+   #S # try:
         item_group = frappe.db.sql("SELECT name FROM `tabItem Group` WHERE custom_item_group_id = '404'" , as_dict = True)
         if len(item_group) == 0 :
             frappe.throw(f"There is No Item Group Brands Where the Item Group ID Must be 404"
