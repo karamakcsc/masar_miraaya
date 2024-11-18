@@ -405,7 +405,21 @@ fixtures = [
                 "Journal Entry-custom_not_to_reverse", 
                 "Pick List-custom_packed",
                 "Pick List-custom_assigned_to",
-                "Company-custom_digital_wallet_account"
+                "Company-custom_digital_wallet_account", 
+                "Item-custom_section_break_d5t25", 
+                "Item-custom_column_break_glt1g", 
+                "Item-custom_arabic_metatitle",
+                "Item-custom_arabic_description",
+                "Item-custom_arabic_country", 
+                "Item-custom_arabic_meta_keywords", 
+                "Item-custom_arabic_meta_description", 
+                "Item-custom_arabic_howtouse", 
+                "Item-custom_arabic_test_result", 
+                "Item-custom_arabic_ingredients", 
+                "Item-custom_article_no", 
+                "Item-custom_meta_title", 
+                "Item-custom_meta_keyword", 
+                "Item-custom_meta_description"
             ]
         ]
     ]},
