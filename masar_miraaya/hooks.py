@@ -419,7 +419,8 @@ fixtures = [
                 "Item-custom_article_no", 
                 "Item-custom_meta_title", 
                 "Item-custom_meta_keyword", 
-                "Item-custom_meta_description"
+                "Item-custom_meta_description",
+                "Item-custom_warning_quantity"
             ]
         ]
     ]},

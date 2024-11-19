@@ -791,6 +791,36 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                             frappe.db.set_value('Item', new_item_.name, 'custom_formulation', att_value)
                         if att_code == "product_description" and att_value:
                             frappe.db.set_value('Item', new_item_.name, 'description', att_value)
+                        ####
+                        # if att_code == "arabic_name" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_item_name_ar', att_value)
+                        # if att_code == "arabic_metatitle" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_arabic_metatitle', att_value)
+                        # if att_code == "arabic_description" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_arabic_description', att_value)
+                        # if att_code == "arabic_country" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_arabic_country', att_value)
+                        # if att_code == "arabic_meta_keywords" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_arabic_meta_keywords', att_value)
+                        # if att_code == "arabic_meta_description" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_arabic_meta_description', att_value)
+                        # if att_code == "arabic_howtouse" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_arabic_howtouse', att_value)
+                        # if att_code == "arabic_testresult" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_arabic_test_result', att_value)
+                        
+                        # if att_code == "arabic_ingredients" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_arabic_ingredients', att_value)
+                        # if att_code == "article_no" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_article_no', att_value)
+                        # if att_code == "meta_title" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_meta_title', att_value)
+                        # if att_code == "meta_keyword" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_meta_keyword', att_value)
+                        # if att_code == "meta_description" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_meta_description', att_value)
+                        # if att_code == "warning_quantity" and att_value:
+                        #     frappe.db.set_value('Item', new_item_.name, 'custom_warning_quantity', att_value)
                         if att_code == "country_of_manufacture" and att_value:
                             country_id_sql = frappe.db.sql("SELECT name FROM tabCountry WHERE code = %s" , (att_value.lower()) , as_dict = True)
                             if country_id_sql and country_id_sql[0] and country_id_sql[0]['name']:

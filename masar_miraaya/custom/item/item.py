@@ -64,7 +64,8 @@ def custom_attributes_function(self):
             "custom_article_no": "article_no", 
             "custom_meta_title":"meta_title",
             "custom_meta_keyword" :"meta_keyword",
-            "custom_meta_description":"meta_description"
+            "custom_meta_description":"meta_description",
+            "custom_warning_quantity":"warning_quantity"
         }
         country_id = None
         country_id_sql = frappe.db.sql("SELECT code FROM tabCountry WHERE name = %s" , (self.custom_country_of_manufacture) , as_dict = True)
