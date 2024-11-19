@@ -679,7 +679,7 @@ def create_templete_items(all_simple,all_configurable_links,  all_configurable, 
         add_attributes(new_templete.name, configurable['extension_attributes'].get('configurable_product_options', []))
         add_default_variant_attributes(new_templete.name)
         set_custom_attributes(new_templete.name, configurable.get('custom_attributes', []))
-        # upload_media(configurable.get('media_gallery_entries', []), templete_code)
+        upload_media(configurable.get('media_gallery_entries', []), templete_code)
     get_magento_products_in_enqueue(all_simple, all_configurable_links , altenative_items)
     
 def get_magento_products_in_enqueue(all_simple , all_configurable_links, altenative_items):
@@ -879,20 +879,19 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                                         frappe.db.commit()
 
                     # Process images
-                    # try:
-
-                    #     for media in item['media_gallery_entries']:
-                    #         if media['media_type'] == "image":
-                    #             base_image = 1 if media['types'] else 0
-                    #             url_file = upload_image_to_item(
-                    #                 file=media['file'], 
-                    #                 item_code=item_code,
-                    #                 base_image=base_image
-                    #             )
-                    #             if url_file:
-                    #                 frappe.db.set_value('Item', new_item_.name, 'image', url_file)
-                    # except Exception as ex:
-                    #     return f"Error While uploading Images to item: {str(ex)}"
+                    try:
+                        for media in item['media_gallery_entries']:
+                            if media['media_type'] == "image":
+                                base_image = 1 if 'thumbnail' in media['types'] else 0
+                                url_file = upload_image_to_item(
+                                    file=media['file'], 
+                                    item_code=item_code,
+                                    base_image=base_image
+                                )
+                                if url_file:
+                                    frappe.db.set_value('Item', new_item_.name, 'image', url_file)
+                    except Exception as ex:
+                        return f"Error While uploading Images to item: {str(ex)}"
                     
                     insert_item_price(
                             item_code=new_item_.name ,
@@ -995,29 +994,6 @@ def get_magento_customers():
                 new_customer.custom_default_billing_id = customer_default_billing_id
                 new_customer.custom_default_shipping_id = customer_default_shipping_id
                 new_customer.save(ignore_permissions=True)
-                addresses = customer['addresses']
-                # for address in addresses:
-                #     address_id = address['id']
-                #     address_line = address['street'][0]
-                #     country = address['region']['region']
-                #     country_id = address['country_id']
-                #     city = address['city']
-                #     pincode = address['postcode']
-                #     phone = address['telephone']
-                #     first_name = address.get('firstname', "")
-                #     last_name = address.get('lastname', "")
-                    # new_customer.custom_address_id = address_id
-                    # new_customer.custom_street = address_line
-                    # new_customer.custom_country = country
-                    # new_customer.custom_country_id = country_id
-                    # new_customer.custom_city = city
-                    # new_customer.custom_pincode = pincode
-                    # new_customer.custom_phone = phone
-                    # new_customer.custom_address_first_name = first_name
-                    # new_customer.custom_address_last_name = last_name if last_name not in [None, "", '', 0, ' ', " "] else "Test"
-                    # new_customer.custom_is_shipping_address = 1
-                    # new_customer.custom_is_primary_address = 1
-                # new_customer.save(ignore_permissions=True)
                 frappe.db.set_value("Customer" ,new_customer.name , 'custom_is_publish' , 1 )
                 
             if len(customer['addresses']) != 0 :   

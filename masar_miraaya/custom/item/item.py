@@ -167,7 +167,7 @@ def product_links_function(self):
 @frappe.whitelist()
 def base_item_data(self):
         sku = self.item_code
-        name = self.item_code
+        name = self.item_name
         visibility = {
             'Not Visible Individually': 1,
             'Catalog': 2,
