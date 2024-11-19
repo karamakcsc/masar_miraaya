@@ -877,7 +877,7 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                                         new_att.insert(ignore_permissions=True , ignore_mandatory=True)
                                         
                                         frappe.db.commit()
-
+# 
                     # Process images
                     try:
                         for media in item['media_gallery_entries']:
