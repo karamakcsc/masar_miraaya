@@ -1,10 +1,12 @@
 import frappe
 def validate(self , method):
-        magento = frappe.get_doc('Magento Sync')
-        if magento.sync == 0 :
-            create_new_brand(self)
-        else: 
-            frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
+        roles = (frappe.get_roles(frappe.session.user))
+        if (self.custom_publish_to_magento and ('API Integration' not in roles)) or (self.custom_publish_to_magento and frappe.session.user == 'Administrator' ):
+            magento = frappe.get_doc('Magento Sync')
+            if magento.sync == 0 :
+                create_new_brand(self)
+            else: 
+                frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
 
 def before_rename(self , method , old, new, merge ):
     rename_item_group(self , method , old, new, merge)
