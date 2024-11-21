@@ -58,7 +58,7 @@ def custom_attributes_function(self):
             "custom_arabic_country":"arabic_country",
             "custom_arabic_meta_keywords":"arabic_meta_keywords", 
             "custom_arabic_meta_description":"arabic_meta_description", 
-            "custom_arabic_howtouse":"arabic_howtouse", 
+            "custom_arabic_howtouse":"how_to_use_arabic", 
             "custom_arabic_test_result":"arabic_testresult", 
             "custom_arabic_ingredients":"arabic_ingredients",
             "custom_article_no": "article_no", 
@@ -173,7 +173,7 @@ def base_item_data(self):
             'Catalog': 2,
             'Search': 3,
             'Catalog & Search': 4
-        }.get(self.custom_visibility, 1)
+        }.get(self.custom_visibility, 4)
         item_group_ids = get_item_groups(self.item_group)
         category_links = [
             {"position": idx, "category_id": id}

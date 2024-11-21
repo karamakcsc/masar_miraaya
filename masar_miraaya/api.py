@@ -37,25 +37,23 @@ def create_magento_auth():
     
     return auth
 
-# @frappe.whitelist()
-# def create_magento_auth():
-#     # base_url, headers = base_data("magento")
-#     # username, password = magento_admin_details()
-#     url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/admin/token"
-#     headers = {
-#         "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
-#     }
-#     # payload = {
-#     #     "username": username,
-#     #     "password": password
-#     # }
+@frappe.whitelist()
+def create_magento_auth_webhook():
+    setting = frappe.get_doc("Magento Setting")
+    if setting.auth_type == "Production":
+        url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/admin/token/prod"
+    elif setting.auth_type == "Develop":
+        url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/admin/token/dev"
+    headers = {
+        "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
+    }
     
-#     response = requests.get(url, headers=headers)
-#     auth = response.text.split('"adminToken":"')[1].rstrip('"}')
-#     setting = frappe.get_doc("Magento Setting")
-#     setting.magento_auth = auth
-#     setting.save()
-#     return auth
+    response = requests.get(url, headers=headers)
+    auth = response.text.split('"adminToken":"')[1].rstrip('"}')
+    setting.magento_admin_prod_auth = auth
+    setting.save()
+    
+    return auth
 
 @frappe.whitelist()
 def create_magento_auth_wallet():
@@ -75,26 +73,24 @@ def create_magento_auth_wallet():
     
     return auth
 
-# @frappe.whitelist()
-# def create_magento_auth_wallet():
-#     # base_url, headers = base_data("magento")
-#     # username, password = magento_wallet_details()
-#     url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/user/token"
-#     headers = {
-#         "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
-#     }
-#     # payload = {
-#     #     "username": username,
-#     #     "password": password
-#     # }
+@frappe.whitelist()
+def create_magento_auth_wallet_webhook():
+    setting = frappe.get_doc("Magento Setting")
+    if setting.auth_type == "Production":
+        url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/user/token/prod"
+    elif setting.auth_type == "Develop":
+        url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/user/token/dev"
+    headers = {
+        "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
+    }
     
-    # response = requests.get(url, headers=headers)
-    # auth = response.text.strip('"')
-    # setting = frappe.get_doc("Magento Setting")
-    # setting.auth_wallet = auth
-    # setting.save()
+    response = requests.get(url, headers=headers)
+    auth = response.text.split('"userToken":"')[1].rstrip('"}')
+    setting.magento_cust_prod_auth = auth
+    setting.save()
     
-    # return auth
+    return auth
+    
 @frappe.whitelist(allow_guest=True)
 def get_payment_channel():
     c = frappe.qb.DocType('Customer')
@@ -299,21 +295,30 @@ def get_item_group_by_item_group_id(category_id):
                 return None
     except Exception as ex:
         return (f"Error in get_item_group_by_item_group_id: {str(ex)}")
+        
     
 def base_data(request_in):
     if request_in == "magento":
         setting = frappe.get_doc("Magento Setting")
+        if setting.token:
+            auth = setting.magento_admin_prod_auth
+        else:
+            auth = setting.magento_auth
         base_url = str(setting.magento_url).strip()
         headers = {
-            "Authorization": f"Bearer {str(setting.magento_auth).strip()}",
+            "Authorization": f"Bearer {str(auth).strip()}",
             "Content-Type": "application/json"
         }
         return base_url , headers
     elif request_in == "magento_wallet":
         setting = frappe.get_doc("Magento Setting")
+        if setting.token:
+            auth = setting.magento_cust_prod_auth
+        else:
+            auth = setting.magento_auth
         base_url = str(setting.url_wallet).strip()
         headers = {
-            "Authorization": f"Bearer {str(setting.auth_wallet).strip()}",
+            "Authorization": f"Bearer {str(auth).strip()}",
             "Content-Type": "application/json"
         }
         return base_url , headers

@@ -5,6 +5,10 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "authorization_method_section",
+  "token_generate",
+  "column_break_hrko",
+  "token",
   "frappe_section",
   "frappe_url",
   "column_break_yqdj",
@@ -14,22 +18,34 @@
   "column_break_nxpo",
   "create_magento_auth",
   "magento_auth",
+  "magento_admin_details_section",
+  "username",
+  "column_break_uajd",
+  "password",
   "magento_wallet_auth_section",
   "url_wallet",
   "column_break_oxhn",
   "create_mag_auth_wallet",
   "auth_wallet",
-  "magento_admin_details_section",
-  "username",
-  "column_break_uajd",
-  "password",
   "magento_wallet_details_section",
   "mag_wallet_user",
   "column_break_vktr",
-  "mag_wallet_pass"
+  "mag_wallet_pass",
+  "magento_admin_prod_section",
+  "auth_type",
+  "column_break_ldwy",
+  "create_magento_admin_prod_auth",
+  "magento_admin_prod_auth",
+  "magento_wallet_prod_section",
+  "column_break_jlyk",
+  "wallet_auth_type",
+  "column_break_vtcc",
+  "create_magento_customer_prod_auth",
+  "magento_cust_prod_auth"
  ],
  "fields": [
   {
+   "depends_on": "eval:(doc.token_generate==1)",
    "fieldname": "frappe_section",
    "fieldtype": "Section Break",
    "label": "Frappe"
@@ -49,6 +65,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:(doc.token_generate==1)",
    "fieldname": "magento_section",
    "fieldtype": "Section Break",
    "label": "Magento"
@@ -73,6 +90,7 @@
    "label": "Create Magento Auth"
   },
   {
+   "depends_on": "eval:(doc.token_generate==1)",
    "fieldname": "magento_admin_details_section",
    "fieldtype": "Section Break",
    "label": "Magento Admin Details"
@@ -92,6 +110,7 @@
    "label": "Password"
   },
   {
+   "depends_on": "eval:(doc.token_generate==1)",
    "fieldname": "magento_wallet_auth_section",
    "fieldtype": "Section Break",
    "label": "Magento Wallet Auth"
@@ -116,6 +135,7 @@
    "label": "Authorization"
   },
   {
+   "depends_on": "eval:(doc.token_generate==1)",
    "fieldname": "magento_wallet_details_section",
    "fieldtype": "Section Break",
    "label": "Magento Wallet Details"
@@ -133,12 +153,91 @@
    "fieldname": "mag_wallet_pass",
    "fieldtype": "Data",
    "label": "Password"
+  },
+  {
+   "fieldname": "authorization_method_section",
+   "fieldtype": "Section Break",
+   "label": "Authorization Method"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:(doc.token==0)",
+   "fieldname": "token_generate",
+   "fieldtype": "Check",
+   "label": "Token Generate"
+  },
+  {
+   "fieldname": "column_break_hrko",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:(doc.token_generate==0)",
+   "fieldname": "token",
+   "fieldtype": "Check",
+   "label": "Token"
+  },
+  {
+   "depends_on": "eval:(doc.token==1)",
+   "fieldname": "magento_admin_prod_section",
+   "fieldtype": "Section Break",
+   "label": "Magento Admin Prod"
+  },
+  {
+   "fieldname": "column_break_ldwy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "create_magento_admin_prod_auth",
+   "fieldtype": "Button",
+   "label": "Create Magento Admin Prod Auth"
+  },
+  {
+   "fieldname": "magento_admin_prod_auth",
+   "fieldtype": "Small Text",
+   "label": "Authorization"
+  },
+  {
+   "depends_on": "eval:(doc.token==1)",
+   "fieldname": "magento_wallet_prod_section",
+   "fieldtype": "Section Break",
+   "label": "Magento Wallet Prod"
+  },
+  {
+   "fieldname": "column_break_vtcc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "create_magento_customer_prod_auth",
+   "fieldtype": "Button",
+   "label": "Create Magento Customer Prod Auth"
+  },
+  {
+   "fieldname": "magento_cust_prod_auth",
+   "fieldtype": "Small Text",
+   "label": "Authorization"
+  },
+  {
+   "fieldname": "auth_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "\nDevelop\nProduction"
+  },
+  {
+   "fieldname": "column_break_jlyk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "wallet_auth_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "\nDevelop\nProduction"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-15 15:30:40.040987",
+ "modified": "2024-11-20 10:39:39.527894",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Magento Setting",
