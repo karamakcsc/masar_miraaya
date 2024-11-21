@@ -2,7 +2,7 @@ import frappe
 def validate(self , method):
         roles = (frappe.get_roles(frappe.session.user))
         if (self.custom_publish_to_magento and ('API Integration' not in roles)) or (self.custom_publish_to_magento and frappe.session.user == 'Administrator' ):
-            magento = frappe.get_doc('Magento Sync')
+            magento = frappe.get_doc('Magento Sync')##
             if magento.sync == 0 :
                 create_new_brand(self)
             else: 
