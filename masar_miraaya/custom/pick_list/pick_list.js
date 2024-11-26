@@ -2,17 +2,17 @@ frappe.ui.form.on('Pick List', {
     onload: function (frm) {
         hide_create_button(frm);
         create_picked_button(frm);
-        // create_assigned_button(frm);
+        create_assigned_button(frm);
     },    
     refresh: function (frm) {
         hide_create_button(frm);
         create_picked_button(frm);
-        // create_assigned_button(frm);
+        create_assigned_button(frm);
     },
     setup: function (frm) {
         hide_create_button(frm);
         create_picked_button(frm);
-        // create_assigned_button(frm);
+        create_assigned_button(frm);
     }
 });
 

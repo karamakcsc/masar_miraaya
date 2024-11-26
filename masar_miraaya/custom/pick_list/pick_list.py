@@ -6,8 +6,8 @@ from frappe.query_builder.functions import  Sum
 def on_submit(self , method):
     items_validation(self)
     qty_validation(self)
-    # assigned_to_validate(self)
-    # user_vaildation(self)
+    assigned_to_validate(self)
+    user_vaildation(self)
     
 def items_validation(self):
     linked_so = get_linked_so(self)
@@ -147,7 +147,7 @@ def assign_to_me(self):
     self = frappe._dict(json.loads(self))
     user = frappe.session.user
     role = frappe.get_roles(user)
-    if 'Fulfillment User' not in role:
+    if 'Picker' not in role:
             frappe.throw(
                 'User {user} does not have the "Fulfillment User" role assigned and therefore cannot be assigned the Material Request.'
                 .format(user = user),
