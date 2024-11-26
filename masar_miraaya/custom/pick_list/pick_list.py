@@ -90,6 +90,7 @@ def assigned_to_validate(self):
             This step is necessary to assign this pick to yourself.''', 
             title = frappe._('Assign Validation')
         )
+@frappe.whitelist()
 def user_vaildation(self):
     if frappe.session.user != self.custom_assigned_to: 
         frappe.throw(
@@ -128,7 +129,7 @@ def change_so_status(linked_so):
             so_doc = frappe.get_doc('Sales Order' , so.so_name)
             if so_doc.docstatus == 1:
                 so_doc.custom_magento_status = 'Fullfilled'
-                so_doc.save() 
+                so_doc.save(ignore_permissions=True)
 
 def get_linked_so(self):
     pl = frappe.qb.DocType(self.doctype)
@@ -149,7 +150,7 @@ def assign_to_me(self):
     role = frappe.get_roles(user)
     if 'Picker' not in role:
             frappe.throw(
-                'User {user} does not have the "Fulfillment User" role assigned and therefore cannot be assigned the Material Request.'
+                'User {user} does not have the "Picker" role assigned and therefore cannot be assigned the Stock Entry.'
                 .format(user = user),
                 title = frappe._('Role Validation')
                 )
@@ -162,5 +163,27 @@ def assign_to_me(self):
             )
             return None 
     frappe.db.set_value(self.doctype, self.name, "custom_assigned_to", user)
+    frappe.db.set_value(self.doctype, self.name, "custom_assigned", 1)
     frappe.db.commit()
     return user
+
+
+@frappe.whitelist()
+def user_validation_picker(self):
+   
+    self = frappe.get_doc(json.loads(self))
+    if not self.custom_assigned_to:
+        frappe.throw(
+            'The Pick list is not assigned. Please assign it to yourself.',
+            title=frappe._('Assigned to Yourself')
+        )
+        return False
+    if frappe.session.user != self.custom_assigned_to:
+        frappe.throw(
+            'Pick List is already assigned to {assigned_to}. You cannot assign this request to yourself.'.format(
+                assigned_to=self.custom_assigned_to
+            ),
+            title=frappe._('Assigned to Another User')
+        )
+        return False
+    return True

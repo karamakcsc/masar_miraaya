@@ -423,7 +423,8 @@ fixtures = [
                 "Item-custom_meta_keyword", 
                 "Item-custom_meta_description",
                 "Item-custom_warning_quantity",
-                "Customer-custom_firebase_id"
+                "Customer-custom_firebase_id",
+                "Pick List-custom_assigned"
             ]
         ]
     ]},
@@ -442,7 +443,23 @@ fixtures = [
                     "Driver-naming_series-options",
                     "Driver-naming_series-default",
                     "Driver-user-depends_on",
-                    "Sales Order-main-field_order"
+                    "Sales Order-main-field_order",
+                    "Pick List-main-field_order",
+                    "Pick List-company-in_list_view",
+                    "Pick List-customer-in_list_view",
+                    "Pick List-parent_warehouse-read_only_depends_on",
+                    "Pick List-scan_barcode-read_only_depends_on",
+                    "Pick List-print_settings_section-read_only_depends_on",
+                    "Pick List-ignore_pricing_rule-read_only",
+                    "Pick List-pick_manually-read_only",
+                    "Pick List-get_item_locations-read_only",
+                    "Pick List-consider_rejected_warehouses-read_only",
+                    "Pick List-customer-read_only",
+                    "Pick List-purpose-read_only",
+                    "Pick List-prompt_qty-read_only_depends_on",
+                    "Pick List-scan_mode-read_only_depends_on",
+                    "Pick List-locations-read_only_depends_on",
+                    "Pick List-scan_barcode-hidden"
                 ]
             ]
         ]
