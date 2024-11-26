@@ -197,7 +197,8 @@ doctype_js = {
 }
 
 doctype_list_js = {
-    "Journal Entry": "custom/journal_entry/journal_entry_list.js"
+    "Journal Entry": "custom/journal_entry/journal_entry_list.js",
+    "Pick List": "custom/pick_List/pick_List_list.js"
 }
 # Scheduled Tasks
 # ---------------
