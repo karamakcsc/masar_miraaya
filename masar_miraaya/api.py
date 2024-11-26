@@ -41,9 +41,9 @@ def create_magento_auth():
 def create_magento_auth_webhook():
     setting = frappe.get_doc("Magento Setting")
     if setting.auth_type == "Production":
-        url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/admin/token/prod"
+        url = "https://miraaya-b5b31.uc.r.appspot.com/api/erp/admin/token/prod"
     elif setting.auth_type == "Develop":
-        url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/admin/token/dev"
+        url = "https://miraaya-b5b31.uc.r.appspot.com/api/erp/admin/token/dev"
     headers = {
         "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
     }
@@ -77,9 +77,9 @@ def create_magento_auth_wallet():
 def create_magento_auth_wallet_webhook():
     setting = frappe.get_doc("Magento Setting")
     if setting.auth_type == "Production":
-        url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/user/token/prod"
+        url = "https://miraaya-b5b31.uc.r.appspot.com/api/erp/user/token/prod"
     elif setting.auth_type == "Develop":
-        url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/user/token/dev"
+        url = "https://miraaya-b5b31.uc.r.appspot.com/api/erp/user/token/dev"
     headers = {
         "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
     }
@@ -331,7 +331,7 @@ def base_data(request_in):
         }
         return base_url , headers
     elif request_in == "webhook":
-        base_url = 'https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp'
+        base_url = 'https://miraaya-b5b31.uc.r.appspot.com/api/erp'
         headers = {
                 'Accept': '*/*',
                 'Authorization': 'Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU=',

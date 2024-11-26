@@ -422,7 +422,8 @@ fixtures = [
                 "Item-custom_meta_title", 
                 "Item-custom_meta_keyword", 
                 "Item-custom_meta_description",
-                "Item-custom_warning_quantity"
+                "Item-custom_warning_quantity",
+                "Customer-custom_firebase_id"
             ]
         ]
     ]},

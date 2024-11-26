@@ -2,17 +2,17 @@ frappe.ui.form.on('Pick List', {
     onload: function (frm) {
         hide_create_button(frm);
         create_picked_button(frm);
-        create_assigned_button(frm);
+        // create_assigned_button(frm);
     },    
     refresh: function (frm) {
         hide_create_button(frm);
         create_picked_button(frm);
-        create_assigned_button(frm);
+        // create_assigned_button(frm);
     },
     setup: function (frm) {
         hide_create_button(frm);
         create_picked_button(frm);
-        create_assigned_button(frm);
+        // create_assigned_button(frm);
     }
 });
 
@@ -45,7 +45,7 @@ function hide_create_button(frm) {
         }, 5);
 }
 function create_picked_button(frm) {
-    if(frm.doc.docstatus === 1 && frm.doc.custom_packed === 0 ) { 
+    if(frm.doc.docstatus === 1 && frm.doc.custom_packed === 0 && frappe.user.has_role('Dispatcher')) { 
         frm.add_custom_button(__('Packing'), function() {
            frappe.call({
             method:'masar_miraaya.custom.pick_list.pick_list.packing', 

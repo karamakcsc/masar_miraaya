@@ -6,8 +6,8 @@ from frappe.query_builder.functions import  Sum
 def on_submit(self , method):
     items_validation(self)
     qty_validation(self)
-    assigned_to_validate(self)
-    user_vaildation(self)
+    # assigned_to_validate(self)
+    # user_vaildation(self)
     
 def items_validation(self):
     linked_so = get_linked_so(self)

@@ -2,14 +2,17 @@ frappe.ui.form.on('Sales Order', {
     onload: function (frm) {
         delivery_company(frm);
         payment_channel(frm);
+        set_doctype_read_only(frm);
     },    
     refresh: function (frm) {
         delivery_company(frm);
         payment_channel(frm);
+        set_doctype_read_only(frm);
     },
     setup: function (frm) {
         delivery_company(frm);
         payment_channel(frm);
+        set_doctype_read_only(frm);
     },
     custom_cash_on_delivery_amount:function(frm){
         GetTotalAmount(frm);
@@ -78,4 +81,13 @@ function GetTotalAmount(frm) {
     frm.doc.custom_total_amount = totalAmount;
     frm.set_value("custom_total_amount", totalAmount);
     frm.refresh_field("custom_total_amount");
+}
+
+
+function set_doctype_read_only(frm) {
+    if (frappe.session.user !== 'Administrator'){
+        if (frappe.user.has_role('Picker') || frappe.user.has_role('Dispatcher')) {
+            frm.set_read_only(true);
+        }
+    }
 }

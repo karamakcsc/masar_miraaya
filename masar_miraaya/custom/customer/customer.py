@@ -130,7 +130,7 @@ def check_validation(self):
         
         
 def create_delivery_company(self):
-    url = "https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/delivery/company"
+    url = "https://miraaya-b5b31.uc.r.appspot.com/api/erp/delivery/company"
     headers = {
         "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU=",
         "Content-Type": "application/json"
@@ -159,9 +159,9 @@ def create_delivery_company(self):
     
     response = requests.post(url, headers=headers, json=payload)
     if response.status_code == 200:
-        json_response = response.json()
-        firebase_id = json_response['firebaseDocId']
-        self.custom_firebase_id = firebase_id
+        # json_response = response.json()
+        # firebase_id = json_response['firebaseDocId']
+        # self.custom_firebase_id = firebase_id
         frappe.msgprint(f"Delivery Company Created Successfully in Firebase", alert = True, indicator = 'green')
     else:
         already_exist = response.json()
@@ -173,7 +173,7 @@ def create_delivery_company(self):
         
         
 def update_delivery_company(self):
-    url = f"https://miraya-webhooks-dot-melodic-argon-401315.lm.r.appspot.com/api/erp/delivery/company/{self.name}"
+    url = f"https://miraaya-b5b31.uc.r.appspot.com/api/erp/delivery/company/{self.name}"
     headers = {
         "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU=",
         "Content-Type": "application/json"

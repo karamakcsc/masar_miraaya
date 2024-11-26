@@ -8,6 +8,8 @@ from erpnext.stock.doctype.pick_list.pick_list import (
                 update_stock_entry_based_on_material_request ,update_stock_entry_items_with_no_reference )
 from masar_miraaya.api import change_magento_status_to_cancelled
 from datetime import datetime
+from masar_miraaya.api import base_data
+import requests
 @frappe.whitelist()
 def get_payment_channel_amount(child):
     payment_chnnel_amount = 0 
@@ -684,3 +686,163 @@ def cancelled_pick_list(self):
                 cancel_stock_reservation_entry(self)
                 pl_doc= frappe.get_doc('Pick List' , pl_loop.name)
                 pl_doc.run_method('cancel')
+                
+                
+                
+                
+def create_empty_cart():
+    base_url, headers = base_data("magento")
+    url = base_url + "rest/V1/carts/mine"
+    
+    response = requests.post(url, headers=headers)
+    if response.status_code == 200:
+        order_no = response.text
+    else:
+        frappe.throw(f"Failed to Create Sales Order in Magento: {str(response.text)}")
+        
+def add_items_to_cart(self):
+    base_url, headers = base_data("magento")
+    url = base_url + "/rest/V1/carts/mine/items"
+    
+    if len(self.items) != 0:
+        for item in self.items:
+            sku = item.item_code
+            name = item.item_name
+            qty = item.qty
+            price = item.rate
+    
+            payload = {
+                "cartItem":{
+                "sku": sku,
+                "qty": qty,
+                "name": name,
+                "price": price,
+                "product_type":"simple",
+                "quote_id":"842", #order_no
+                }
+            }
+            
+            response = requests.post(url, headers=headers, json=payload)
+            if response.status_code == 200:
+                frappe.msgprint(f"Items Added Successfully to Sales Order", alert = True, indicator = 'green')
+            else:
+                frappe.throw(f"Failed to Add Items to Sales Order: {str(response.text)}")
+        
+def add_address_to_cart(self):
+    base_url, headers = base_data("magento")
+    url = base_url + "/rest/V1/carts/mine/billing-address"
+    
+    address_sql = frappe.db.sql("""SELECT 
+                                        ta.address_line1, 
+                                        ta.city, 
+                                        ta.country, 
+                                        ta.custom_first_name, 
+                                        ta.custom_last_name, 
+                                        ta.email_id, 
+                                        ta.pincode, 
+                                        ta.phone 
+                                    FROM tabAddress ta
+                                    INNER JOIN `tabDynamic Link` tdl ON tdl.parent = ta.name
+                                    WHERE tdl.link_doctype = 'Customer' AND tdl.link_name = %s
+                                    """, (self.customer), as_dict=True)
+    
+    if len(address_sql) != 0:
+        for address in address_sql:
+            street = address.address_line1
+            city = address.city
+            country = address.country
+            counrty_id_sql = frappe.db.sql("SELECT code FROM tabCountry WHERE name = %s" , (country) , as_dict = True)
+            if counrty_id_sql and counrty_id_sql[0] and counrty_id_sql[0]['code']:
+                country_id = counrty_id_sql[0]['code'] 
+            first_name = address.custom_first_name
+            last_name = address.custom_last_name
+            email_id = address.email_id
+            pincode = address.pincode
+            phone = address.phone
+    else:
+        frappe.throw(f"No Address for Customer: {self.customer}")
+    
+    payload = {
+        "address": {
+        "city": city,
+        "countryId": country_id.upper(),
+        "email": email_id,
+        "firstname": first_name,
+        "lastname": last_name,
+        "postcode": pincode,
+        "saveInAddressBook": 1,
+        "street": [street],
+        "telephone": phone
+        },
+        "useForShipping": True
+    }
+    
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        frappe.msgprint(f"Address Added Successfully to Sales Order", alert = True, indicator = 'green')
+    else:
+        frappe.throw(f"Failed to Add Address to Sales Order: {str(response.text)}")
+        
+def add_shipping_info(self):
+    base_url, headers = base_data("magento")
+    url = base_url + "/rest/V1/carts/mine/shipping-information"
+    
+    payload = {
+        "addressInformation": {
+        "billingAddress": {
+            "city": "Springfield",
+            "company": "iprag",
+            "email": "customer_email@domain.com",
+            "firstname": "Jane",
+            "lastname": "Doe",
+            "postcode": "335001",
+            "region": "UP",
+            "street": ["Street"],
+            "telephone": "5551234"
+        },
+        "shippingAddress": {
+            "city": "Springfield",
+            "company": "iprag",
+            "email": "customer_email@domain.com",
+            "firstname": "Jane",
+            "lastname": "Doe",
+            "postcode": "335001",
+            "region": "UP",
+            "street": ["Street"],
+            "telephone": "5551234"
+        },
+        "shippingCarrierCode": "freeshipping",
+        "shippingMethodCode": "freeshipping"
+        }
+    }
+    
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        frappe.msgprint(f"Shipping Information Added Successfully to Sales Order", alert = True, indicator = 'green')
+    else:
+        frappe.throw(f"Failed to Add Shipping Information to Sales Order: {str(response.text)}")
+                
+
+def place_order(self):
+    base_url, headers = base_data("magento")
+    url = base_url + "/rest/V1/carts/mine/order"
+    
+    payload = {
+        "paymentMethod":{"method":"checkmo"},
+        "shippingMethod":
+            {
+            "method_code":"freeshipping",
+
+            "carrier_code":"freeshipping",
+            "additionalProperties":{}
+
+            }
+    }
+    
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        json_response = response.json()
+        self.custom_magento_id = json_response['message']
+        frappe.msgprint(f"Order Placed Successfully to Sales Order", alert = True, indicator = 'green')
+    else:
+        frappe.throw(f"Failed to Place Order to Sales Order: {str(response.text)}")
