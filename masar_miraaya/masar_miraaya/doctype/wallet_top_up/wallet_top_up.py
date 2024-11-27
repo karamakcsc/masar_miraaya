@@ -160,7 +160,7 @@ class WalletTopup(Document):
         
     def adjust_amount_to_wallet_magento(self):
         base_url, headers = base_data("magento_wallet")
-        url = base_url + "/graphql"
+        url = base_url + "graphql"
         
         action_type = None
         wallet_amount = 0        

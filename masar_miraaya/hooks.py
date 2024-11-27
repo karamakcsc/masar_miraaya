@@ -411,7 +411,6 @@ fixtures = [
                 "Company-custom_digital_wallet_account", 
                 "Item-custom_section_break_d5t25", 
                 "Item-custom_column_break_glt1g", 
-                "Item-custom_arabic_metatitle",
                 "Item-custom_arabic_description",
                 "Item-custom_arabic_country", 
                 "Item-custom_arabic_meta_keywords", 
@@ -420,12 +419,16 @@ fixtures = [
                 "Item-custom_arabic_test_result", 
                 "Item-custom_arabic_ingredients", 
                 "Item-custom_article_no", 
-                "Item-custom_meta_title", 
                 "Item-custom_meta_keyword", 
                 "Item-custom_meta_description",
                 "Item-custom_warning_quantity",
-                "Customer-custom_firebase_id",
-                "Pick List-custom_assigned"
+                "Pick List-custom_assigned",
+                "Item-custom_meta_section",
+                "Item-custom_column_break_h6axq",
+                "Pick List-custom_delivery_time",
+                "Pick List-custom_delivery_date",
+                "Item-custom_meta_title",
+                "Item-custom_arabic_metatitle"
             ]
         ]
     ]},

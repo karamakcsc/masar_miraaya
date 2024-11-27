@@ -882,7 +882,7 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                                         new_att.insert(ignore_permissions=True , ignore_mandatory=True)
                                         
                                         frappe.db.commit()
-# 
+
                     # Process images
                     try:
                         for media in item['media_gallery_entries']:
@@ -905,7 +905,68 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                             rate = str(rate)
                         )  
                     frappe.db.commit()  # Ensure all operations are committed
-
+                else:
+                    item_exist_doc = frappe.get_doc('Item' , exist_item_code[0]['name']) 
+                    for custom_attributes in item['custom_attributes']:
+                        att_code = custom_attributes['attribute_code']
+                        att_value = custom_attributes['value']
+                        if att_code == "brand":
+                            brand_sql = frappe.db.sql("SELECT name FROM `tabBrand` WHERE name = %s", (att_value,), as_dict=True)
+                            if brand_sql and brand_sql[0] and brand_sql[0]['name']:
+                                brand = brand_sql[0]['name']
+                            else:
+                                new_brand = frappe.new_doc('Brand')
+                                new_brand.brand = att_value
+                                new_brand.insert(ignore_permissions=True)
+                                frappe.db.set_value("Brand" ,new_brand.name , 'custom_publish_to_magento' , 1 )
+                                frappe.db.commit()
+                                brand = new_brand.name
+                            item_exist_doc.brand = brand
+                        if att_code == "free_from" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_free_from', att_value)
+                        if att_code == "key_features" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_key_features', att_value)
+                        if att_code == "ingredients" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_ingredients', att_value)
+                        if att_code == "how_to_use" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_how_to_use', att_value)
+                        if att_code == "formulation" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_formulation', att_value)
+                        if att_code == "product_description" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'description', att_value)
+                        if att_code == "arabic_name" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_item_name_ar', att_value)
+                        if att_code == "arabic_metatitle" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_arabic_metatitle', att_value)
+                        if att_code == "arabic_description" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_arabic_description', att_value)
+                        if att_code == "arabic_country" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_arabic_country', att_value)
+                        if att_code == "arabic_meta_keywords" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_arabic_meta_keywords', att_value)
+                        if att_code == "arabic_meta_description" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_arabic_meta_description', att_value)
+                        if att_code == "arabic_howtouse" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_arabic_howtouse', att_value)
+                        if att_code == "arabic_testresult" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_arabic_test_result', att_value)
+                        if att_code == "arabic_ingredients" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_arabic_ingredients', att_value)
+                        if att_code == "article_no" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_article_no', att_value)
+                        if att_code == "meta_title" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_meta_title', att_value)
+                        if att_code == "meta_keyword" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_meta_keyword', att_value)
+                        if att_code == "meta_description" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_meta_description', att_value)
+                        if att_code == "warning_quantity" and att_value:
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_warning_quantity', att_value)
+                        if att_code == "country_of_manufacture" and att_value:
+                            country_id_sql = frappe.db.sql("SELECT name FROM tabCountry WHERE code = %s" , (att_value.lower()) , as_dict = True)
+                            if country_id_sql and country_id_sql[0] and country_id_sql[0]['name']:
+                                country = country_id_sql[0]['name']
+                            frappe.db.set_value('Item', item_exist_doc.name, 'custom_country_of_manufacture', country)
         if final_loop and altenative_items:
             frappe.enqueue(
                 'masar_miraaya.api.get_alternative_items',
@@ -1242,7 +1303,12 @@ def get_customer_contact(customer):
 
 def change_magento_status_to_fullfilled(so_name):
     base_url, headers = base_data("webhook")
-    url = base_url + '/order/updateStatus/{so_name}'.format(so_name = so_name)
+    setting = frappe.get_doc("Magento Setting")
+    if setting.auth_type == "Develop":
+        env = "dev"
+    elif setting.auth_type == "Production":
+        env = "prod"
+    url = base_url + '/order/updateStatus/{so_name}/{env}'.format(so_name = so_name, env = env)
     payload = json.dumps({
             "order_status": "Fulfilled"
             })
@@ -1251,6 +1317,11 @@ def change_magento_status_to_fullfilled(so_name):
 
 def change_magento_status_to_cancelled(so_magento_id):
     base_url, headers = base_data("webhook")
-    url = base_url + '/order/cancel/{so_magento_id}'.format(so_magento_id = so_magento_id)
+    setting = frappe.get_doc("Magento Setting")
+    if setting.auth_type == "Develop":
+        env = "dev"
+    elif setting.auth_type == "Production":
+        env = "prod"
+    url = base_url + '/order/cancel/{so_magento_id}/{env}'.format(so_magento_id = so_magento_id, env = env)
     response = requests.request("PUT", url, headers=headers)
     return response.text , response.status_code ## returns: Order (magento id) has been successfully cancelled
