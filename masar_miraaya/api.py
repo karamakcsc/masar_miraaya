@@ -100,8 +100,9 @@ def create_customer_auth(customer_email):
         'Authorization': 'Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU='
         }
     response = requests.get(url, headers=headers)
+    token_json = json.loads(response.text)
     if response.status_code in [200 , 201]:
-        token_json = json.loads(response.text)
+        
         if token_json.get('userToken'): 
             return token_json['userToken']
         else:
