@@ -39,6 +39,7 @@
   "magento_wallet_prod_section",
   "column_break_jlyk",
   "wallet_auth_type",
+  "customer",
   "column_break_vtcc",
   "create_magento_customer_prod_auth",
   "magento_cust_prod_auth"
@@ -232,12 +233,18 @@
    "fieldtype": "Select",
    "label": "Type",
    "options": "\nDevelop\nProduction"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-20 10:39:39.527894",
+ "modified": "2024-11-28 11:02:19.884598",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Magento Setting",

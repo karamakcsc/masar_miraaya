@@ -76,21 +76,42 @@ def create_magento_auth_wallet():
 @frappe.whitelist()
 def create_magento_auth_wallet_webhook():
     setting = frappe.get_doc("Magento Setting")
+    if setting.customer: 
+        customer_doc = frappe.get_doc('Customer' , setting.customer)
+        customer_email = customer_doc.custom_email
+        auth = create_customer_auth(customer_email)
+        
+        setting.magento_cust_prod_auth = auth
+        setting.save()
+        return auth
+
+@frappe.whitelist()
+def create_customer_auth(customer_email):
+    setting = frappe.get_doc("Magento Setting")
     if setting.auth_type == "Production":
-        url = "https://miraaya-b5b31.uc.r.appspot.com/api/erp/user/token/prod"
+        env = 'prod'
     elif setting.auth_type == "Develop":
-        url = "https://miraaya-b5b31.uc.r.appspot.com/api/erp/user/token/dev"
+        env = 'dev'
+    else: 
+        frappe.throw(
+            f"Select Type of Evniroment in Magento Setting -Magento Wallet Customer Auth"
+            )
+    url = f"https://miraaya-b5b31.uc.r.appspot.com/api/erp/user/token/{customer_email}/{env}"
     headers = {
-        "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
-    }
-    
+        'Accept': '*/*',
+        'User-Agent': 'Thunder Client (https://www.thunderclient.com)',
+        'Authorization': 'Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU='
+        }
     response = requests.get(url, headers=headers)
-    auth = response.text.split('"userToken":"')[1].rstrip('"}')
-    setting.magento_cust_prod_auth = auth
-    setting.save()
-    
-    return auth
-    
+    if response.status_code in [200 , 201]:
+        token_json = json.loads(response.text)
+        if token_json.get('userToken'): 
+            return token_json['userToken']
+        else:
+            frappe.throw(f'Error To Create User Token {str(token_json)}')
+    else: 
+        frappe.throw(f'Error To Create User Token {str(token_json)}')
+
 @frappe.whitelist(allow_guest=True)
 def get_payment_channel():
     c = frappe.qb.DocType('Customer')
@@ -297,7 +318,7 @@ def get_item_group_by_item_group_id(category_id):
         return (f"Error in get_item_group_by_item_group_id: {str(ex)}")
         
     
-def base_data(request_in):
+def base_data(request_in ,customer_email = None):
     if request_in == "magento":
         setting = frappe.get_doc("Magento Setting")
         if setting.token:
@@ -310,18 +331,24 @@ def base_data(request_in):
             "Content-Type": "application/json"
         }
         return base_url , headers
-    elif request_in == "magento_wallet":
+    
+    
+    
+    
+    
+    elif request_in == "magento_customer_auth" and  customer_email is not None :
+        auth = create_customer_auth(customer_email)
         setting = frappe.get_doc("Magento Setting")
-        if setting.token:
-            auth = setting.magento_cust_prod_auth
-        else:
-            auth = setting.magento_auth
         base_url = str(setting.url_wallet).strip()
         headers = {
-            "Authorization": f"Bearer {str(auth).strip()}",
+            "Authorization": f"Bearer {auth}",
             "Content-Type": "application/json"
         }
         return base_url , headers
+    
+    
+    
+    
     elif request_in == "frappe":
         setting = frappe.get_doc("Magento Setting")
         base_url = str(setting.frappe_url).strip()
@@ -330,6 +357,10 @@ def base_data(request_in):
             "Content-Type": "application/json"
         }
         return base_url , headers
+    
+    
+    
+    
     elif request_in == "webhook":
         base_url = 'https://miraaya-b5b31.uc.r.appspot.com/api/erp'
         headers = {

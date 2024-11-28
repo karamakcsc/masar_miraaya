@@ -693,8 +693,6 @@ def cancelled_pick_list(self):
                 pl_doc.run_method('cancel')
                 
 
-
-
           
 def reorder_sales_order(self):
     if self.custom_magento_status == "Reorder":
@@ -704,9 +702,9 @@ def reorder_sales_order(self):
         set_payment_info(self)
                 
 def create_empty_cart(self):
-    base_url, headers = base_data("magento_wallet")
+    customer_doc = frappe.get_doc('Customer' , self.customer)
+    base_url, headers = base_data(request_in="magento_customer_auth" , customer_email=customer_doc.custom_email)
     url = base_url + "rest/V1/carts/mine"
-    
     response = requests.post(url, headers=headers)
     if response.status_code == 200:
         cart_id = response.text
@@ -901,9 +899,11 @@ def save_reorder_fleetroot(self, entity_id, order_id):
     
     date_time = combine_date_time(self)
     
+    address = get_address(self)
+    
     payload = {
         "orderDetails": {
-            "address_id": "123", #//from selected address of the user
+            "address_id": "123", #//from selected address of the user  from add_address_to_cart function
             "coupon_amount": "0", #//amount if discount coupon is used
             "delivery_slot": "10 am - 4 pm", #//hardcode this or  "4 pm - 10 pm"
             "due_amount": due_amount, #//total amount of order if cash on delivery, if online then 0

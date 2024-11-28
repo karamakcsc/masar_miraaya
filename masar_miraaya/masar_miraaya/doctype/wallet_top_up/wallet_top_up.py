@@ -159,7 +159,8 @@ class WalletTopup(Document):
         
         
     def adjust_amount_to_wallet_magento(self):
-        base_url, headers = base_data("magento_wallet")
+        customer_doc = frappe.get_doc('Customer' , self.customer)
+        base_url, headers =base_data(request_in="magento_customer_auth" , customer_email=customer_doc.custom_email)
         url = base_url + "graphql"
         
         action_type = None

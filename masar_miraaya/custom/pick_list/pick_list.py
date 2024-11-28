@@ -104,14 +104,14 @@ def user_vaildation(self):
 def packing(self):
     self = frappe._dict(json.loads(self))##
     linked_so = get_linked_so(self)##
-    # error , continue_ = change_magento_status(linked_so)############# Magento
-    # if continue_: ############# Magento
-    change_so_status(linked_so)
-    PickList.create_stock_reservation_entries(self= frappe.get_doc(self.doctype , self.name) , notify=True)
-    frappe.db.set_value(self.doctype , self.name , 'custom_packed' ,1)
-    return 1 
-    # else : ############# Magento
-    #     frappe.throw('Error Magento Connection : {error}'.format(error = str(error))) ############# Magento
+    error , continue_ = change_magento_status(linked_so)############# Magento
+    if continue_: ############# Magento
+        change_so_status(linked_so)
+        PickList.create_stock_reservation_entries(self= frappe.get_doc(self.doctype , self.name) , notify=True)
+        frappe.db.set_value(self.doctype , self.name , 'custom_packed' ,1)
+        return 1 
+    else : ############# Magento
+        frappe.throw('Error Magento Connection : {error}'.format(error = str(error))) ############# Magento
 
 def change_magento_status(linked_so): 
     text = 'Magento ID is None or Sales Order is Not Submitted.' 
