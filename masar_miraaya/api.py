@@ -64,13 +64,11 @@ def create_magento_auth_wallet():
         "username": username,
         "password": password
     }
-    
     response = requests.post(url, json=payload)
     auth = response.text.strip('"')
     setting = frappe.get_doc("Magento Setting")
     setting.auth_wallet = auth
     setting.save()
-    
     return auth
 
 @frappe.whitelist()
@@ -80,7 +78,6 @@ def create_magento_auth_wallet_webhook():
         customer_doc = frappe.get_doc('Customer' , setting.customer)
         customer_email = customer_doc.custom_email
         auth = create_customer_auth(customer_email)
-        
         setting.magento_cust_prod_auth = auth
         setting.save()
         return auth
@@ -331,11 +328,6 @@ def base_data(request_in ,customer_email = None):
             "Content-Type": "application/json"
         }
         return base_url , headers
-    
-    
-    
-    
-    
     elif request_in == "magento_customer_auth" and  customer_email is not None :
         auth = create_customer_auth(customer_email)
         setting = frappe.get_doc("Magento Setting")
@@ -345,10 +337,6 @@ def base_data(request_in ,customer_email = None):
             "Content-Type": "application/json"
         }
         return base_url , headers
-    
-    
-    
-    
     elif request_in == "frappe":
         setting = frappe.get_doc("Magento Setting")
         base_url = str(setting.frappe_url).strip()
@@ -356,11 +344,7 @@ def base_data(request_in ,customer_email = None):
             "Authorization": f"Basic {str(setting.frappe_auth).strip()}",
             "Content-Type": "application/json"
         }
-        return base_url , headers
-    
-    
-    
-    
+        return base_url , headers    
     elif request_in == "webhook":
         base_url = 'https://miraaya-b5b31.uc.r.appspot.com/api/erp'
         headers = {
@@ -877,7 +861,7 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                                 SELECT tia.name , tav.attribute_value FROM `tabItem Attribute` tia 
                                             INNER JOIN  `tabItem Attribute Value` tav ON tia.name = tav.parent 
                                             WHERE tav.abbr = %s OR tav.attribute_value =  %s
-                                            """, ("default","Default"), as_dict=True)[0]['attribute_value']
+                                            """, ("default","Default"), as_dict=True)
                                 if  variant_sql and variant_sql[0] and variant_sql[0]['attribute_value']:
                                     variant = variant_sql[0]['attribute_value']
                                 else:
@@ -893,26 +877,26 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                             if att_code == 'size_ml':
                                 frappe.db.set_value('Item', new_item_.name, 'custom_size_ml', variant)
 
-                                item_attribute_sql = frappe.db.sql("SELECT custom_attribute_code FROM `tabItem Attribute`", as_dict=True)
-                                for item_attribute in item_attribute_sql:
-                                    if att_code == item_attribute.custom_attribute_code:
-                                        attribute_value = frappe.db.sql("""
-                                            SELECT tia.name , tav.attribute_value FROM `tabItem Attribute` tia 
-                                            INNER JOIN  `tabItem Attribute Value` tav ON tia.name = tav.parent 
-                                            WHERE tav.abbr = %s OR tav.attribute_value =  %s
-                                        """, (str(att_value),str(att_value)), as_dict=True)
+                            item_attribute_sql = frappe.db.sql("SELECT custom_attribute_code FROM `tabItem Attribute`", as_dict=True)
+                            for item_attribute in item_attribute_sql:
+                                if att_code == item_attribute.custom_attribute_code:
+                                    attribute_value = frappe.db.sql("""
+                                        SELECT tia.name , tav.attribute_value FROM `tabItem Attribute` tia 
+                                        INNER JOIN  `tabItem Attribute Value` tav ON tia.name = tav.parent 
+                                        WHERE tav.abbr = %s OR tav.attribute_value =  %s
+                                    """, (str(att_value),str(att_value)), as_dict=True)
 
-                                        # if attribute_value:
-                                        new_att = frappe.new_doc('Item Variant Attribute')
-                                        new_att.attribute = str(attribute_value[0]['name'])
-                                        new_att.attribute_value = str(attribute_value[0]['attribute_value'])
-                                        new_att.variant_of = new_item_.variant_of
-                                        new_att.parent = new_item_.name
-                                        new_att.parentfield = 'attributes'
-                                        new_att.parenttype = 'Item'
-                                        new_att.insert(ignore_permissions=True , ignore_mandatory=True)
-                                        
-                                        frappe.db.commit()
+                                    # if attribute_value:
+                                    new_att = frappe.new_doc('Item Variant Attribute')
+                                    new_att.attribute = str(attribute_value[0]['name'])
+                                    new_att.attribute_value = str(attribute_value[0]['attribute_value'])
+                                    new_att.variant_of = new_item_.variant_of
+                                    new_att.parent = new_item_.name
+                                    new_att.parentfield = 'attributes'
+                                    new_att.parenttype = 'Item'
+                                    new_att.insert(ignore_permissions=True , ignore_mandatory=True)
+                                    
+                                    frappe.db.commit()
 
                     # Process images
                     try:

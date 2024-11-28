@@ -152,6 +152,12 @@ def create_sales_invoice(self):
 def on_submit(self, method):
     create_sales_invoice(self)
     create_draft_pick_list(self)
+    if self.amended_from is not None : 
+        magento_id , entity_id ,address_id = magento_reorder(self)
+        self.custom_magento_id = magento_id
+        frappe.db.set_value(self.doctype , self.name , 'custom_magento_id' , magento_id)
+        fleetroot_reorder(self , magento_id , entity_id , address_id)
+    
     
 def on_update_after_submit(self, method):
         if  self.docstatus == 1:
@@ -172,13 +178,12 @@ def on_update_after_submit(self, method):
                 if len(pl_lsts['submit']) !=0 : 
                     pl_sudimtted(self = self ,submit = pl_lsts['submit'] )
                 change_magento_status_to_cancelled(self.custom_magento_id)
-            if self.custom_magento_status =='Reorder': 
-                reorder_sales_order(self)
+            if self.custom_magento_status =='Reorder':
                 cancelled_pick_list(self)
                 create_amend_so(self)
 
 def create_amend_so(self): 
-    new_so = frappe.copy_doc(self)
+    new_so = frappe.copy_doc(self )
     new_so.amended_from = self.name  
     new_so.status = "Draft"   
     new_so.custom_magento_status = "New"
@@ -193,8 +198,9 @@ def create_amend_so(self):
     new_so.payment_schedule = list()
     new_so.delivery_date = delivery_date
     new_so.transaction_date = delivery_date
+    new_so.custom_magento_id = None
     new_so.run_method('save')
-    new_so.run_method('submit')
+    return new_so.name
 
 
 def delete_pl_draft(self , draft = list() ):
@@ -265,7 +271,6 @@ def create_draft_pick_list(self):
         .where(i.is_stock_item ==1 )
         .where(soi.parent == self.name)
     ).run(as_dict = True)
-    # frappe.throw(str(items))
     doc.locations = list()
     for i in items: 
         row = { 
@@ -629,33 +634,34 @@ def cost_of_delivery_jv(self):
     if delivery_cost in [ None , 0 ]: 
         delivery_company_doc = frappe.get_doc('Customer' , self.custom_delivery_company )
         delivery_cost = delivery_company_doc.custom_delivery_cost
-    if delivery_cost in [None , 0]:
+    if delivery_cost in [None]:
         frappe.throw('Set Delivary Cost of Delivery Company {dc}.'
                      .format(dc = frappe.utils.get_link_to_form("Customer", self.custom_delivery_company))
                      , 
                      title = frappe._("Missing Delivery Cost")
         )
-    jv = frappe.new_doc("Journal Entry")
-    jv.posting_date = self.transaction_date
-    jv.company = self.company
-    jv.custom_reference_document = self.doctype
-    jv.custom_reference_doctype = self.name
-    dr_row = { 
-            'account': dr_account, 'debit_in_account_currency' : float(delivery_cost),
-            'debit' : float(delivery_cost),'party_type': 'Customer',
+    if delivery_cost not in [0 , None]:
+        jv = frappe.new_doc("Journal Entry")
+        jv.posting_date = self.transaction_date
+        jv.company = self.company
+        jv.custom_reference_document = self.doctype
+        jv.custom_reference_doctype = self.name
+        dr_row = { 
+                'account': dr_account, 'debit_in_account_currency' : float(delivery_cost),
+                'debit' : float(delivery_cost),'party_type': 'Customer',
+                'party': self.custom_delivery_company,'cost_center': cost_center,
+                'driver' : self.custom_driver
+            }
+        jv.append("accounts", dr_row)
+        cr_row = { 
+            'account': cr_account,'credit_in_account_currency' : float(delivery_cost),
+            'credit' : float(delivery_cost),'party_type': 'Customer',
             'party': self.custom_delivery_company,'cost_center': cost_center,
             'driver' : self.custom_driver
         }
-    jv.append("accounts", dr_row)
-    cr_row = { 
-        'account': cr_account,'credit_in_account_currency' : float(delivery_cost),
-        'credit' : float(delivery_cost),'party_type': 'Customer',
-        'party': self.custom_delivery_company,'cost_center': cost_center,
-        'driver' : self.custom_driver
-    }
-    jv.append("accounts", cr_row)
-    jv.save(ignore_permissions=True)
-    jv.submit()
+        jv.append("accounts", cr_row)
+        jv.save(ignore_permissions=True)
+        jv.submit()
     
 def cancel_stock_reservation_entry(self):
     sre = frappe.qb.DocType('Stock Reservation Entry')
@@ -692,142 +698,14 @@ def cancelled_pick_list(self):
                 pl_doc= frappe.get_doc('Pick List' , pl_loop.name)
                 pl_doc.run_method('cancel')
                 
-
-          
-def reorder_sales_order(self):
-    if self.custom_magento_status == "Reorder":
-        create_empty_cart(self)
-        add_address_to_cart(self)
-        add_shipping_info(self)
-        set_payment_info(self)
-                
-def create_empty_cart(self):
-    customer_doc = frappe.get_doc('Customer' , self.customer)
-    base_url, headers = base_data(request_in="magento_customer_auth" , customer_email=customer_doc.custom_email)
-    url = base_url + "rest/V1/carts/mine"
-    response = requests.post(url, headers=headers)
-    if response.status_code == 200:
-        cart_id = response.text
-        add_items_to_cart(self, cart_id)
-    else:
-        frappe.throw(f"Failed to Create Sales Order in Magento: {str(response.text)}")
-        
-def add_items_to_cart(self, cart_id):
-    base_url, headers = base_data("magento_wallet")
-    url = base_url + "rest/V1/carts/mine/items"
-    
-    if len(self.items) != 0:
-        for item in self.items:
-            sku = item.item_code
-            qty = item.qty
-
-            item_doc = frappe.get_doc("Item", sku)
-            
-            if item_doc.is_stock_item:
-                payload = {
-                    "cartItem":{
-                    "sku": sku,
-                    "qty": qty,
-                    "quote_id": cart_id,
-                    }
-                }
-                
-                response = requests.post(url, headers=headers, json=payload)
-                if response.status_code != 200:
-                    frappe.throw(f"Failed to Add Items to Sales Order: {str(response.text)}")
-                    
-        
-def add_address_to_cart(self):
-    base_url, headers = base_data("magento_wallet")
-    url = base_url + "rest/V1/carts/mine/billing-address"
-    address = get_address(self)
-    if address:
-        payload = {
-            "address": address
-        }
-        response = requests.post(url, headers=headers, json=payload)
-        if response.status_code != 200:
-            frappe.throw(f"Failed to Add Address to Sales Order 'Billing Address': {str(response.text)}")   
-    else: 
-        frappe.throw('''Error To Get Address Data."Billing Address"''')
-        
-def add_shipping_info(self):
-    base_url, headers = base_data("magento_wallet")
-    url = base_url + "rest/V1/carts/mine/shipping-information"
-    address = get_address(self)
-    if address:
-        payload = {
-        "addressInformation": {
-            "shipping_address": address,
-            "billing_address": address,
-            "shipping_carrier_code": "flatrate",
-            "shipping_method_code": "flatrate"
-            }
-        }
-        response = requests.post(url, headers=headers, json=payload)
-        if response.status_code != 200:
-            frappe.throw(f"Failed to Add Address to Sales Order 'Shipping Addresss': {str(response.text)}")   
-    else: 
-        frappe.throw('Error To Get Address Data."Shipping Addresss"')
-
-def set_payment_info(self):
-    base_url, headers = base_data("magento_wallet")
-    url = base_url + "rest/default/V1/carts/mine/payment-information"
-    cust_doc = frappe.get_doc("Customer", self.customer)
-    customer_id = cust_doc.custom_customer_id
-    address = get_address(self)
-    date_time = combine_date_time(self)
-    if address:
-        payload = {
-            "paymentMethod": {
-                "method": "cashondelivery"
-            },
-            "billing_address": address,
-            "extension_attributes": {
-                "preferred_delivery_date": str(date_time)
-            }
-        }
-        response = requests.post(url, headers=headers, json=payload)
-        if response.status_code == 200:
-            entity_id = response.text
-            get_magento_id(self, customer_id, entity_id)
-        
-        else:
-            frappe.throw(f"Error Adding Shipping Information to Sales Order : {str(response.text)}" )
-    else: 
-        frappe.throw('Error To Get Address Data."Billing Addresss"')
-        
-    
-
-def get_magento_id(self, customer_id, entity_id):
-    base_url, headers = base_data("magento")
-    url = base_url + f"rest/V1/orders?searchCriteria[filterGroups][0][filters][0][field]=customer_id&searchCriteria[filterGroups][0][filters][0][value]={customer_id}&searchCriteria[filterGroups][0][filters][0][field]=entity_id&searchCriteria[filterGroups][0][filters][0][value]={entity_id}&searchCriteria[filterGroups][0][filters][0][conditionType]=eq"
-
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        json_response = response.json()
-        for increment_id in json_response['items']:
-            magento_id = increment_id['increment_id']
-            self.custom_magento_id = magento_id
-    else:
-        frappe.throw("Error Getting Magento ID")
-            
-
 def get_address(self):
     if self.customer_address:
-        address_sql = frappe.db.sql("""SELECT 
-                                            ta.address_line1, 
-                                            ta.city, 
-                                            ta.country, 
-                                            ta.custom_first_name, 
-                                            ta.custom_last_name, 
-                                            ta.email_id, 
-                                            ta.pincode, 
-                                            ta.phone 
-                                        FROM tabAddress ta
-                                        WHERE ta.name = %s
-                                        """, (self.customer_address), as_dict=True)
-    
+        address_sql = frappe.db.sql("""
+            SELECT ta.address_line1, ta.city,ta.country, ta.custom_first_name, 
+                ta.custom_last_name, ta.email_id, ta.pincode, ta.phone 
+                FROM tabAddress ta
+                WHERE ta.name = %s
+        """, (self.customer_address), as_dict=True)
         if len(address_sql) != 0:
             address = address_sql[0]
             street = address.address_line1
@@ -842,129 +720,224 @@ def get_address(self):
             pincode = address.pincode
             phone = address.phone
             address_dict = {
-                "country_id": country_id,
-                "street": [street],
-                "postcode": pincode,
-                "city": city,
-                "firstname": first_name,
-                "lastname": last_name,
-                "email": email_id,
-                "telephone": phone
+                "country_id": country_id,"street": [street],
+                "postcode": pincode,"city": city,"firstname": first_name,
+                "lastname": last_name,"email": email_id, "telephone": phone
             }
-            
             return address_dict
         return None
     else:
             frappe.throw(f"Add  Address to Customer: {self.customer} , in Sales order.")
-            
-            
+
 def combine_date_time(self):
     if self.delivery_date and self.custom_delivery_time:
         date = datetime.strptime(self.delivery_date, "%Y-%m-%d")
-        time = datetime.strptime(self.custom_delivery_time, "%H:%M:%S.%f").time()
+        time = datetime.strptime(self.custom_delivery_time, "%H:%M:%S").time()
         date_time = datetime.combine(date, time).replace(microsecond=0) 
         return date_time
     else:
         frappe.throw("Please Set Delivery Date and Delivery Time.")
+    
+    
+    
+    
+          
+def magento_reorder(self):
+    customer_doc = frappe.get_doc('Customer' , self.customer)
+    base_url, headers = base_data(request_in="magento_customer_auth" , customer_email=customer_doc.custom_email)
+    customer_id = customer_doc.custom_customer_id
+    cart_id = create_empty_cart(base_url , headers)
+    continue_ = add_items_to_cart(self, cart_id ,  base_url , headers)
+    address = get_address(self)
+    if continue_:
+        address_id = add_address_to_cart(address,base_url,headers)
+        add_shipping_info(address,base_url,headers)
+        entity_id = set_payment_info(self , address , base_url, headers)
+        if entity_id:
+            magento_id = get_magento_id(self, customer_id, entity_id , base_url, headers)
+            frappe.msgprint('Magento reordered successfully' ,
+                alert=True, 
+                indicator='green'
+            )
+            return magento_id   , entity_id , address_id
+def create_empty_cart(base_url , headers):
+    url = base_url + "rest/V1/carts/mine"
+    response = requests.post(url, headers=headers)
+    if response.status_code == 200:
+        cart_id = response.text
+        return cart_id
+    else:
+        frappe.throw(f"Failed to Create Sales Order in Magento: {str(response.text)}")
+        
+def add_items_to_cart(self, cart_id ,  base_url , headers):
+    url = base_url + "rest/V1/carts/mine/items"
+    if len(self.items) != 0:
+        for item in self.items:
+            sku = item.item_code
+            qty = item.qty
+            item_doc = frappe.get_doc("Item", sku)
+            if item_doc.is_stock_item:
+                payload = { "cartItem":{"sku": sku,"qty": qty,"quote_id": cart_id,}}
+                response = requests.post(url, headers=headers, json=payload)
+                if response.status_code not in [200 , 201]:
+                    frappe.throw(f"Failed to Add Items to Sales Order: {str(response.text)}")
+                    return False
+        return True
+    else: 
+        return False
 
+def add_address_to_cart(address , base_url , headers ):
+    url = base_url + "rest/V1/carts/mine/billing-address"
+    payload = {"address": address}
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code not in [200 , 201]:
+            frappe.throw(f"Failed to Add Address to Sales Order 'Billing Address': {str(response.text)}") 
+    else: 
+        return   response.text
+        
+def add_shipping_info(address,base_url,headers):
+    url = base_url + "rest/V1/carts/mine/shipping-information"
+    if address:
+        payload = {
+        "addressInformation": {
+            "shipping_address": address,"billing_address": address,
+            "shipping_carrier_code": "flatrate","shipping_method_code": "flatrate"
+            }
+        }
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code != 200:
+            frappe.throw(f"Failed to Add Address to Sales Order 'Shipping Addresss': {str(response.text)}")   
+        return True
+    else: 
+        frappe.throw(f'Error To Get Address Data."Shipping Addresss": {str(response.text)}')
 
-def save_reorder_fleetroot(self, entity_id, order_id):
+def set_payment_info(self , address , base_url, headers):
+    url = base_url + "rest/default/V1/carts/mine/payment-information"
+    date_time = combine_date_time(self)
+    payload = {
+        "paymentMethod": {
+            "method": "cashondelivery"
+        },
+        "billing_address": address,
+        "extension_attributes": {
+            "preferred_delivery_date": str(date_time)
+        }
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code in [200 , 201]:
+        entity_id = response.text
+        return entity_id
+    else:
+        frappe.throw(f"Error Adding Shipping Information to Sales Order : {str(response.text)}" )
+        return None
+        
+    
+
+def get_magento_id(self, customer_id, entity_id , base_url, headers):
+    url = base_url + f"rest/V1/orders?searchCriteria[filterGroups][0][filters][0][field]=customer_id&searchCriteria[filterGroups][0][filters][0][value]={customer_id}&searchCriteria[filterGroups][0][filters][0][field]=entity_id&searchCriteria[filterGroups][0][filters][0][value]={entity_id}&searchCriteria[filterGroups][0][filters][0][conditionType]=eq"
+    setting = frappe.get_doc('Magento Setting')
+    auth = setting.magento_admin_prod_auth
+    headers['Authorization'] = f"Bearer {auth}"
+    response = requests.get(url, headers=headers)
+    json_response = response.json()
+    if response.status_code in [200 , 201]:        
+        for increment_id in json_response['items']:
+            magento_id = increment_id['increment_id']
+            return magento_id
+    else:
+        frappe.throw(f"Error Getting Magento ID: {str(json_response)}" )
+            
+def get_items_details(self):
+    items = list()
+    fees_shipping = 0 
+    for i in self.items:
+        item_doc = frappe.get_doc('Item', i.item_code)
+        if item_doc.is_stock_item == 0 : 
+            fees_shipping += (i.amount if i.amount else 0 )
+        else : 
+            items.append(
+            {
+                "item": i.item_code,
+                "price": str(i.rate),
+                "qty": str(i.qty),
+                "tax": "0",
+                "total":str(i.rate*i.qty)
+                }
+            ) 
+    return  items ,  fees_shipping
+    
+        
+def fleetroot_reorder(self , magento_id , entity_id , address_id):
+    base_url , headers = base_data("webhook")
     setting = frappe.get_doc("Magento Setting")
     if setting.auth_type == "Develop":
         env = "dev"
     elif setting.auth_type == "Production":
         env = "prod"
-        
-    url = f"https://miraaya-b5b31.uc.r.appspot.com/api/erp/order/save-order-and-track/{env}"
-    headers = {
-        "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU=",
-        "Content-Type": "application/json"
+    url = base_url + f'/order/save-order-and-track/{env}'
+    coupon_amount = self.discount_amount if self.discount_amount else 0 
+    items ,  fees_shipping = get_items_details(self)
+    order_details = {
+        "address_id" : address_id,
+        "coupon_amount": coupon_amount, 
+        "delivery_slot": "10 am - 4 pm",
+        "expected_delivery_date" : str(combine_date_time(self)),
+        "order_id": magento_id,
+        "entity_id": entity_id,
+        "due_amount": str(self.custom_cash_on_delivery_amount if self.custom_cash_on_delivery_amount else 0 ) , 
+        "paid_amount": str(self.custom_payment_channel_amount if self.custom_payment_channel_amount else 0 ) , 
+        "payment_method" : "cashondelivery" if (self.custom_payment_channel_amount not in [None , 0 ]) else "prepaid",
+        "shipping_fee": fees_shipping,
+        "total_amount" : self.custom_total_amount,
+        "wallet_amount_used": "0"
+    }    
+    pickup = {
+        "lat": "33.2793535","lng": "44.3867075","address": "Jadryah 915 | 26 | 3","stop_type": 1, "note": "pickup point",
+        "datetime": str(combine_date_time(self)),"contact_name": "Miraaya","contact_phone": "+964 780 699 9197", 
+        "contact_email": "dev@miraaya.com", "order_no" : magento_id,
+        "payment_mode": "cashondelivey", "total_amount": self.custom_total_amount,
+        "items":items
     }
+    customer_doc = frappe.get_doc('Customer' ,self.customer )
     
-    due_amount = None
-    if self.custom_cash_on_delivery_amount:
-        due_amount = self.custom_cash_on_delivery_amount
-    else:
-        due_amount = 0
-    
-    item_list = []    
-    for item in self.items:
-        item_list.append({
-            "item": item.item_name, #//item name
-            "price": item.rate, #//price of the item
-            "qty": item.qty, #//quanity of the item
-            "tax": "0", #//set to 0
-            "total": item.amount #// price * qty
-        })
-    
-    date_time = combine_date_time(self)
-    
-    address = get_address(self)
-    
+    delivery = {
+        "lat": "33.3152832", "lng": "44.3661671",
+        "address": self.customer_address , "stop_type": 2,  "note": "delivery point", 
+        "datetime": str(combine_date_time(self)),
+        "contact_name": self.customer_name,
+        "contact_phone": self.contact_phone, 
+        "contact_email":customer_doc.custom_email,
+        "order_no":magento_id,
+        "payment_mode":"cashondelivery" if (self.custom_payment_channel_amount not in [None , 0 ]) else "prepaid",
+        "total_amount": self.custom_total_amount,
+        "priority": 2,
+        "qr_code":magento_id,
+        "items":items
+    }
+    tracking_details_obj = {
+        "name": f"Miraaya{magento_id}",
+        "description": f"Miraaya Order tracking, Order ID: {magento_id}",
+        "driver_id": "","driver_code": "",
+        "auto_assignment": 1,
+        "pickup":pickup,
+        "delivery":delivery
+    }
+    tracking_details = {
+        "order_status": "processing",
+        "entity_id": entity_id,
+        "order_id": magento_id,
+        "sales_order_id": self.name, 
+        "obj": tracking_details_obj
+    }
     payload = {
-        "orderDetails": {
-            "address_id": "123", #//from selected address of the user  from add_address_to_cart function
-            "coupon_amount": "0", #//amount if discount coupon is used
-            "delivery_slot": "10 am - 4 pm", #//hardcode this or  "4 pm - 10 pm"
-            "due_amount": due_amount, #//total amount of order if cash on delivery, if online then 0
-            "expected_delivery_date": "2023-06-15T14:00:00Z", #//add this when u want the order to get delivered"
-            "order_id": order_id, #// from  step 6
-            "entity_id": entity_id, #// from  step 5
-            "paid_amount": "0", #//total paid amount
-            "payment_method": "cashondelivery", #//if online methods used to pa then use "prepaid"
-            "shipping_fee": "0", #//send 0
-            "total_amount": self.total, #//total amount of the order
-            "wallet_amount_used": "0" #//send 0
-            },
-            "trackingDetails": {
-            "order_status": "processing",
-            "entity_id": entity_id, #// from  step 5
-            "order_id": order_id, #// from  step 6
-            "sales_order_id": "ERP123", #//ERP customer id
-            "obj": {
-                "name": f"Miraaya{order_id}", #//Miraaya + order id
-                "description": f"Miraaya Order tracking, Order ID: {order_id}", #//anything
-                "driver_id": "", #//empty
-                "driver_code": "", #//empty
-                "auto_assignment": 1, #//set as 1
-                "pickup": {
-                "lat": "33.2793535", #//hardcode this
-                "lng": "44.3867075", #//hardcode this
-                "address": "Jadryah 915 | 26 | 3", #//hardcode this
-                "stop_type": 1, #//set as 1
-                "note": "pickup point", #//hardcode this
-                "datetime": date_time, #//preferred deliery date and time
-                "contact_name": "Miraaya", #//hardocde
-                "contact_phone": "+964 780 699 9197", #//hardocde
-                "contact_email": "dev@miraaya.com", #//hardocde
-                "order_no": order_id, #//from step 6
-                "payment_mode": "cashondelivey",
-                "total_amount": self.total, #//total amt of order
-                "items": item_list
-                },
-                "delivery": {
-                "lat": "33.3152832", #//hardcode this
-                "lng": "44.3661671", #//hardcode this
-                "address": "Customer Address", #//shipping address used in step 3 payload in string format
-                "stop_type": 2, #//set to 2
-                "note": "delivery point", #//hardcode
-                "datetime": date_time, #//expected delivery date and time
-                "contact_name": "John Doe", #//customer name
-                "contact_phone": "+964123456789", #//cusomter phone number
-                "contact_email": "john@example.com", #//cusomter email
-                "order_no": order_id, #//from step 6
-                "payment_mode": "cashondelivery", #//this or "prepaid" if online mode is used
-                "total_amount": self.total, #//order total
-                "priority": 2, #//set to 2
-                "qr_code": order_id, #//same as ooorder id forms tep 6
-                "items": item_list
-            }
-        }
-        }
-    }
-    
+        "orderDetails": order_details, 
+        "trackingDetails": tracking_details,
+    }    
     response = requests.post(url, headers=headers, json=payload)
-    if response.status_code == 200:
-        pass
+    if response.status_code in [200 , 201]:
+        frappe.msgprint('fleetroot reordered successfully' ,
+                alert=True, 
+                indicator='green'
+            )
     else:
-        frappe.throw("Error Saving reorder to fleetroot.")
+        frappe.throw(f"Error Saving reorder to fleetroot: {str(response.text)}")

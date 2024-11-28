@@ -25,7 +25,7 @@ def validate(self, method):
 def create_new_item(self):
     payload = base_item_data(self)
     base_url, headers = base_data("magento")
-    url = f"{base_url}/rest/V1/products/{self.item_code}"
+    url = f"{base_url}/rest/all/V1/products/{self.item_code}"
     response = requests.put(url, headers=headers, json=payload)
     if response.status_code == 200:
         json_response = response.json()
