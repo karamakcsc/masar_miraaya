@@ -189,12 +189,14 @@ def create_amend_so(self):
     new_so.custom_magento_status = "New"
     new_so.name  = None
     new_so.per_delivered = 0 
-    new_so.per_billed = 100
+    new_so.per_billed = 0
+    new_so.billing_status =  "Not Billed"
     new_so.per_picked =0 
     new_so.insert()
     delivery_date = datetime.now().date()
     for item in new_so.items:
         item.delivery_date = delivery_date
+        item.picked_qty = 0 
     new_so.payment_schedule = list()
     new_so.delivery_date = delivery_date
     new_so.transaction_date = delivery_date
