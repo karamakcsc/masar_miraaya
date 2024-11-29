@@ -8,7 +8,7 @@ from erpnext.stock.doctype.pick_list.pick_list import (
                 update_stock_entry_based_on_material_request ,update_stock_entry_items_with_no_reference )
 from masar_miraaya.api import change_magento_status_to_cancelled
 from datetime import datetime
-from masar_miraaya.api import base_data
+from masar_miraaya.api import base_data , create_magento_auth_webhook
 import requests
 @frappe.whitelist()
 def get_payment_channel_amount(child):
@@ -838,7 +838,7 @@ def set_payment_info(self , address , base_url, headers):
 def get_magento_id(self, customer_id, entity_id , base_url, headers):
     url = base_url + f"rest/V1/orders?searchCriteria[filterGroups][0][filters][0][field]=customer_id&searchCriteria[filterGroups][0][filters][0][value]={customer_id}&searchCriteria[filterGroups][0][filters][0][field]=entity_id&searchCriteria[filterGroups][0][filters][0][value]={entity_id}&searchCriteria[filterGroups][0][filters][0][conditionType]=eq"
     setting = frappe.get_doc('Magento Setting')
-    auth = setting.magento_admin_prod_auth
+    auth = create_magento_auth_webhook()
     headers['Authorization'] = f"Bearer {auth}"
     response = requests.get(url, headers=headers)
     json_response = response.json()
@@ -847,7 +847,7 @@ def get_magento_id(self, customer_id, entity_id , base_url, headers):
             magento_id = increment_id['increment_id']
             return magento_id
     else:
-        frappe.throw(f"Error Getting Magento ID: {str(json_response)}" )
+        frappe.throw(f"Error Getting Magento ID: {str(json_response)} <br> url:{str(url)} <br> headers:{str(headers)}" )
             
 def get_items_details(self):
     items = list()
