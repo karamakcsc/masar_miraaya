@@ -1,7 +1,7 @@
 frappe.ui.form.on('Wallet Top-up', {
     customer: function (frm) {
         update_sales_order_filter(frm);
-        // set_wallet_balance(frm);
+        set_wallet_balance(frm);
     },
 
     onload: function (frm) {

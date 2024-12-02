@@ -3,16 +3,16 @@ frappe.ui.form.on('Customer', {
         if (frm.is_new()) {
             frm.set_value('custom_customer_id', 0);
         }
-        // set_wallet_balance(frm);
+        set_wallet_balance(frm);
     },
     onload:function(frm){
-        // set_wallet_balance(frm);
+        set_wallet_balance(frm);
         if (frm.is_new()) {
             frm.set_value('custom_customer_id', 0);
         }
     },
     refresh: function(frm){
-        // set_wallet_balance(frm);
+        set_wallet_balance(frm);
     }
 });
 
