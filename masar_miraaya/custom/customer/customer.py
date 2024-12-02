@@ -205,6 +205,5 @@ def cust_wallet_balance(customer_id, magento_id):
     balance = get_customer_wallet_balance(customer_id, magento_id)
     
     if balance not in ["", " ", None]:
-        frappe.db.set_value("Customer", customer_id, "custom_lp_balance", balance , update_modified=False)
-        
-        return True
+        # frappe.db.set_value("Customer", customer_id, "custom_lp_balance", balance , update_modified=False)
+        return balance

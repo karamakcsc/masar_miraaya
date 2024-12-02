@@ -26,6 +26,7 @@ function set_wallet_balance(frm) {
                 magento_id: frm.doc.custom_customer_id
             },
 			callback: function(r) {
+                frm.doc.custom_lp_balance = r.message;
 				frm.refresh_field("custom_lp_balance");
 			}
 		});

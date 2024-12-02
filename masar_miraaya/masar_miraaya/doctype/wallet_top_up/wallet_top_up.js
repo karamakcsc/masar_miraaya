@@ -113,21 +113,19 @@ function set_wallet_balance(frm) {
             },
             callback: function(r) {
                 if (r.message) {
-                    console.log(r.message);
-                    frm.set_value("wallet_balance", r.message);
+                    frm.doc.wallet_balance =  r.message;
                 } else {
-                    frm.set_value("wallet_balance", 0);
+                    frm.doc.wallet_balance =  0;
                 }
                 frm.refresh_field("wallet_balance"); 
             },
             error: function(err) {
-                console.error('Error while fetching wallet balance', err);
-                frm.set_value("wallet_balance", 0); 
+                frm.doc.wallet_balance = 0 ; 
                 frm.refresh_field("wallet_balance");
             }
         });
     } else {
-        frm.set_value("wallet_balance", null);
+        frm.doc.wallet_balance =  null;
         frm.refresh_field("wallet_balance");
     }
 }
