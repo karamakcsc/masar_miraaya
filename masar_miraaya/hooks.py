@@ -128,7 +128,7 @@ doc_events = {
         "before_rename": "masar_miraaya.custom.brand.brand.before_rename"
     },
 	"Item": {
-		# "validate": "masar_miraaya.custom.item.item.validate",
+		"before_rename": "masar_miraaya.custom.item.item.before_rename",
         "validate": "masar_miraaya.custom.item.item.validate"
 	},
 	"Item Group": {

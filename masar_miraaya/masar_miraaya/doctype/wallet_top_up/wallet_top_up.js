@@ -1,6 +1,7 @@
 frappe.ui.form.on('Wallet Top-up', {
     customer: function (frm) {
         update_sales_order_filter(frm);
+        // set_wallet_balance(frm);
     },
 
     onload: function (frm) {
@@ -98,4 +99,35 @@ function setQueryFilters(frm) {
             }
         };
     };
+}
+
+
+// Get The Balance For Customer From Magento
+function set_wallet_balance(frm) {
+    if (frm.doc.customer) {
+        frappe.call({
+            method: 'masar_miraaya.api.get_customer_wallet_balance',
+            args: {
+                customer_id: frm.doc.customer,
+                magento_id: frm.doc.customer_id
+            },
+            callback: function(r) {
+                if (r.message) {
+                    console.log(r.message);
+                    frm.set_value("wallet_balance", r.message);
+                } else {
+                    frm.set_value("wallet_balance", 0);
+                }
+                frm.refresh_field("wallet_balance"); 
+            },
+            error: function(err) {
+                console.error('Error while fetching wallet balance', err);
+                frm.set_value("wallet_balance", 0); 
+                frm.refresh_field("wallet_balance");
+            }
+        });
+    } else {
+        frm.set_value("wallet_balance", null);
+        frm.refresh_field("wallet_balance");
+    }
 }

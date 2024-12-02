@@ -10,6 +10,7 @@ import json
 
 class WalletTopup(Document):
     def validate(self):
+        # self.debit_validation()
         self.get_digital_wallet_account()
         self.get_accounts_form_company(with_cost_center=False)
     def on_submit(self):
@@ -190,7 +191,6 @@ class WalletTopup(Document):
             }}
             """
         }
-        
         response = requests.post(url, headers=headers, json=payload)
         json_response = response.json()
         if response.status_code == 200:
@@ -200,3 +200,9 @@ class WalletTopup(Document):
                 frappe.msgprint(f"Wallet Updated Successfully for Customer: {self.customer} With Amount: {wallet_amount}. in Magento", alert=True, indicator='green')
         else:
             frappe.throw(f"Failed to Update Wallet. {str(response.text)}")
+            
+            
+    def debit_validation(self):
+        if self.transaction_type == 'Adjustment' and self.action_type == 'Debit':
+            if self.adjustment_amount > self.wallet_balance:
+                frappe.throw(str(f"Insufficient wallet balance for customer {self.customer}. Cannot debit {self.adjustment_amount} from a balance of {self.wallet_balance}."))

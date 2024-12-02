@@ -1,7 +1,7 @@
 import frappe
 import json
 import requests
-from masar_miraaya.api import base_data
+from masar_miraaya.api import base_data, get_customer_wallet_balance
 from frappe import _
 def validate(self, method):
     check_validation(self)
@@ -199,3 +199,12 @@ def update_delivery_company(self):
         frappe.throw(f"Failed to Update Delivery Company in Firebase: {str(response.text)}")
 
 ##
+
+@frappe.whitelist()
+def cust_wallet_balance(customer_id, magento_id):
+    balance = get_customer_wallet_balance(customer_id, magento_id)
+    
+    if balance not in ["", " ", None]:
+        frappe.db.set_value("Customer", customer_id, "custom_lp_balance", balance , update_modified=False)
+        
+        return True

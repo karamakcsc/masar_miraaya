@@ -44,9 +44,6 @@ def items_validation(self):
                         .format(item = r.item_code , idx=r.idx),
                         title=frappe._('Sales Order Item Missing')
                     )
-            
-            
-            
 def qty_validation(self): 
     linked_so = get_linked_so(self)
     soi = frappe.qb.DocType('Sales Order Item')

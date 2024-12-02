@@ -6,7 +6,7 @@ import json
 from erpnext.stock.doctype.pick_list.pick_list import ( 
                 validate_item_locations,     stock_entry_exists ,   update_stock_entry_based_on_work_order,
                 update_stock_entry_based_on_material_request ,update_stock_entry_items_with_no_reference )
-from masar_miraaya.api import change_magento_status_to_cancelled
+from masar_miraaya.api import change_magento_status_to_cancelled , get_customer_wallet_balance
 from datetime import datetime
 from masar_miraaya.api import base_data , create_magento_auth_webhook
 import requests
@@ -19,6 +19,29 @@ def get_payment_channel_amount(child):
 
 def validate(self, method):
     validation_payment_channel_amount(self)
+    
+
+
+def wallet_balance_validation(self):
+    customer_doc = frappe.get_doc('Customer' , self.customer)
+    wallet_balance = get_customer_wallet_balance(customer_id=self.customer , magento_id=customer_doc.custom_customer_id)
+    if wallet_balance is None:
+        frappe.throw(
+            f'Please Check if Customer <b>{str(self.customer)}</b> is Publish to Magento.'
+        )
+    for channel in self.custom_payment_channels:
+        if channel.channel:
+            doc = frappe.get_doc('Customer' ,channel.channel)
+            if doc.custom_is_digital_wallet:
+                if channel.amount > float(wallet_balance):
+                    frappe.throw(
+                    f"""The Customer has a Wallet Balance of {wallet_balance}, 
+                    but the Amount Specified in The Channel <b>({channel.channel})</b> Exceeds the Available Balance.
+                    <br> 
+                    Please Ensure That The Amount Does Not Exceed The Wallet Balance."""
+                  )
+        
+    
 
 def validation_payment_channel_amount(self):
     if self.custom_total_amount is None or self.grand_total is None:
@@ -150,6 +173,9 @@ def create_sales_invoice(self):
 
 
 def on_submit(self, method):
+    wallet_balance_validation(self)
+    if self.amended_from is not None : 
+        digital_wallet_account_validation(self)
     create_sales_invoice(self)
     create_draft_pick_list(self)
     if self.amended_from is not None : 
@@ -157,8 +183,15 @@ def on_submit(self, method):
         self.custom_magento_id = magento_id
         frappe.db.set_value(self.doctype , self.name , 'custom_magento_id' , magento_id)
         fleetroot_reorder(self , magento_id , entity_id , address_id)
+        wallet_debit_reorder(self , magento_id=50)
     
-    
+def digital_wallet_account_validation(self):   
+    company = frappe.get_doc('Company' , self.company)
+    digital_wallet_account = company.custom_digital_wallet_account
+    if digital_wallet_account is None :
+        frappe.throw(
+            f'Company {self.company}. Must has Digital Wallet Account.'
+        )
 def on_update_after_submit(self, method):
         if  self.docstatus == 1:
             if self.custom_magento_status == 'On the Way':
@@ -180,7 +213,8 @@ def on_update_after_submit(self, method):
                 change_magento_status_to_cancelled(self.custom_magento_id)
             if self.custom_magento_status =='Reorder':
                 cancelled_pick_list(self)
-                create_amend_so(self)
+                so = create_amend_so(self)
+                remove_discount(so)
 
 def create_amend_so(self): 
     new_so = frappe.copy_doc(self )
@@ -202,8 +236,20 @@ def create_amend_so(self):
     new_so.transaction_date = delivery_date
     new_so.custom_magento_id = None
     new_so.run_method('save')
-    return new_so.name
+    return new_so
 
+def remove_discount(self):
+    if self.discount_amount : 
+        new_cash_on_delivery_amount = (
+            self.custom_cash_on_delivery_amount if self.custom_cash_on_delivery_amount else 0 
+            +
+            self.discount_amount if self.discount_amount else 0 
+        )
+        self.discount_amount = 0
+        self.custom_is_cash_on_delivery =1 
+        self.custom_cash_on_delivery_amount = new_cash_on_delivery_amount
+        self.custom_total_amount = new_cash_on_delivery_amount + self.custom_payment_channel_amount
+        self.save()
 
 def delete_pl_draft(self , draft = list() ):
     for d in draft:
@@ -934,7 +980,7 @@ def fleetroot_reorder(self , magento_id , entity_id , address_id):
     payload = {
         "orderDetails": order_details, 
         "trackingDetails": tracking_details,
-    }    
+    }
     response = requests.post(url, headers=headers, json=payload)
     if response.status_code in [200 , 201]:
         frappe.msgprint('fleetroot reordered successfully' ,
@@ -943,3 +989,34 @@ def fleetroot_reorder(self , magento_id , entity_id , address_id):
             )
     else:
         frappe.throw(f"Error Saving reorder to fleetroot: {str(response.text)}")
+
+
+def wallet_debit_reorder(self , magento_id=None):
+    company = frappe.get_doc('Company' , self.company)
+    digital_wallet_account = company.custom_digital_wallet_account
+    if digital_wallet_account is  None :
+            frappe.throw(
+                f'Company {self.company}. Must has Digital Wallet Account'
+            )
+    for ph in self.custom_payment_channels:
+        cust_doc = frappe.get_doc('Customer' , ph.channel)
+        if (cust_doc is not None) and (cust_doc.custom_is_digital_wallet ==1):
+            data = {
+                'customer' : self.customer , 
+                'transaction_type' : 'Adjustment',
+                'digital_wallet' : ph.channel,
+                'wallet_adjustment_account':digital_wallet_account,
+                'action_type' : 'Debit',
+                'adjustment_amount' : ph.amount,
+                'user_remarks' : 'Debit Amount {amount} From Reorder Number ERP:{so_name} , Magento ID : {magento_id}'
+                                .format(amount = ph.amount , so_name = self.name , magento_id = magento_id), 
+            }
+            
+            wallet_doc = frappe.new_doc('Wallet Top-up')
+            wallet_doc.update(data)
+            wallet_doc.save()
+            wallet_doc.submit()
+            frappe.msgprint('Wallet Top Up Created Successfully.' ,        
+                    alert=True, 
+                    indicator='green' 
+            )

@@ -89,5 +89,6 @@ function set_doctype_read_only(frm) {
         if (frappe.user.has_role('Picker') || frappe.user.has_role('Dispatcher')) {
             frm.set_read_only(true);
         }
+        frm.set_df_property('section_break_48', 'read_only', 1);   // Additional Discount Read Only Section
     }
 }

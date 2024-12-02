@@ -20,7 +20,25 @@ def validate(self, method):
             ) 
         else: 
             frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
-
+def before_rename(self, method, old, new, merge):
+    payload = {
+        "product": {
+            "id": self.custom_item_id           
+        }
+    }
+    
+    base_url, headers = base_data("magento")
+    url = f"{base_url}rest/V1/products/{new}"
+    response = requests.put(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        # json_response = response.json()
+        # self.custom_item_id = json_response['id']
+        # frappe.db.set_value("Item", self.name, "custom_item_id", json_response['id'])
+        # frappe.db.commit()
+        frappe.msgprint(f"Item Renamed Successfully in Magento" , alert=True , indicator='green')
+    else:
+        frappe.throw(str(f"Error Renaming Item: {str(response.text)}."))
+    
 
 def create_new_item(self):
     payload = base_item_data(self)
