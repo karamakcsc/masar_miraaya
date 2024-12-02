@@ -50,8 +50,8 @@ def create_magento_auth_webhook():
     
     response = requests.get(url, headers=headers)
     auth = response.text.split('"adminToken":"')[1].rstrip('"}')
-    setting.magento_admin_prod_auth = auth
-    setting.save()
+    # setting.magento_admin_prod_auth = auth
+    # setting.save()
     frappe.db.set_single_value( 'Magento Setting', 'magento_admin_prod_auth', auth, update_modified=False)
     return auth
 
