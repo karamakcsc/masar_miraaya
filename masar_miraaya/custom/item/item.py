@@ -28,7 +28,7 @@ def before_rename(self, method, old, new, merge):
     }
     
     base_url, headers = base_data("magento")
-    url = f"{base_url}rest/V1/products/{new}"
+    url = f"{base_url}/rest/V1/products/{new}"
     response = requests.put(url, headers=headers, json=payload)
     if response.status_code == 200:
         # json_response = response.json()
