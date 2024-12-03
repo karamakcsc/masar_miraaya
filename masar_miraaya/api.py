@@ -21,21 +21,20 @@ def magento_wallet_details():
     return username, password
 @frappe.whitelist()
 def create_magento_auth():
-    base_url, headers = base_data("magento")
-    username, password = magento_admin_details()
-    url = f"{base_url}/rest/V1/integration/admin/token"
-    payload = {
-        "username": username,
-        "password": password
-    }
-    
-    response = requests.post(url, json=payload)
-    auth = response.text.strip('"')
     setting = frappe.get_doc("Magento Setting")
-    setting.magento_auth = auth
-    setting.save()
-    
-    return auth
+    if setting.token_generate ==1:
+        base_url, headers = base_data("magento")
+        username, password = magento_admin_details()
+        url = f"{base_url}/rest/V1/integration/admin/token"
+        payload = {
+            "username": username,
+            "password": password
+        }
+        
+        response = requests.post(url, json=payload)
+        auth = response.text.strip('"')
+        frappe.db.set_single_value( 'Magento Setting', 'magento_auth', auth, update_modified=False)
+        return auth
 
 @frappe.whitelist()
 def create_magento_auth_webhook():
@@ -50,8 +49,6 @@ def create_magento_auth_webhook():
     
     response = requests.get(url, headers=headers)
     auth = response.text.split('"adminToken":"')[1].rstrip('"}')
-    # setting.magento_admin_prod_auth = auth
-    # setting.save()
     frappe.db.set_single_value( 'Magento Setting', 'magento_admin_prod_auth', auth, update_modified=False)
     return auth
 
@@ -74,7 +71,7 @@ def create_magento_auth_wallet():
 @frappe.whitelist()
 def create_magento_auth_wallet_webhook():
     setting = frappe.get_doc("Magento Setting")
-    if setting.customer: 
+    if setting.customer and setting.token ==1: 
         customer_doc = frappe.get_doc('Customer' , setting.customer)
         customer_email = customer_doc.custom_email
         auth = create_customer_auth(customer_email)
