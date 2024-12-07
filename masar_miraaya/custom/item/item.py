@@ -76,7 +76,7 @@ def custom_attributes_function(self):
             "custom_arabic_country":"arabic_country",
             "custom_arabic_meta_keywords":"arabic_meta_keywords", 
             "custom_arabic_meta_description":"arabic_meta_description", 
-            "custom_arabic_howtouse":"how_to_use_arabic", 
+            "custom_arabic_howtouse":"arabic_howtouse", 
             "custom_arabic_test_result":"arabic_testresult", 
             "custom_arabic_ingredients":"arabic_ingredients",
             "custom_article_no": "article_no", 
