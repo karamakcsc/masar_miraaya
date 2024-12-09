@@ -1276,7 +1276,7 @@ def update_stock_magento_stock_entry(self):
         item_stock = get_magento_item_stock(sku) ## GET Item Stock
         stock_qty = item_stock.get('qty') if item_stock.get('qty') else 0 
         if stock_qty < qty:
-            frappe.throw(f"The Material Issue Qty: {qty}, is More than the Stock Qty in Magento: {stock_qty}")
+            frappe.throw(f"The Qty: {qty}, is More than the Stock Qty in Magento: {stock_qty}")
         stock = stock_qty - qty  ## Subtract Existing qty with new qty
         
         item_list.append({

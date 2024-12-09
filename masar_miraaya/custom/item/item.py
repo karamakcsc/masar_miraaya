@@ -197,6 +197,10 @@ def base_item_data(self):
             {"position": idx, "category_id": id}
             for idx, id in enumerate(item_group_ids)
         ]
+        brand_id = get_brand_id(self.brand)
+        if brand_id:  ## To Add Brand in Category
+            category_links.append({"position": len(item_group_ids), "category_id": brand_id})
+        # frappe.throw(str(category_links))
         extension_attributes =  {
                     "website_ids": [
                         1
@@ -316,3 +320,16 @@ def get_item_groups(item_group, item_groups_ids=None):
             return get_item_groups(parent_item_group, item_groups_ids)
     
     return item_groups_ids
+
+
+def get_brand_id(brand):    ## To Get Brand Id
+    brand_query = frappe.db.sql(f"""
+        SELECT tig.custom_item_group_id
+        FROM `tabItem Group` tig 
+        WHERE tig.item_group_name LIKE "%{brand}%"
+    """,  as_dict=True)
+    brand_id = None
+    if brand_query:
+        brand_id = brand_query[0]['custom_item_group_id']
+                    
+    return brand_id

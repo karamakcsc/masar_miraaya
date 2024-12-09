@@ -171,10 +171,12 @@ doc_events = {
         "validate": "masar_miraaya.custom.item_alternative.item_alternative.validate"
     },
     "Purchase Receipt": {
-        "on_submit": "masar_miraaya.custom.purchase_receipt.purchase_receipt.on_submit"
+        "on_submit": "masar_miraaya.custom.purchase_receipt.purchase_receipt.on_submit",
+        "on_cancel": "masar_miraaya.custom.purchase_receipt.purchase_receipt.on_cancel"
     },
     "Stock Entry": {
-        "on_submit": "masar_miraaya.custom.stock_entry.stock_entry.on_submit"
+        "on_submit": "masar_miraaya.custom.stock_entry.stock_entry.on_submit",
+        "on_cancel": "masar_miraaya.custom.stock_entry.stock_entry.on_cancel"
     },
     "Pick List": {
         "on_submit": "masar_miraaya.custom.pick_list.pick_list.on_submit"
