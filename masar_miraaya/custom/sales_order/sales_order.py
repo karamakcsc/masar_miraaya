@@ -19,7 +19,7 @@ def get_payment_channel_amount(child):
 
 def validate(self, method):
     validation_payment_channel_amount(self)
-    
+    wallet_balance_validation(self)
 
 
 def wallet_balance_validation(self):
@@ -183,7 +183,7 @@ def on_submit(self, method):
         self.custom_magento_id = magento_id
         frappe.db.set_value(self.doctype , self.name , 'custom_magento_id' , magento_id)
         fleetroot_reorder(self , magento_id , entity_id , address_id)
-        wallet_debit_reorder(self , magento_id=50)
+        wallet_debit_reorder(self , magento_id)
     
 def digital_wallet_account_validation(self):   
     company = frappe.get_doc('Company' , self.company)

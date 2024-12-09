@@ -14,7 +14,8 @@ class WalletTopup(Document):
         self.get_digital_wallet_account()
         self.get_accounts_form_company(with_cost_center=False)
     def on_submit(self):
-        self.adjust_amount_to_wallet_magento()
+        if frappe.session.user != 'api@kcsc.com.jo':
+            self.adjust_amount_to_wallet_magento()
         self.create_journal_entry()
         
     def get_accounts_form_company(self , with_cost_center):
