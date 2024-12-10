@@ -312,6 +312,7 @@
    "options": "\nCredit\nDebit"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "wallet_balance",
    "fieldtype": "Float",
    "label": "Wallet Balance",
@@ -327,7 +328,7 @@
    "link_fieldname": "custom_reference_doctype"
   }
  ],
- "modified": "2024-12-01 15:05:04.436408",
+ "modified": "2024-12-10 13:48:27.483479",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Wallet Top-up",

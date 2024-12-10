@@ -27,62 +27,66 @@ def make_gl(self):
             account = get_account(company=self.company , customer=r.channel)
 
             if self.is_return == 0 :
-                gl_entries.append(
-                    self.get_gl_dict({
-                        "account": account,
-                        "against": main_customer_account ,
-                        "cost_center": cost_center,
-                        "debit_in_account_currency": abs(r.amount),
-                        "debit": abs(r.amount),
-                        "party_type": "Customer",
-                        "party": r.channel,
-                        "remarks": r.channel + ' : ' + self.name,
-                        "voucher_type" : self.doctype , 
-                        "voucher_no" : self.name
-                    }))
+                if r.amount not in [None , 0]:
+                    gl_entries.append(
+                        self.get_gl_dict({
+                            "account": account,
+                            "against": main_customer_account ,
+                            "cost_center": cost_center,
+                            "debit_in_account_currency": abs(r.amount),
+                            "debit": abs(r.amount),
+                            "party_type": "Customer",
+                            "party": r.channel,
+                            "remarks": r.channel + ' : ' + self.name,
+                            "voucher_type" : self.doctype , 
+                            "voucher_no" : self.name
+                        }))
             elif self.is_return == 1 : 
-                gl_entries.append(
-                    self.get_gl_dict({
-                        "account": account,
-                        "against": main_customer_account ,
-                        "cost_center": cost_center,
-                        "credit_in_account_currency":abs( r.amount),
-                        "credit": abs(r.amount),
-                        "party_type": "Customer",
-                        "party": r.channel,
-                        "remarks": r.channel + ' : ' + self.name,
-                        "voucher_type" : self.doctype , 
-                        "voucher_no" : self.name
-                    }))
+                if r.amount not in [None , 0]:
+                    gl_entries.append(
+                        self.get_gl_dict({
+                            "account": account,
+                            "against": main_customer_account ,
+                            "cost_center": cost_center,
+                            "credit_in_account_currency":abs( r.amount),
+                            "credit": abs(r.amount),
+                            "party_type": "Customer",
+                            "party": r.channel,
+                            "remarks": r.channel + ' : ' + self.name,
+                            "voucher_type" : self.doctype , 
+                            "voucher_no" : self.name
+                        }))
         ################## Cash on Delivery
         if self.is_return == 0 : 
-            gl_entries.append(
-                self.get_gl_dict({
-                    "account": main_customer_account,
-                    "against": account,
-                    "credit_in_account_currency": abs(sales_order.custom_payment_channel_amount),
-                    "credit": abs(sales_order.custom_payment_channel_amount),
-                    "cost_center": cost_center,
-                    "party_type": "Customer",
-                    "party": self.customer,
-                    "remarks": self.name,
-                    "voucher_type" : self.doctype , 
-                    "voucher_no" : self.name
-                }))
+            if sales_order.custom_payment_channel_amount not in [None , 0]:
+                gl_entries.append(
+                    self.get_gl_dict({
+                        "account": main_customer_account,
+                        "against": account,
+                        "credit_in_account_currency": abs(sales_order.custom_payment_channel_amount),
+                        "credit": abs(sales_order.custom_payment_channel_amount),
+                        "cost_center": cost_center,
+                        "party_type": "Customer",
+                        "party": self.customer,
+                        "remarks": self.name,
+                        "voucher_type" : self.doctype , 
+                        "voucher_no" : self.name
+                    }))
         elif self.is_return == 1 : 
-            gl_entries.append(
-                self.get_gl_dict({
-                    "account": main_customer_account,
-                    "against": account,
-                    "debit_in_account_currency":abs(sales_order.custom_payment_channel_amount),
-                    "debit": abs(sales_order.custom_payment_channel_amount),
-                    "cost_center": cost_center,
-                    "party_type": "Customer",
-                    "party": self.customer,
-                    "remarks": self.name,
-                    "voucher_type" : self.doctype , 
-                    "voucher_no" : self.name
-                }))
+            if sales_order.custom_payment_channel_amount not in [None , 0]:
+                gl_entries.append(
+                    self.get_gl_dict({
+                        "account": main_customer_account,
+                        "against": account,
+                        "debit_in_account_currency":abs(sales_order.custom_payment_channel_amount),
+                        "debit": abs(sales_order.custom_payment_channel_amount),
+                        "cost_center": cost_center,
+                        "party_type": "Customer",
+                        "party": self.customer,
+                        "remarks": self.name,
+                        "voucher_type" : self.doctype , 
+                        "voucher_no" : self.name
+                    }))
         if sales_order.custom_is_cash_on_delivery and sales_order.custom_cash_on_delivery_amount != 0 :
             cash_on_delivery_acc = cash_on_delivery_account(self)
             if cash_on_delivery_acc is None:
@@ -92,54 +96,56 @@ def make_gl(self):
                     ), 
                     title = frappe._("Missing Account"))
             if self.is_return == 0 : 
-                gl_entries.append(
-                    self.get_gl_dict({
-                        "account": cash_on_delivery_acc,
-                        "against": main_customer_account,
-                        "cost_center": cost_center,
-                        "debit_in_account_currency": abs(sales_order.custom_cash_on_delivery_amount),
-                        "debit":abs(sales_order.custom_cash_on_delivery_amount),
-                        "voucher_type" : self.doctype , 
-                        "voucher_no" : self.name
-                    })) 
-                gl_entries.append(
-                self.get_gl_dict({
-                    "account": main_customer_account,
-                    "against": cash_on_delivery_acc,
-                    "credit_in_account_currency": abs(sales_order.custom_cash_on_delivery_amount),
-                    "credit": abs(sales_order.custom_cash_on_delivery_amount),
-                    "cost_center": cost_center,
-                    "remarks": self.name,
-                    "party_type": "Customer",
-                    "party": self.customer,
-                    "voucher_type" : self.doctype , 
-                    "voucher_no" : self.name
-                }))
-            elif self.is_return == 1 : 
-                gl_entries.append(
-                    self.get_gl_dict({
-                        "account": cash_on_delivery_acc,
-                        "against": main_customer_account,
-                        "cost_center": cost_center,
-                        "credit_in_account_currency": abs(sales_order.custom_cash_on_delivery_amount),
-                        "credit":abs(sales_order.custom_cash_on_delivery_amount),
-                        "voucher_type" : self.doctype , 
-                        "voucher_no" : self.name
-                    }))
-                
-                gl_entries.append(
+                if sales_order.custom_cash_on_delivery_amount not in [None , 0]:
+                    gl_entries.append(
+                        self.get_gl_dict({
+                            "account": cash_on_delivery_acc,
+                            "against": main_customer_account,
+                            "cost_center": cost_center,
+                            "debit_in_account_currency": abs(sales_order.custom_cash_on_delivery_amount),
+                            "debit":abs(sales_order.custom_cash_on_delivery_amount),
+                            "voucher_type" : self.doctype , 
+                            "voucher_no" : self.name
+                        })) 
+                    gl_entries.append(
                     self.get_gl_dict({
                         "account": main_customer_account,
                         "against": cash_on_delivery_acc,
-                        "debit_in_account_currency":abs(sales_order.custom_cash_on_delivery_amount),
-                        "debit": abs(sales_order.custom_cash_on_delivery_amount),
+                        "credit_in_account_currency": abs(sales_order.custom_cash_on_delivery_amount),
+                        "credit": abs(sales_order.custom_cash_on_delivery_amount),
                         "cost_center": cost_center,
+                        "remarks": self.name,
                         "party_type": "Customer",
                         "party": self.customer,
-                        "remarks": self.name,
                         "voucher_type" : self.doctype , 
                         "voucher_no" : self.name
                     }))
+            elif self.is_return == 1 : 
+                if sales_order.custom_cash_on_delivery_amount not in [None , 0]:
+                    gl_entries.append(
+                        self.get_gl_dict({
+                            "account": cash_on_delivery_acc,
+                            "against": main_customer_account,
+                            "cost_center": cost_center,
+                            "credit_in_account_currency": abs(sales_order.custom_cash_on_delivery_amount),
+                            "credit":abs(sales_order.custom_cash_on_delivery_amount),
+                            "voucher_type" : self.doctype , 
+                            "voucher_no" : self.name
+                        }))
+                
+                    gl_entries.append(
+                        self.get_gl_dict({
+                            "account": main_customer_account,
+                            "against": cash_on_delivery_acc,
+                            "debit_in_account_currency":abs(sales_order.custom_cash_on_delivery_amount),
+                            "debit": abs(sales_order.custom_cash_on_delivery_amount),
+                            "cost_center": cost_center,
+                            "party_type": "Customer",
+                            "party": self.customer,
+                            "remarks": self.name,
+                            "voucher_type" : self.doctype , 
+                            "voucher_no" : self.name
+                        }))
         ###########   
         if gl_entries:
             make_gl_entries(gl_entries, cancel=0, adv_adj=0)

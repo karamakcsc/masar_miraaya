@@ -7,10 +7,12 @@ from frappe import _
 from frappe.model.document import Document
 import requests
 import json
-
+from masar_miraaya.api import get_customer_wallet_balance
 class WalletTopup(Document):
     def validate(self):
-        # self.debit_validation()
+        wallet_balance  = get_customer_wallet_balance(self.customer, self.customer_id)
+        self.wallet_balance = wallet_balance if wallet_balance  else 0 
+        self.debit_validation()
         self.get_digital_wallet_account()
         self.get_accounts_form_company(with_cost_center=False)
     def on_submit(self):
@@ -194,14 +196,13 @@ class WalletTopup(Document):
         json_response = response.json()
         if response.status_code == 200:
             if 'errors' in json_response:
-                frappe.throw(f"Failed to Update Wallet in Magento.")
+                frappe.throw(f"Failed to Update Wallet in Magento. <br> {str(json_response)}")
             else:
                 frappe.msgprint(f"Wallet Updated Successfully for Customer: {self.customer} With Amount: {wallet_amount}. in Magento", alert=True, indicator='green')
         else:
             frappe.throw(f"Failed to Update Wallet. {str(response.text)}")
             
-            
     def debit_validation(self):
         if self.transaction_type == 'Adjustment' and self.action_type == 'Debit':
-            if self.adjustment_amount > self.wallet_balance:
+            if (self.adjustment_amount if self.adjustment_amount else 0 )  > (self.wallet_balance if self.wallet_balance else 0 ):
                 frappe.throw(str(f"Insufficient wallet balance for customer {self.customer}. Cannot debit {self.adjustment_amount} from a balance of {self.wallet_balance}."))

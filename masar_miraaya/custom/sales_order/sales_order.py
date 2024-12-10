@@ -19,7 +19,6 @@ def get_payment_channel_amount(child):
 
 def validate(self, method):
     validation_payment_channel_amount(self)
-    wallet_balance_validation(self)
 
 
 def wallet_balance_validation(self):
@@ -213,8 +212,8 @@ def on_update_after_submit(self, method):
                 change_magento_status_to_cancelled(self.custom_magento_id)
             if self.custom_magento_status =='Reorder':
                 cancelled_pick_list(self)
-                so = create_amend_so(self)
-                remove_discount(so)
+                create_amend_so(self)
+            
 
 def create_amend_so(self): 
     new_so = frappe.copy_doc(self )
@@ -226,7 +225,6 @@ def create_amend_so(self):
     new_so.per_billed = 0
     new_so.billing_status =  "Not Billed"
     new_so.per_picked =0 
-    new_so.insert()
     delivery_date = datetime.now().date()
     for item in new_so.items:
         item.delivery_date = delivery_date
@@ -235,20 +233,21 @@ def create_amend_so(self):
     new_so.delivery_date = delivery_date
     new_so.transaction_date = delivery_date
     new_so.custom_magento_id = None
+    remove_discount(new_so , discount = self.discount_amount)
     new_so.run_method('save')
     return new_so
 
-def remove_discount(self):
+def remove_discount(self , discount):
     if self.discount_amount : 
         new_cash_on_delivery_amount = (
-            self.custom_cash_on_delivery_amount if self.custom_cash_on_delivery_amount else 0 
+            (float(self.custom_cash_on_delivery_amount) if self.custom_cash_on_delivery_amount else 0 )
             +
-            self.discount_amount if self.discount_amount else 0 
+            (float(discount) if discount else 0 )
         )
         self.discount_amount = 0
         self.custom_is_cash_on_delivery =1 
         self.custom_cash_on_delivery_amount = new_cash_on_delivery_amount
-        self.custom_total_amount = new_cash_on_delivery_amount + self.custom_payment_channel_amount
+        self.custom_total_amount = new_cash_on_delivery_amount + float(self.custom_payment_channel_amount if self.custom_payment_channel_amount else 0 )
         self.save()
 
 def delete_pl_draft(self , draft = list() ):
@@ -934,11 +933,11 @@ def fleetroot_reorder(self , magento_id , entity_id , address_id):
         "entity_id": entity_id,
         "due_amount": str(self.custom_cash_on_delivery_amount if self.custom_cash_on_delivery_amount else 0 ) , 
         "paid_amount": str(self.custom_payment_channel_amount if self.custom_payment_channel_amount else 0 ) , 
-        "payment_method" : "cashondelivery" if (self.custom_payment_channel_amount not in [None , 0 ]) else "prepaid",
+        "payment_method" : "cashondelivery" if (self.custom_payment_channel_amount  in [None , 0 ]) else "prepaid",
         "shipping_fee": fees_shipping,
-        "total_amount" : self.custom_total_amount,
+        "total_amount" : self.total,
         "wallet_amount_used": "0"
-    }    
+    } 
     pickup = {
         "lat": "33.2793535","lng": "44.3867075","address": "Jadryah 915 | 26 | 3","stop_type": 1, "note": "pickup point",
         "datetime": str(combine_date_time(self)),"contact_name": "Miraaya","contact_phone": "+964 780 699 9197", 

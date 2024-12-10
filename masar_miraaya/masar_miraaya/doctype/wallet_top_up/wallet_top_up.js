@@ -9,6 +9,7 @@ frappe.ui.form.on('Wallet Top-up', {
         if (frm.doc.customer) {
             update_sales_order_filter(frm);
         }
+        set_wallet_balance(frm);
     },
 
     validate: function (frm) {
@@ -16,10 +17,12 @@ frappe.ui.form.on('Wallet Top-up', {
     },
     refresh:function(frm){
         setQueryFilters(frm);
+        set_wallet_balance(frm);
     },
     setup: function (frm) {
         setQueryFilters(frm);
         update_sales_order_filter(frm);
+        set_wallet_balance(frm);
     },
 
     sales_order_no: function (frm) {

@@ -471,3 +471,10 @@ fixtures = [
         ]
     }
 ]
+
+
+
+from frappe.model.document import Document
+from masar_miraaya.override import _document
+Document.validate_amended_from  = _document.validate_amended_from_override
+
