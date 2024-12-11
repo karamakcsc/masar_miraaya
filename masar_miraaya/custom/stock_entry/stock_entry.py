@@ -1,13 +1,50 @@
 import frappe
-from masar_miraaya.api import update_stock_magento_stock_entry
-from masar_miraaya.api import update_stock_magento_pr
+import requests
+from masar_miraaya.api import base_data, get_qty_items_details, get_magento_item_stock
 
 
 def on_submit(self, method):
-    if self.docstatus == 1 and self.stock_entry_type == 'Material Issue':
-        update_stock_magento_stock_entry(self)
+    if self.stock_entry_type == 'Material Issue':
+        update_stock(self , '-')
+    pass
 
 def on_cancel(self, method):
     if self.stock_entry_type == 'Material Issue':
-        update_stock_magento_pr(self)
+        update_stock(self , '+')
     pass
+    
+    
+    
+def update_stock(self , operation):
+        base_url, headers = base_data("magento")
+        url = base_url + "/rest/V1/inventory/source-items"
+        item_list = []
+        sql = get_qty_items_details(self.doctype, 'Stock Entry Detail', self.name)
+        
+        if sql:
+            for item in sql:
+                item_stock = get_magento_item_stock(item.item_code)
+                stock_qty = item_stock.get('qty') if item_stock.get('qty') else 0
+                
+                if operation == '+': 
+                    stock = stock_qty + item.qty
+                elif operation == '-': 
+                    if stock_qty < item.qty:
+                        frappe.throw(f"The Qty: {item.qty}, is More than the Stock Qty in Magento: {stock_qty}")
+                    stock = stock_qty - item.qty
+                item_list.append({
+                    "sku": item.item_code,
+                    "source_code": "default",
+                    "quantity": stock,
+                    "status": 1 ## if 1 in stock , 0 out of stock
+                })
+                
+            payload = {
+                "sourceItems": item_list
+            }
+            
+            response = requests.post(url, headers=headers, json=payload)
+            if response.status_code == 200:
+                frappe.msgprint("Item Stock Updated Successfully in Magento", alert=True , indicator='green')
+            else:
+                frappe.throw(f"Failed to Update Item Stock in Magento: {str(response.text)}")

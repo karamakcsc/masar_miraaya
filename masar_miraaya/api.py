@@ -5,6 +5,7 @@ from io import BytesIO
 import base64
 from urllib.parse import urlparse
 from frappe.query_builder import Order
+from frappe.query_builder.functions import  Sum 
 import json
 ###
 def magento_admin_details():
@@ -1227,76 +1228,19 @@ def get_magento_item_stock(item_code):
     else:
         frappe.throw(f"Error in Getting Item Stock. {str(response.text)}")
 
-
-def update_stock_magento_pr(self):
-    base_url, headers = base_data("magento")
-    url = base_url + "/rest/V1/inventory/source-items"
+def get_qty_items_details(main , child_name , name):
+    doc = frappe.qb.DocType(main)
+    child = frappe.qb.DocType(child_name)
+    return (
+        frappe.qb.from_(doc).join(child).on(child.parent == doc.name)
+        .where(doc.name == name)
+        .groupby(child.item_code)
+        .select(
+            (child.item_code) , (Sum(child.qty).as_('qty'))
+        )
+    ).run(as_dict = True)
     
-    warehouse_codes = get_warehouse_code_magento() ## GET Warehouse Codes (source_code) from Magento
-    
-    item_list = []
-    for row in self.items:
-        sku = row.item_code
-        qty = row.qty if row.qty else 0 
-        # warehouse = row.warehouse
-        
-        item_stock = get_magento_item_stock(sku) ## GET Item Stock
-        stock_qty = item_stock.get('qty') if item_stock.get('qty') else 0 
-        stock = stock_qty + qty  ## Add Existing qty with new qty
-        
-        item_list.append({
-            "sku": sku,
-            "source_code": "default",
-            "quantity": stock,
-            "status": 1 ## if 1 in stock , 0 out of stock
-        })
-        
-    payload = {
-        "sourceItems": item_list
-    }
-    
-    response = requests.post(url, headers=headers, json=payload)
-    if response.status_code == 200:
-        frappe.msgprint("Item Stock Updated Successfully in Magento", alert=True , indicator='green')
-    else:
-        frappe.throw(f"Failed to Update Item Stock in Magento: {str(response.text)}")
-
-def update_stock_magento_stock_entry(self):
-    base_url, headers = base_data("magento")
-    url = base_url + "/rest/V1/inventory/source-items"
-    
-    warehouse_codes = get_warehouse_code_magento() ## GET Warehouse Codes (source_code) from Magento
-    
-    item_list = []
-    for row in self.items:
-        sku = row.item_code
-        qty = row.qty if row.qty else 0 
-        # warehouse = row.warehouse
-        
-        item_stock = get_magento_item_stock(sku) ## GET Item Stock
-        stock_qty = item_stock.get('qty') if item_stock.get('qty') else 0 
-        if stock_qty < qty:
-            frappe.throw(f"The Qty: {qty}, is More than the Stock Qty in Magento: {stock_qty}")
-        stock = stock_qty - qty  ## Subtract Existing qty with new qty
-        
-        item_list.append({
-            "sku": sku,
-            "source_code": "default",
-            "quantity": stock,
-            "status": 1 ## if 1 in stock , 0 out of stock
-        })
-        
-    payload = {
-        "sourceItems": item_list
-    }
-    
-    response = requests.post(url, headers=headers, json=payload)
-    if response.status_code == 200:
-        frappe.msgprint("Item Stock Updated Successfully in Magento", alert=True , indicator='green')
-    else:
-        frappe.throw(f"Failed to Update Item Stock in Magento: {str(response.text)}")
-
-                    
+               
 @frappe.whitelist()
 def get_customer_address(customer):
     return frappe.db.sql("""select ta.*
