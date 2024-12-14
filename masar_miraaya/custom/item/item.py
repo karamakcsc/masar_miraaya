@@ -17,7 +17,7 @@ def validate(self, method):
                 enqueue_after_commit=True,
                 at_front=True,
                 self = self,
-            ) 
+            )
         else: 
             frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
 def before_rename(self, method, old, new, merge):
@@ -49,8 +49,10 @@ def create_new_item(self):
         json_response = response.json()
         self.custom_item_id = json_response['id']
         frappe.db.set_value("Item", self.name, "custom_item_id", json_response['id'])
-        frappe.db.commit()
+        # frappe.db.commit()
         frappe.msgprint(f"Item Created Successfully in Magento" , alert=True , indicator='green')
+    else:
+        frappe.throw(str(f"Error Creating Item: {str(response.text)}."))
     if self.variant_of:
             templete_doc = frappe.get_doc('Item' , self.variant_of)
             create_new_item(templete_doc)
@@ -116,6 +118,11 @@ def custom_attributes_function(self):
                 'attribute_code': 'tax_class_id',
                 'value': 2
             }))
+        
+        custom_attributes.append({
+            "attribute_code": "url_key",
+            "value": f"{self.item_name.lower()}-{self.item_code.lower()}"
+        })
         
         if len(self.attributes) != 0 :
             for attributes in self.attributes: 
