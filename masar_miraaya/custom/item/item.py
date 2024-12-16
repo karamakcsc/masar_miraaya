@@ -49,7 +49,7 @@ def create_new_item(self):
         json_response = response.json()
         self.custom_item_id = json_response['id']
         frappe.db.set_value("Item", self.name, "custom_item_id", json_response['id'])
-        # frappe.db.commit()
+        frappe.db.commit()
         frappe.msgprint(f"Item Created Successfully in Magento" , alert=True , indicator='green')
     else:
         frappe.throw(str(f"Error Creating Item: {str(response.text)}."))

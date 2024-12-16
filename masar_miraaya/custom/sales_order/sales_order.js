@@ -89,6 +89,13 @@ function set_doctype_read_only(frm) {
         if (frappe.user.has_role('Picker') || frappe.user.has_role('Dispatcher')) {
             frm.set_read_only(true);
         }
-        frm.set_df_property('section_break_48', 'read_only', 1);   // Additional Discount Read Only Section
+
+        if (frm.doc.amended_from) {
+            frm.set_df_property('apply_discount_on', 'read_only', 1);   // Additional Discount Section Read Only
+            frm.set_df_property('additional_discount_percentage', 'read_only', 1);
+            frm.set_df_property('base_discount_amount', 'read_only', 1);
+            frm.set_df_property('discount_amount', 'read_only', 1);
+            frm.set_df_property('coupon_code', 'read_only', 1); 
+        }
     }
 }

@@ -222,7 +222,7 @@ scheduler_events = {
 	# 	"masar_miraaya.tasks.monthly"
 	# ],
 	"cron": {
-        "*/30 * * * *": [
+        "*/45 * * * *": [
             # "masar_miraaya.api.create_magento_auth",
             "masar_miraaya.api.create_magento_auth_webhook",
             # "masar_miraaya.api.create_magento_auth_wallet",

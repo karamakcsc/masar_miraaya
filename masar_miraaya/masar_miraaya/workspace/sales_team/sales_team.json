@@ -1,0 +1,45 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"XtIUpF8Vu6\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Sales Team</span>\",\"col\":12}},{\"id\":\"UNT_08e-s5\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"V3LHrSceNR\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b></span>\",\"col\":12}},{\"id\":\"C-Nv9aj_yw\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Order\",\"col\":6}},{\"id\":\"Y4_tv7fhEp\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Pick List\",\"col\":6}}]",
+ "creation": "2024-12-15 13:16:36.243719",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "color-review-points",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Sales Team",
+ "links": [],
+ "modified": "2024-12-15 13:18:11.683647",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Sales Team",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 28.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Sales Order",
+   "link_to": "Sales Order",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Pick List",
+   "link_to": "Pick List",
+   "stats_filter": "[]",
+   "type": "DocType"
+  }
+ ],
+ "title": "Sales Team"
+}
