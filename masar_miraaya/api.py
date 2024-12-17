@@ -34,9 +34,12 @@ def create_magento_auth():
         
         response = requests.post(url, json=payload)
         auth = response.text.strip('"')
-        frappe.db.set_single_value( 'Magento Setting', 'magento_auth', auth, update_modified=False)
-        frappe.db.set_single_value( 'Magento Setting', 'magento_admin_prod_auth', auth, update_modified=False)
-        frappe.db.commit()
+        # frappe.db.set_single_value( 'Magento Setting', 'magento_auth', auth, update_modified=False)
+        # frappe.db.set_single_value( 'Magento Setting', 'magento_admin_prod_auth', auth, update_modified=False)
+        # frappe.db.commit()
+        setting.magento_admin_prod_auth = auth
+        setting.magento_auth = auth
+        setting.save()
         return auth
 
 @frappe.whitelist()
@@ -52,9 +55,12 @@ def create_magento_auth_webhook():
     
     response = requests.get(url, headers=headers)
     auth = response.text.split('"adminToken":"')[1].rstrip('"}')
-    frappe.db.set_single_value( 'Magento Setting', 'magento_admin_prod_auth', auth, update_modified=False)
-    frappe.db.set_single_value( 'Magento Setting', 'magento_auth', auth, update_modified=False)
-    frappe.db.commit()
+    # frappe.db.set_single_value( 'Magento Setting', 'magento_admin_prod_auth', auth, update_modified=False)
+    # frappe.db.set_single_value( 'Magento Setting', 'magento_auth', auth, update_modified=False)
+    # frappe.db.commit()
+    setting.magento_admin_prod_auth = auth
+    setting.magento_auth = auth
+    setting.save()
     return auth
 
 @frappe.whitelist()
