@@ -302,7 +302,7 @@ def get_actual_qty_value(item_code):
 @frappe.whitelist()
 def get_item_price(item_code, uom):
     item_price = frappe.db.sql(""" SELECT price_list_rate FROM `tabItem Price` 
-                                    WHERE item_code = %s AND uom = %s """, (item_code, uom), as_dict = True)
+                                    WHERE item_code = %s AND uom = %s AND selling = 1 """, (item_code, uom), as_dict = True)
     price = item_price[0]['price_list_rate'] if item_price and item_price[0].get('price_list_rate') else 0
     
     return price
