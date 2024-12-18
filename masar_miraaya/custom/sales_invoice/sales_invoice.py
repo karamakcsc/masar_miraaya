@@ -14,7 +14,7 @@ def make_gl(self):
             sales_order = frappe.get_doc("Sales Order", item.sales_order)
     if sales_order: 
         company_doc = frappe.get_doc("Company", self.company)
-        main_customer_account = get_account(company=self.company , customer=self.customer , with_company=False)
+        main_customer_account = get_account(company=self.company , customer=self.customer)
         if main_customer_account is None: 
             main_customer_account = company_doc.default_receivable_account
         company_cost_center = company_doc.cost_center

@@ -23,20 +23,34 @@ class WalletTopup(Document):
     def get_accounts_form_company(self , with_cost_center):
         account = frappe.db.sql("""
             SELECT 
-                custom_gift_card_deferred_account AS gift_account, 
                 custom_compensation_expense_account AS comp_account,
                 custom_lp_expense_account AS lp_account , 
                 cost_center
             FROM `tabCompany`
             WHERE name = %s
         """ , (self.company) , as_dict = True)
-        if len(account) !=0 :
+        if len(account) !=0:
+            gift_account = None
             if with_cost_center== False:
-                if account[0]['gift_account']:
-                    self.gift_card_deferred_account = account[0]['gift_account']
-                else:
-                    frappe.throw("Set Gift Card Deferred Account in Company." ,title=_("Missing Gift Account") )
-                    
+                if self.digital_wallet: 
+                    cust_doc = frappe.get_doc('Customer' , self.digital_wallet )
+                    for c in cust_doc.accounts: 
+                        if c.company == self.company:
+                            gift_account = c.account
+                            break
+                    if gift_account is None: 
+                        group_doc = frappe.get_doc('Customer Group' , cust_doc.customer_group )
+                        for g in group_doc.accounts: 
+                            if g.company == self.company: 
+                                gift_account = g.account
+                                break 
+                    if gift_account is None: 
+                        company_doc = frappe.get_doc('Company' , self.company)
+                        gift_account = company_doc.default_receivable_account
+                    if gift_account is None: 
+                        frappe.throw("Set Account in one of Customer, Customer Group or Company.", title=_("Missing Account"))
+                    else: 
+                        self.gift_card_deferred_account = gift_account
                 if account[0]['comp_account']:
                     self.compensation_expense_account = account[0]['comp_account']
                 else:
@@ -57,10 +71,10 @@ class WalletTopup(Document):
             SELECT 
                 tpa.account AS customer_account, 
                 tpa2.account AS group_account, 
-                tc2.custom_digital_wallet_account AS company_account
+                tc2.default_receivable_account AS company_account
             FROM 
                 tabCustomer tc 
-            INNER JOIN 
+            LEFT JOIN 
                 `tabParty Account` tpa ON tpa.parent = tc.name
             LEFT JOIN 
                 `tabParty Account` tpa2 ON tpa2.parent = tc.customer_group 

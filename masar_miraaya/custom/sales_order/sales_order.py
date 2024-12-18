@@ -66,7 +66,7 @@ def cash_on_delivery_account(self):
             return None
         return company_doc.custom_default_cash_on_delivery_account
 
-def get_account(company , customer , with_company= True): 
+def get_account(company , customer ): 
         account = None
         pc_doc = frappe.get_doc('Customer' , customer) 
         if len(pc_doc.accounts) != 0 :
@@ -81,11 +81,11 @@ def get_account(company , customer , with_company= True):
                     if group.company == company : 
                         account = group.account
                         break
-        if account is None and with_company == True : 
-            company_doc = frappe.get_doc('Company' , company)        
-            account = company_doc.custom_receivable_payment_channel if company_doc.custom_receivable_payment_channel else None 
+        if account is None: 
+            company_doc = frappe.get_doc('Company' , company) 
+            account = company_doc.default_receivable_account if company_doc.default_receivable_account else None 
         if account is None:
-            frappe.throw('Payment Channel {pc_name} Not HAve Receivable Account or Define a Defulat Account in Group {pc_group} or in Company {comp}'
+            frappe.throw('Payment Channel {pc_name} Not Have Receivable Account or Define a Defulat Account in Group {pc_group} or in Company {comp}'
                         .format(
                             pc_name = frappe.utils.get_link_to_form("Customer", customer),
                             pc_group =frappe.utils.get_link_to_form("Customer Group", pc_doc.customer_group),
@@ -173,8 +173,6 @@ def create_sales_invoice(self):
 
 def on_submit(self, method):
     wallet_balance_validation(self)
-    if self.amended_from is not None : 
-        digital_wallet_account_validation(self)
     create_sales_invoice(self)
     create_draft_pick_list(self)
     if self.amended_from is not None : 
@@ -184,13 +182,29 @@ def on_submit(self, method):
         fleetroot_reorder(self , magento_id , entity_id , address_id)
         wallet_debit_reorder(self , magento_id)
     
-def digital_wallet_account_validation(self):   
-    company = frappe.get_doc('Company' , self.company)
-    digital_wallet_account = company.custom_digital_wallet_account
-    if digital_wallet_account is None :
-        frappe.throw(
-            f'Company {self.company}. Must has Digital Wallet Account.'
-        )
+def digital_wallet_account(customer_id , company): 
+    account  = None   
+    if customer_id : 
+        cust_doc = frappe.get_doc('Customer' , customer_id)
+        for c in cust_doc.accounts: 
+            if c.account: 
+                account = c.account
+                break
+        if account is None: 
+            group_doc = frappe.get_doc('Customer Group' , cust_doc.customer_group)
+            for g in group_doc.accounts: 
+                if g.account: 
+                    account = g.account
+                    break
+        if account is None: 
+            company_doc = frappe.get_doc('Company' , company)
+            account = company_doc.default_receivable_account
+        if account is None : 
+            frappe.throw("Set Account in one of Digital Wallet, Digital Wallet Group or Company.", title=_("Missing Account"))
+        else: 
+            return account
+        
+
 def on_update_after_submit(self, method):
         if  self.docstatus == 1:
             if self.custom_magento_status == 'On the Way':
@@ -466,7 +480,7 @@ def create_delivery_company_jv(self):
             'driver' : self.custom_driver
 
         }
-        jv.append("accounts", dr_row)
+        jv.append("accounts", dr_row) 
         jv.save(ignore_permissions=True)
         jv.submit()
         frappe.msgprint(
@@ -657,9 +671,7 @@ def cost_of_delivery_jv(self):
     company_doc = frappe.get_doc('Company' , self.company)
     dc_doc = frappe.get_doc('Customer' , self.custom_delivery_company)
     cost_center = get_cost_center(self)
-    cr_account = get_account(company=self.company , customer=self.custom_delivery_company , with_company=False)
-    if cr_account is None:
-        cr_account = company_doc.default_receivable_account
+    cr_account = get_account(company=self.company , customer=self.custom_delivery_company )
     if cr_account is None :
         frappe.throw('Delivary Company {dc} Not Have Receivable Account or Define a Defulat Account in Group {dc_group} or in Company {comp}'
                         .format(
@@ -991,12 +1003,6 @@ def fleetroot_reorder(self , magento_id , entity_id , address_id):
 
 
 def wallet_debit_reorder(self , magento_id=None):
-    company = frappe.get_doc('Company' , self.company)
-    digital_wallet_account = company.custom_digital_wallet_account
-    if digital_wallet_account is  None :
-            frappe.throw(
-                f'Company {self.company}. Must has Digital Wallet Account'
-            )
     for ph in self.custom_payment_channels:
         cust_doc = frappe.get_doc('Customer' , ph.channel)
         if (cust_doc is not None) and (cust_doc.custom_is_digital_wallet ==1):
@@ -1004,7 +1010,7 @@ def wallet_debit_reorder(self , magento_id=None):
                 'customer' : self.customer , 
                 'transaction_type' : 'Adjustment',
                 'digital_wallet' : ph.channel,
-                'wallet_adjustment_account':digital_wallet_account,
+                'wallet_adjustment_account':digital_wallet_account(ph.channel , self.company),
                 'action_type' : 'Debit',
                 'adjustment_amount' : ph.amount,
                 'user_remarks' : 'Debit Amount {amount} From Reorder Number ERP:{so_name} , Magento ID : {magento_id}'

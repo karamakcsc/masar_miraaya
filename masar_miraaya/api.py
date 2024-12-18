@@ -1311,7 +1311,8 @@ def get_customer_wallet_balance(customer_id , magento_id):
                 }}
         """
             }
-        auth = create_magento_auth_webhook()
+        setting = frappe.get_doc("Magento Setting")
+        auth = setting.magento_admin_prod_auth
         headers['Authorization'] = f"Bearer {auth}"
         response = requests.post(url , headers=headers , json=payload)
         res = response.json()
