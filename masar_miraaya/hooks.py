@@ -468,7 +468,10 @@ fixtures = [
                     "Pick List-prompt_qty-read_only_depends_on",
                     "Pick List-scan_mode-read_only_depends_on",
                     "Pick List-locations-read_only_depends_on",
-                    "Pick List-scan_barcode-hidden"
+                    "Pick List-scan_barcode-hidden",
+                    "Address-main-field_order",
+                    "Address-phone-reqd",
+                    "Address-pincode-reqd"
                 ]
             ]
         ]
