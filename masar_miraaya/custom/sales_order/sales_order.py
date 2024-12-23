@@ -352,6 +352,7 @@ def create_draft_pick_list(self):
         doc.append('locations' , row)
     doc.custom_delivery_date = self.delivery_date
     doc.custom_delivery_time = self.custom_delivery_time
+    doc.custom_magento_id = self.custom_magento_id
     doc.save()
 
 

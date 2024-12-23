@@ -430,7 +430,8 @@ fixtures = [
                 "Pick List-custom_delivery_time",
                 "Pick List-custom_delivery_date",
                 "Item-custom_meta_title",
-                "Item-custom_arabic_metatitle"
+                "Item-custom_arabic_metatitle",
+                "Pick List-custom_magento_id"
             ]
         ]
     ]},
