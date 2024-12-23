@@ -431,7 +431,9 @@ fixtures = [
                 "Pick List-custom_delivery_date",
                 "Item-custom_meta_title",
                 "Item-custom_arabic_metatitle",
-                "Pick List-custom_magento_id"
+                "Pick List-custom_magento_id",
+                "Payment Entry-custom_user_remarks",
+                "Payment Entry-custom_driver_details"
             ]
         ]
     ]},
