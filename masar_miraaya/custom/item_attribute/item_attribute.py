@@ -1,7 +1,7 @@
 import frappe
 import json
 import requests
-from masar_miraaya.api import base_data
+from masar_miraaya.api import base_data ,request_with_history
 
 
 def validate(self, method):
@@ -29,7 +29,13 @@ def create_attributes_in_magento(self):
         base_url, headers = base_data("magento")        
         url = base_url + f"/rest/V1/products/attributes/{attribute_id}"
         
-        get_response = requests.get(url, headers=headers)
+        get_response =request_with_history(
+                    req_method='GET', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  
+                )
         if get_response.status_code == 200:
             json_response = get_response.json()
             options = json_response['options']
@@ -60,7 +66,14 @@ def create_attributes_in_magento(self):
                     }
                 }
                 
-                response = requests.put(url, headers=headers, json=data)
+                response = request_with_history(
+                    req_method='PUT', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=data        
+                )
                 if response.status_code == 200:
                     json_response = response.json()
                     options = json_response['options']

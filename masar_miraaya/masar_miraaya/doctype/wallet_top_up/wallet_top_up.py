@@ -7,7 +7,7 @@ from frappe import _
 from frappe.model.document import Document
 import requests
 import json
-from masar_miraaya.api import get_customer_wallet_balance
+from masar_miraaya.api import get_customer_wallet_balance , request_with_history
 class WalletTopup(Document):
     def validate(self):
         wallet_balance  = get_customer_wallet_balance(self.customer, self.customer_id)
@@ -25,10 +25,15 @@ class WalletTopup(Document):
             SELECT 
                 custom_compensation_expense_account AS comp_account,
                 custom_lp_expense_account AS lp_account , 
-                cost_center
+                cost_center, custom_gift_card_deferred_account AS gift_account
             FROM `tabCompany`
             WHERE name = %s
         """ , (self.company) , as_dict = True)
+        if self.transaction_type == "Gift Card":
+                            if account and account[0] and account[0]['gift_account']:
+                                self.gift_card_deferred_account = account[0]['gift_account']
+                            else:
+                                frappe.throw('Set Account in Company "Gift Card Deferred Account"') 
         if len(account) !=0:
             gift_account = None
             if with_cost_center== False:
@@ -50,7 +55,8 @@ class WalletTopup(Document):
                     if gift_account is None: 
                         frappe.throw("Set Account in one of Customer, Customer Group or Company.", title=_("Missing Account"))
                     else: 
-                        self.gift_card_deferred_account = gift_account
+                        if self.transaction_type != "Gift Card":
+                            self.gift_card_deferred_account = gift_account
                 if account[0]['comp_account']:
                     self.compensation_expense_account = account[0]['comp_account']
                 else:
@@ -206,7 +212,14 @@ class WalletTopup(Document):
             }}
             """
         }
-        response = requests.post(url, headers=headers, json=payload)
+        response = request_with_history(
+                    req_method='POST', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=payload        
+                )
         json_response = response.json()
         if response.status_code == 200:
             if 'errors' in json_response:

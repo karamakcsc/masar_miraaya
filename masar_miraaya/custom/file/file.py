@@ -2,7 +2,7 @@ import frappe
 import requests
 import base64
 import os
-from masar_miraaya.api import base_data
+from masar_miraaya.api import base_data , request_with_history
 def validate(self, method):
     if self.attached_to_doctype == 'Item' and self.custom_magento_sync == 0 :
         doc = frappe.get_doc('Item', self.attached_to_name)
@@ -61,7 +61,14 @@ def add_image_to_item(self, doc, file_path):
     
     url = base_url + f"/rest/V1/products/{doc.item_code}/media"
 
-    response = requests.post(url, headers=headers, json=data)
+    response =  request_with_history(
+                    req_method='POST', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=data        
+                )
     
     if response.status_code == 200:
         frappe.msgprint("Image Added to Item Successfully", alert = True, indicator = 'green')
@@ -75,8 +82,13 @@ def get_magento_image_id(self, image_path):
     
     url = base_url + f"/rest/default/V1/products/{self.item_code}/media"
     
-    response = requests.get(url, headers=headers)
-    
+    response = request_with_history(
+                    req_method='GET', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                )
     if response.status_code == 200:
         image_data = response.json()
     else:
@@ -97,9 +109,13 @@ def get_magento_image_id(self, image_path):
 def remove_image_from_magento(self, entity_id):
     base_url, headers = base_data("magento")
     url = base_url + f"/rest/V1/products/{self.item_code}/media/{entity_id}"
-    
-    response = requests.delete(url, headers=headers)
-    
+    response = request_with_history(
+                    req_method='DELETE', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers        
+                )    
     if response.status_code == 200:
         frappe.msgprint("Image Deleted Successfully From Magento", alert = True, indicator = 'green')
     else:

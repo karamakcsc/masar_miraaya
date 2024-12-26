@@ -1,6 +1,6 @@
 import frappe
 import requests
-from masar_miraaya.api import base_data
+from masar_miraaya.api import base_data , request_with_history
 from frappe import _ 
 
 def validate(self, method):
@@ -28,7 +28,15 @@ def create_new_customer_group(self):
         if self.custom_customer_group_id in ['', 0, None, ' ']:
             base_url, headers = base_data("magento")
             get_url = base_url + "/rest/default/V1/customerGroups/search?searchCriteria="
-            get_response = requests.get(get_url, headers=headers)
+            get_response = request_with_history(
+                    req_method='GET', 
+                    document='Customer Group', 
+                    doctype=self.name, 
+                    url=get_url, 
+                    headers=headers       
+                )
+            
+            
             if get_response.status_code == 200:
                 json_response = get_response.json()
                 for group in json_response['items']:
@@ -44,7 +52,14 @@ def create_new_customer_group(self):
                         }
                     }
 
-                response = requests.post(url, headers=headers, json=data)
+                response = request_with_history(
+                    req_method='POST', 
+                    document='Customer Group', 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers,
+                    payload=data
+                )
                 if response.status_code == 200:
                     json_response = response.json()
                     customer_group_id = json_response['id']
@@ -59,7 +74,13 @@ def update_customer_group(self):
     # try:
         base_url, headers = base_data("magento")
         get_url = base_url + "/rest/default/V1/customerGroups/search?searchCriteria="
-        get_response = requests.get(get_url, headers=headers)
+        get_response = request_with_history(
+                    req_method='GET', 
+                    document='Customer Group', 
+                    doctype=self.name, 
+                    url=get_url, 
+                    headers=headers       
+                )
         if get_response.status_code == 200:
             json_response = get_response.json()
             for group in json_response['items']:
@@ -72,7 +93,14 @@ def update_customer_group(self):
                         "tax_class_id": 3,
                         }
                     }
-                    response = requests.put(url, headers=headers, json=data)
+                    response = request_with_history(
+                            req_method='PUT', 
+                            document='Customer Group', 
+                            doctype=self.name, 
+                            url=url, 
+                            headers=headers ,
+                            payload=data      
+                        )
                     if response.status_code == 200:
                         json_response = response.json()
                         customer_group_id = json_response['id']

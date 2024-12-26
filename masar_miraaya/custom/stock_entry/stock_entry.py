@@ -1,6 +1,6 @@
 import frappe
 import requests
-from masar_miraaya.api import base_data, get_qty_items_details, get_magento_item_stock
+from masar_miraaya.api import base_data, get_qty_items_details, get_magento_item_stock , request_with_history
 
 
 def on_submit(self, method):
@@ -43,7 +43,14 @@ def update_stock(self , operation):
                 "sourceItems": item_list
             }
             
-            response = requests.post(url, headers=headers, json=payload)
+            response = request_with_history(
+                    req_method='POST', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=payload        
+                )
             if response.status_code == 200:
                 frappe.msgprint("Item Stock Updated Successfully in Magento", alert=True , indicator='green')
             else:

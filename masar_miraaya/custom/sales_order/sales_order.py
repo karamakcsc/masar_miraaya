@@ -8,7 +8,7 @@ from erpnext.stock.doctype.pick_list.pick_list import (
                 update_stock_entry_based_on_material_request ,update_stock_entry_items_with_no_reference )
 from masar_miraaya.api import change_magento_status_to_cancelled , get_customer_wallet_balance
 from datetime import datetime
-from masar_miraaya.api import base_data , create_magento_auth_webhook
+from masar_miraaya.api import base_data , create_magento_auth_webhook , request_with_history
 import requests
 @frappe.whitelist()
 def get_payment_channel_amount(child):
@@ -224,7 +224,7 @@ def on_update_after_submit(self, method):
                     delete_pl_draft(self = self ,draft=pl_lsts['draft'] )
                 if len(pl_lsts['submit']) !=0 : 
                     pl_sudimtted(self = self ,submit = pl_lsts['submit'] )
-                change_magento_status_to_cancelled(self.custom_magento_id)
+                change_magento_status_to_cancelled(self.name ,self.custom_magento_id)
             if self.custom_magento_status =='Reorder':
                 cancelled_pick_list(self)
                 create_amend_so(self)
@@ -827,12 +827,12 @@ def magento_reorder(self):
     customer_doc = frappe.get_doc('Customer' , self.customer)
     base_url, headers = base_data(request_in="magento_customer_auth" , customer_email=customer_doc.custom_email)
     customer_id = customer_doc.custom_customer_id
-    cart_id = create_empty_cart(base_url , headers)
+    cart_id = create_empty_cart(self , base_url , headers)
     continue_ = add_items_to_cart(self, cart_id ,  base_url , headers)
     address = get_address(self)
     if continue_:
-        address_id = add_address_to_cart(address,base_url,headers)
-        add_shipping_info(address,base_url,headers)
+        address_id = add_address_to_cart(self , address,base_url,headers)
+        add_shipping_info(self , address,base_url,headers)
         entity_id = set_payment_info(self , address , base_url, headers)
         if entity_id:
             magento_id = get_magento_id(self, customer_id, entity_id , base_url, headers)
@@ -841,9 +841,15 @@ def magento_reorder(self):
                 indicator='green'
             )
             return magento_id   , entity_id , address_id
-def create_empty_cart(base_url , headers):
+def create_empty_cart(self , base_url , headers):
     url = base_url + "rest/V1/carts/mine"
-    response = requests.post(url, headers=headers)
+    response = request_with_history(
+                    req_method='POST', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers     
+                )
     if response.status_code == 200:
         cart_id = response.text
         return cart_id
@@ -859,7 +865,14 @@ def add_items_to_cart(self, cart_id ,  base_url , headers):
             item_doc = frappe.get_doc("Item", sku)
             if item_doc.is_stock_item:
                 payload = { "cartItem":{"sku": sku,"qty": qty,"quote_id": cart_id,}}
-                response = requests.post(url, headers=headers, json=payload)
+                response = request_with_history(
+                    req_method='POST', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=payload        
+                )
                 if response.status_code not in [200 , 201]:
                     frappe.throw(f"Failed to Add Items to Sales Order: {str(response.text)}")
                     return False
@@ -867,16 +880,23 @@ def add_items_to_cart(self, cart_id ,  base_url , headers):
     else: 
         return False
 
-def add_address_to_cart(address , base_url , headers ):
+def add_address_to_cart(self , address , base_url , headers ):
     url = base_url + "rest/V1/carts/mine/billing-address"
     payload = {"address": address}
-    response = requests.post(url, headers=headers, json=payload)
+    response = request_with_history(
+                    req_method='POST', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=payload        
+                )
     if response.status_code not in [200 , 201]:
             frappe.throw(f"Failed to Add Address to Sales Order 'Billing Address': {str(response.text)}") 
     else: 
         return   response.text
         
-def add_shipping_info(address,base_url,headers):
+def add_shipping_info(self , address,base_url,headers):
     url = base_url + "rest/V1/carts/mine/shipping-information"
     if address:
         payload = {
@@ -885,7 +905,14 @@ def add_shipping_info(address,base_url,headers):
             "shipping_carrier_code": "flatrate","shipping_method_code": "flatrate"
             }
         }
-        response = requests.post(url, headers=headers, json=payload)
+        response = request_with_history(
+                    req_method='POST', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=payload        
+                )
         if response.status_code != 200:
             frappe.throw(f"Failed to Add Address to Sales Order 'Shipping Addresss': {str(response.text)}")   
         return True
@@ -904,7 +931,14 @@ def set_payment_info(self , address , base_url, headers):
             "preferred_delivery_date": str(date_time)
         }
     }
-    response = requests.post(url, headers=headers, json=payload)
+    response =request_with_history(
+                    req_method='POST', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=payload        
+                )
     if response.status_code in [200 , 201]:
         entity_id = response.text
         return entity_id
@@ -919,7 +953,13 @@ def get_magento_id(self, customer_id, entity_id , base_url, headers):
     setting = frappe.get_doc('Magento Setting')
     auth = create_magento_auth_webhook()
     headers['Authorization'] = f"Bearer {auth}"
-    response = requests.get(url, headers=headers)
+    response = request_with_history(
+                    req_method='GET', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers     
+                )
     json_response = response.json()
     if response.status_code in [200 , 201]:        
         for increment_id in json_response['items']:
@@ -1014,7 +1054,14 @@ def fleetroot_reorder(self , magento_id , entity_id , address_id):
         "orderDetails": order_details, 
         "trackingDetails": tracking_details,
     }
-    response = requests.post(url, headers=headers, json=payload)
+    response =request_with_history(
+                    req_method='POST', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=payload        
+                )
     if response.status_code in [200 , 201]:
         frappe.msgprint('fleetroot reordered successfully' ,
                 alert=True, 

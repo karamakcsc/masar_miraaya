@@ -1,7 +1,7 @@
 import frappe
 import json
 import requests
-from masar_miraaya.api import base_data, get_customer_wallet_balance
+from masar_miraaya.api import base_data, get_customer_wallet_balance , request_with_history
 from frappe import _
 def validate(self, method):
     check_validation(self)
@@ -88,7 +88,14 @@ def create_new_customer(self):
             }
         }
     }
-    response = requests.put(url, headers=headers, json=data)
+    response = request_with_history(
+                    req_method='PUT', 
+                    document='Customer', 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers , 
+                    payload=data          
+                )
     if response.status_code == 200:
         json_response = response.json()
         customer_id = json_response['id']
@@ -157,7 +164,14 @@ def create_delivery_company(self):
         "env": env # "prod" or "dev"
     }
     
-    response = requests.post(url, headers=headers, json=payload)
+    response =request_with_history(
+                    req_method='POST', 
+                    document='Customer', 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers , 
+                    payload=payload          
+                )
     if response.status_code == 200:
         # json_response = response.json()
         # firebase_id = json_response['firebaseDocId']
@@ -192,7 +206,14 @@ def update_delivery_company(self):
         "email": self.custom_email,
     }
     
-    response = requests.put(url, headers=headers, json=payload)
+    response =request_with_history(
+                    req_method='PUT', 
+                    document='Customer', 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers , 
+                    payload=payload          
+                )
     if response.status_code == 200:
         frappe.msgprint(f"Delivery Company Updated Successfully in Firebase", alert = True, indicator = 'green')
     else:

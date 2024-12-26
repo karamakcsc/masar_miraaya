@@ -7,7 +7,37 @@ from urllib.parse import urlparse
 from frappe.query_builder import Order
 from frappe.query_builder.functions import  Sum 
 import json
-###
+from typing import Optional, Union
+
+
+
+def request_with_history(
+            req_method:  Optional[str] = None,
+            document: Optional[str] = None, 
+            doctype: Optional[str] = None, 
+            url: Optional[str] = None, 
+            headers: Optional[Union[dict, str , float]] = None, 
+            payload: Optional[Union[dict, str  , float]] = None
+        ):
+    headers = headers or {}
+    payload = payload or {}
+    if payload != {}:
+        response = requests.request(req_method, url, headers=headers , json= payload)
+    else:
+        response = requests.request(req_method, url, headers=headers)
+    api = frappe.new_doc('API History')
+    api.document = document
+    api.doc_type = doctype
+    api.url = url
+    api.headers = str(headers)
+    api.payload = str(payload)
+    api.response = str(response)
+    api.response_code_status = str(response.status_code)
+    api.response_text = str(response.text)
+    api.insert(ignore_permissions=True , ignore_mandatory=True)
+    return response
+    
+
 def magento_admin_details():
     setting = frappe.get_doc("Magento Setting")
     username = str(setting.username) #admintoken
@@ -32,7 +62,12 @@ def create_magento_auth():
             "password": password
         }
         
-        response = requests.post(url, json=payload)
+        response = request_with_history(req_method='POST' , 
+                                        document= 'Magento Setting' , 
+                                        doctype='Magento Setting' , 
+                                        url=url, 
+                                        headers=None, 
+                                        payload=payload )
         auth = response.text.strip('"')
         # frappe.db.set_single_value( 'Magento Setting', 'magento_auth', auth, update_modified=False)
         # frappe.db.set_single_value( 'Magento Setting', 'magento_admin_prod_auth', auth, update_modified=False)
@@ -53,7 +88,12 @@ def create_magento_auth_webhook():
         "Authorization": "Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU="
     }
     
-    response = requests.get(url, headers=headers)
+    response = request_with_history(req_method='GET' , 
+                                        document= 'Magento Setting' , 
+                                        doctype='Magento Setting' , 
+                                        url=url, 
+                                        headers=headers, 
+                                        )
     auth = response.text.split('"adminToken":"')[1].rstrip('"}')
     # frappe.db.set_single_value( 'Magento Setting', 'magento_admin_prod_auth', auth, update_modified=False)
     # frappe.db.set_single_value( 'Magento Setting', 'magento_auth', auth, update_modified=False)
@@ -72,7 +112,13 @@ def create_magento_auth_wallet():
         "username": username,
         "password": password
     }
-    response = requests.post(url, json=payload)
+    response = request_with_history(
+                    req_method='POST',
+                    doctype='Magento Setting', 
+                    document='Magento Setting' , 
+                    url = url , 
+                    payload=payload
+                    )
     auth = response.text.strip('"')
     setting = frappe.get_doc("Magento Setting")
     setting.auth_wallet = auth
@@ -107,7 +153,13 @@ def create_customer_auth(customer_email):
         'User-Agent': 'Thunder Client (https://www.thunderclient.com)',
         'Authorization': 'Bearer xmhL3cnUY+xtuCZ981sJUaDfsTmOh6dLJcdzfgbuyEU='
         }
-    response = requests.get(url, headers=headers)
+    response = request_with_history(
+        req_method='GET', 
+        document='Magento Setting', 
+        doctype='Magento Setting', 
+        url = url, 
+        headers=headers
+    )
     token_json = json.loads(response.text)
     if response.status_code in [200 , 201]:
         
@@ -262,7 +314,11 @@ def set_custom_attributes(item_name, custom_attributes):
 def upload_image_to_item( file ,  item_code , base_image):
     try:
         image_url = validate_url(file)
-        response = requests.get(image_url)
+        
+        response = request_with_history(req_method='GET' , 
+                                        document='File' , 
+                                        doctype= f'Atteched To Item: {item_code}',
+                                        url=image_url )
         response.raise_for_status()
 
         image_content = BytesIO(response.content).getvalue()
@@ -397,7 +453,11 @@ def sync_magento_products():
     try: 
         base_url, headers = base_data("magento")
         url = base_url + "/rest/V1/products?searchCriteria="
-        request = requests.get(url, headers=headers)
+        request = request_with_history(req_method='GET', 
+                                       doctype='Sync To Barnd', 
+                                       document='Brand', 
+                                       headers=headers, 
+                                       url=url)        
         json_response = request.json()
     except Exception as ex:
         return f"Error in Magento Connection : {str(ex)}"
@@ -481,7 +541,13 @@ def create_item_group():
     try:
         base_url, headers =  base_data("magento")
         url = f"{base_url}/rest/all/V1/categories"
-        request = requests.get(url, headers=headers)
+        request = request_with_history(
+                    req_method='GET', 
+                    document='Item Group', 
+                    doctype='Sync to Item Group', 
+                    url=url, 
+                    headers=headers        
+                )
         magento_categories =  request.json()
         existing_root_item_group = frappe.db.sql("SELECT name FROM `tabItem Group` WHERE custom_parent_item_group_id = 0 " , as_dict=True)
         if not(existing_root_item_group and existing_root_item_group[0] and existing_root_item_group[0]['name']):
@@ -547,8 +613,13 @@ def create_item_group_childs(parent , children_data):
 def get_magento_item_attributes(all_simple= None , all_configurable_links = None , all_configurable = None , altenative_items = None):
     base_url, headers = base_data("magento")
     url = base_url + "/rest/V1/products/attributes?searchCriteria[pageSize]=100"
-    response = requests.get(url, headers=headers)
-    # response.raise_for_status()
+    
+    response = request_with_history(
+                        req_method='GET', 
+                        doctype='Item Attributes' , 
+                        document='Sync to Item Attributes', 
+                        url=url, 
+                        headers=headers)
     json_response = response.json()
     attributes = json_response['items']
     for attribute in attributes:
@@ -1025,7 +1096,12 @@ def get_magento_customers():
         get_customer_group()
         base_url, headers = base_data("magento")
         url = base_url + "/rest/V1/customers/search?searchCriteria="
-        request = requests.get(url, headers=headers)
+        request = request_with_history(
+                            req_method='GET', 
+                            doctype='Customer', 
+                            document='Sync to Customer', 
+                            url=url, 
+                            headers=headers)
         json_response = request.json()
         customers = json_response['items']
 
@@ -1114,10 +1190,14 @@ def get_customer_group():
             frappe.db.commit()
             
         url = base_url + "/rest/V1/customerGroups/search?searchCriteria="
-        request = requests.get(url, headers=headers)
+        request = request_with_history(
+                            req_method='GET', 
+                            doctype='Customer Group', 
+                            document='Sync to Customer Group', 
+                            url=url, 
+                            headers=headers)
         json_response = request.json()
         customer_groups = json_response['items']
-        
         for group in customer_groups:
             customer_group_id = group['id']
             customer_group_name = group['code']
@@ -1155,7 +1235,12 @@ def get_customer_group_name(id):
     else: 
         base_url, headers = base_data("magento")
         url = base_url + f"/rest/V1/customerGroups/{id}"
-        request = requests.get(url, headers=headers)
+        request = request_with_history(
+                            req_method='GET', 
+                            doctype='Customer Group', 
+                            document=id, 
+                            url=url, 
+                            headers=headers)
         json_response = request.json()
         if json_response:
             new_group = frappe.get_doc('Customer Group')
@@ -1220,7 +1305,12 @@ def get_warehouse_code_magento():
     base_url, headers = base_data("magento")
     url = base_url + "/rest/V1/inventory/sources"
     
-    response = requests.get(url, headers=headers)
+    response = request_with_history(
+                            req_method='GET', 
+                            doctype='Stock', 
+                            document='Update Stock', 
+                            url=url, 
+                            headers=headers)
     json_response = response.json()
     if response.status_code == 200:
         return json_response
@@ -1231,7 +1321,12 @@ def get_warehouse_code_magento():
 def get_magento_item_stock(item_code):
     base_url, headers = base_data("magento")
     url = base_url + f"/rest/V1/stockItems/{item_code}"
-    response = requests.get(url, headers=headers)
+    response = request_with_history(
+                            req_method='GET', 
+                            doctype='Stock', 
+                            document='Get magento Item Stock', 
+                            url=url, 
+                            headers=headers)
     json_response = response.json()
     if response.status_code == 200:
         return json_response
@@ -1279,10 +1374,16 @@ def change_magento_status_to_fullfilled(so_name):
     payload = json.dumps({
             "order_status": "Fulfilled"
             })
-    response = requests.request("PUT", url, headers=headers, data=payload)
+    response = request_with_history(
+                            req_method='PUT', 
+                            doctype='Sales Order', 
+                            document=so_name, 
+                            url=url, 
+                            headers=headers,
+                            payload=payload)
     return response.text , response.status_code
 
-def change_magento_status_to_cancelled(so_magento_id):
+def change_magento_status_to_cancelled(so_name , so_magento_id):
     base_url, headers = base_data("webhook")
     setting = frappe.get_doc("Magento Setting")
     if setting.auth_type == "Develop":
@@ -1290,7 +1391,13 @@ def change_magento_status_to_cancelled(so_magento_id):
     elif setting.auth_type == "Production":
         env = "prod"
     url = base_url + '/order/cancel/{so_magento_id}/{env}'.format(so_magento_id = so_magento_id, env = env)
-    response = requests.request("PUT", url, headers=headers)
+    response =  request_with_history(
+                            req_method='PUT', 
+                            doctype='Sales Order', 
+                            document=so_name, 
+                            url=url, 
+                            headers=headers
+                        )
     return response.text , response.status_code ## returns: Order (magento id) has been successfully cancelled
 
 ######## Customer Wallet Balance Magento API "Mahmoud API"
@@ -1314,7 +1421,13 @@ def get_customer_wallet_balance(customer_id , magento_id):
         setting = frappe.get_doc("Magento Setting")
         auth = setting.magento_admin_prod_auth
         headers['Authorization'] = f"Bearer {auth}"
-        response = requests.post(url , headers=headers , json=payload)
+        response =  request_with_history(
+                            req_method='POST', 
+                            doctype='Wallet Balance', 
+                            document=f"for Customer:{customer_id}", 
+                            url=url, 
+                            headers=headers,
+                            payload=payload)
         res = response.json()
         credit = 0 
         debit = 0 

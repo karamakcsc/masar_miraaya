@@ -1,0 +1,138 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:API-{###########}",
+ "creation": "2024-12-26 10:30:32.859966",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_upvy",
+  "document",
+  "column_break_zfzc",
+  "doc_type",
+  "section_break_iebd",
+  "url",
+  "section_break_lsyc",
+  "headers",
+  "column_break_vwqg",
+  "payload",
+  "section_break_xodk",
+  "response_code_status",
+  "response",
+  "column_break_ptxc",
+  "response_text"
+ ],
+ "fields": [
+  {
+   "fieldname": "document",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Document",
+   "read_only": 1
+  },
+  {
+   "fieldname": "doc_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_zfzc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_iebd",
+   "fieldtype": "Section Break",
+   "read_only": 1
+  },
+  {
+   "fieldname": "url",
+   "fieldtype": "Small Text",
+   "label": "URL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_lsyc",
+   "fieldtype": "Section Break",
+   "read_only": 1
+  },
+  {
+   "fieldname": "headers",
+   "fieldtype": "Long Text",
+   "label": "Headers",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_vwqg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "payload",
+   "fieldtype": "Long Text",
+   "label": "Payload",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_xodk",
+   "fieldtype": "Section Break",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response",
+   "fieldtype": "Long Text",
+   "label": "Response",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_upvy",
+   "fieldtype": "Section Break",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response_code_status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Response Code Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ptxc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "response_text",
+   "fieldtype": "Long Text",
+   "label": "Response Text",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-12-26 12:59:10.816421",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "API History",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

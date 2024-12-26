@@ -1,6 +1,6 @@
 import frappe
 import requests
-from masar_miraaya.api import base_data
+from masar_miraaya.api import base_data , request_with_history
 
 def validate(self, method):
     roles = (frappe.get_roles(frappe.session.user))
@@ -87,7 +87,14 @@ def update_customer_address(self):
         }
     }
     
-    response = requests.put(url, headers=headers, json=data)
+    response =request_with_history(
+                    req_method='PUT', 
+                    document='Address', 
+                    doctype=f'Update Customer Address:{customer_id} , address:{self.name}', 
+                    url=url, 
+                    headers=headers, 
+                    payload=data      
+                )
     if response.status_code == 200:
         json_response = response.json()
         addresses = json_response['addresses'][0]

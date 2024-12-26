@@ -1,6 +1,6 @@
 import frappe
 import requests
-from masar_miraaya.api import base_data
+from masar_miraaya.api import base_data , request_with_history
 
 def validate(self, method):
     # frappe.throw("HHH")
@@ -52,7 +52,14 @@ def new_item_group_in_magento(self):
             }
         }
     print(data)
-    response = requests.put(url, headers=headers, json=data)
+    response = request_with_history(
+                    req_method='PUT', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=data        
+                )
     if response.status_code == 200:
             json_response = response.json()
             group_id = json_response['id']
@@ -65,7 +72,13 @@ def new_item_group_in_magento(self):
 def update_item_group_in_magento(self):
         base_url, headers = base_data("magento")
         url = base_url + f"/rest/V1/categories/{self.custom_item_group_id}"
-        check_response = requests.get(url, headers=headers)
+        check_response = request_with_history(
+                    req_method='GET', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers
+                )
         if check_response.status_code == 200:
             json_response = check_response.json()
         else:
@@ -86,7 +99,14 @@ def update_item_group_in_magento(self):
                 data = {
                     "parentId": self.custom_parent_item_group_id,
                 }
-                response = requests.put(url_to_update, headers=headers, json=data)
+                response = request_with_history(
+                    req_method='PUT', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url_to_update, 
+                    headers=headers  ,
+                    payload=data        
+                )
                 if response.status_code == 200:
                     frappe.msgprint('Perant Item Group Updated Successflly.' , alert=True , indicator='green')
         if update_in_magento:
@@ -100,7 +120,14 @@ def update_item_group_in_magento(self):
                     "include_in_menu": True
                 }
             }
-            response_update = requests.put(url, headers=headers, json=data)
+            response_update = request_with_history(
+                    req_method='PUT', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=data        
+                )
             if response_update.status_code == 200:
                     json_response = response_update.json()
                     group_id = json_response['id']
@@ -111,7 +138,13 @@ def update_item_group_in_magento(self):
 def remane_in_magento(self, method, old, new, merge):
         base_url, headers = base_data("magento")
         url = base_url + f"/rest/all/V1/categories/{self.custom_item_group_id}"
-        check_response = requests.get(url, headers=headers)
+        check_response = request_with_history(
+                    req_method='GET', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers
+                )
         if check_response.status_code == 200:
             json_response = check_response.json()
         else:
@@ -128,7 +161,14 @@ def remane_in_magento(self, method, old, new, merge):
                     "include_in_menu": True
                 }
             } 
-            response_update = requests.put(url, headers=headers, json=data)
+            response_update = request_with_history(
+                    req_method='PUT', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=data        
+                )
             if response_update.status_code == 200:
                     json_response = response_update.json()
                     group_id = json_response['id']

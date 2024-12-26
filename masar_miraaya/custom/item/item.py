@@ -1,7 +1,5 @@
 import frappe
-import requests
-import os 
-from masar_miraaya.api import base_data
+from masar_miraaya.api import base_data , request_with_history
 
         
 def validate(self, method):
@@ -29,7 +27,14 @@ def before_rename(self, method, old, new, merge):
     
     base_url, headers = base_data("magento")
     url = f"{base_url}/rest/V1/products/{new}"
-    response = requests.put(url, headers=headers, json=payload)
+    response =request_with_history(
+                    req_method='PUT', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=payload        
+                )
     if response.status_code == 200:
         # json_response = response.json()
         # self.custom_item_id = json_response['id']
@@ -44,7 +49,14 @@ def create_new_item(self):
     payload = base_item_data(self)
     base_url, headers = base_data("magento")
     url = f"{base_url}/rest/all/V1/products/{self.item_code}"
-    response = requests.put(url, headers=headers, json=payload)
+    response =request_with_history(
+                    req_method='PUT', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=payload        
+                )
     if response.status_code == 200:
         json_response = response.json()
         self.custom_item_id = json_response['id']

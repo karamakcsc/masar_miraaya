@@ -1,6 +1,6 @@
 import frappe
 import requests
-from masar_miraaya.api import base_data
+from masar_miraaya.api import base_data , request_with_history
 
 
 def validate(self, method):
@@ -26,7 +26,14 @@ def validate(self, method):
         if product_link:    
             data["product"]["product_links"] = product_link
 
-        response = requests.put(url, headers=headers, json=data)
+        response =request_with_history(
+                    req_method='PUT', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=data        
+                )
         if response.status_code == 200:
             frappe.msgprint(f"Item Alternative Created Successfully in Magento" , alert=True , indicator='green')
             

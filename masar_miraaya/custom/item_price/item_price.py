@@ -1,7 +1,7 @@
 import frappe
 import json
 import requests
-from masar_miraaya.api import base_data
+from masar_miraaya.api import base_data ,request_with_history
 
 def validate(self , method):
     roles = (frappe.get_roles(frappe.session.user))
@@ -39,7 +39,14 @@ def update_magento_price(self):
                 ]
             }
                 
-            response = requests.post(url, headers=headers, json=data)
+            response = request_with_history(
+                    req_method='POST', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=data        
+                )
             if response.status_code == 200:
                 frappe.msgprint("Product Price Updated Successfully in Magento", alert=True , indicator='green')
             else:
