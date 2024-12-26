@@ -37,59 +37,54 @@ class MyPage {
 	
 
 	submitForm() {
-        let item = $("#item-input").val().trim();
-        if (!item) return;
-
-        frappe.call({
-            method: "masar_miraaya.masar_miraaya.page.batch_count.batch_count.get_item",
-            args: {item: item },
-            callback: (response) => {
-                let resultContainer = $("#result-container");
-                resultContainer.empty();
-
-                if (response.message && response.message.length > 0) {
-                    let message = `
-                        <b>Result:</b>
-                        <br>
-                        <table class='datatable'>
-                            <thead>
-                                <tr>
-                                    <th style='width:200px'>Item Code</th>
-                                    <th style='width:200px'>Item Name</th>
+		let item = $("#item-input").val().trim();
+	
+		frappe.call({
+			method: "masar_miraaya.masar_miraaya.page.batch_count.batch_count.get_item",
+			args: item ? { item: item } : {}, // Pass the item argument only if it's not empty
+			callback: (response) => {
+				let resultContainer = $("#result-container");
+				resultContainer.empty();
+	
+				if (response.message && response.message.length > 0) {
+					let message = `
+						<b>Result:</b>
+						<br>
+						<table class='datatable'>
+							<thead>
+								<tr>
+									<th style='width:200px'>Item Code</th>
+									<th style='width:200px'>Item Name</th>
 									<th style='width:200px'>UOM</th>
-                                    <th style='width:200px'>Warehouse</th>
-                                    <th style='width:200px'>Batch</th>
-                                    <th style='width:200px'>Reserved Qty</th>
-                                    <th style='width:200px'>Actual Qty</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-
-                    $.each(response.message, (index, item) => {
-                        message += `
-                            <tr>
-                                <td>${item.item_code || ''}</td>
-                                <td>${item.item_name || ''}</td>
+									<th style='width:200px'>Warehouse</th>
+									<th style='width:200px'>Batch</th>
+									<th style='width:200px'>Reserved Qty</th>
+									<th style='width:200px'>Actual Qty</th>
+								</tr>
+							</thead>
+							<tbody>`;
+	
+					$.each(response.message, (index, item) => {
+						message += `
+							<tr>
+								<td>${item.item_code || ''}</td>
+								<td>${item.item_name || ''}</td>
 								<td>${item.stock_uom || ''}</td>
 								<td>${item.warehouse || ''}</td>
-                                <td>${item.batch || ''}</td>
-                                <td>${item.reserved_qty || ''}</td>
-                                <td>${item.actual_qty || ''}</td>
-                            </tr>`;
-                    });
-
-                    message += `</tbody></table>`;
-                    resultContainer.html(message);
-                    $('.datatable').DataTable();
-
-                    // Display QR code if available
-                    if (response.custom_qr_code_text) {
-                        $("#qr_code_image").html(`<img src="${response.custom_qr_code_text || ''}">`);
-                    }
-                } else {
-                    resultContainer.html("No data found for the given Barcode.");
-                }
-            }
-        });
-    }
+								<td>${item.batch || ''}</td>
+								<td>${item.reserved_qty || ''}</td>
+								<td>${item.actual_qty || ''}</td>
+							</tr>`;
+					});
+	
+					message += `</tbody></table>`;
+					resultContainer.html(message);
+					$('.datatable').DataTable();
+	
+				} else {
+					resultContainer.html("No data found for the given Barcode.");
+				}
+			}
+		});
+	}	
 }
