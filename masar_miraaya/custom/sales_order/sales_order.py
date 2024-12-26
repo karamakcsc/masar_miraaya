@@ -212,6 +212,7 @@ def on_update_after_submit(self, method):
                 create_delivery_company_jv(self)
                 stock_entry_method(self)
             if self.custom_magento_status == 'Delivered':
+                stock_entry_validation(self)
                 cancel_stock_reservation_entry(self)
                 delivery_note = create_delivery_note(self)
                 delivery_note_jv(self , delivery_note=delivery_note)
@@ -284,7 +285,27 @@ def pl_sudimtted(self ,submit ):
     else : 
         return_delivery_note(self)
     
-        
+def stock_entry_validation(self): 
+    pli = frappe.qb.DocType('Pick List Item')
+    se = frappe.qb.DocType('Stock Entry')
+    pick_list = (
+            frappe.qb.from_(pli)
+            .select(pli.parent)
+            .where(pli.sales_order == self.name)
+            .groupby(pli.parent).run(as_dict = True)        
+    )
+    if len(pick_list) == 0 : 
+        frappe.throw('Please ensure the order is properly packed before proceeding with delivery.')
+    stock_entry = (
+            frappe.qb.from_(se)
+            .select(se.name)
+            .where(se.docstatus == 1 )
+            .where(se.pick_list.isin([p.parent for p in pick_list]))
+        ).run(as_dict = True)
+    if len(stock_entry) == 0: 
+        frappe.throw('Please ensure the order is packed and the stock entry is created before proceeding with delivery.')
+    
+
         
         
 def pick_list_known(self): 
