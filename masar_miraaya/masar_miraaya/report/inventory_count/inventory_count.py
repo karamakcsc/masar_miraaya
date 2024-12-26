@@ -18,18 +18,13 @@ def data(filters):
                                 tb.item_code, 
                                 ti.item_name, 
                                 tb.stock_uom, 
-                                tb.warehouse,
-                                tb.actual_qty,
+                                tb.warehouse, 
                                 tb.reserved_qty, 
-                                tb2.name,
-								tb2.batch_qty,
-								tb2.expiry_date
+                                tb.actual_qty
                             FROM 
                                 tabBin tb 
                             INNER JOIN
                                 tabItem ti ON tb.item_code = ti.name
-                            INNER JOIN 
-								`tabBatch` tb2 ON tb.item_code = tb2.item
                             WHERE {conditions}
                         """)
     return sql
@@ -40,9 +35,6 @@ def columns():
         "Item Name:data:300",
         "UOM:Data:200",
         "Warehouse:Link/Warehouse:200",
-        "Actual Qty:Float:200",
         "Reserved Qty:Float:200",
-        "Batch No:Data:200",
-        "Batch Qty:Data:200",
-        "Batch Expiry Date:Data:200",
+        "Actual Qty:Float:200"
 	]

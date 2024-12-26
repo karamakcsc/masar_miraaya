@@ -39,7 +39,7 @@ class WalletTopup(Document):
 
         if self.transaction_type == "Gift Card" and self.is_free == 1 :
                             if account and account[0] and account[0]['free_account']:
-                                self.gift_card_deferred_account = account[0]['free_account']
+                                self.gift_card_expense_account = account[0]['free_account']
                             else:
                                 frappe.throw('Set Account in Company "Gift Card Expense Account"') 
         if len(account) !=0:

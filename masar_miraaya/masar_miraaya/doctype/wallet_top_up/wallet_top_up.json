@@ -42,6 +42,7 @@
   "description",
   "accounts_details_section",
   "gift_card_deferred_account",
+  "gift_card_expense_account",
   "compensation_expense_account",
   "column_break_dxmy",
   "lp_expense_account",
@@ -325,6 +326,13 @@
    "fieldname": "is_free",
    "fieldtype": "Check",
    "label": "Free"
+  },
+  {
+   "fieldname": "gift_card_expense_account",
+   "fieldtype": "Link",
+   "label": "Gift Card Expense Account",
+   "options": "Account",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -336,7 +344,7 @@
    "link_fieldname": "custom_reference_doctype"
   }
  ],
- "modified": "2024-12-26 16:45:52.967344",
+ "modified": "2024-12-26 17:12:33.431207",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Wallet Top-up",

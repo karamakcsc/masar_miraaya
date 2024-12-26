@@ -81,11 +81,11 @@ class MyPage {
 										<th style='width:200px'>Item Name</th>
 										<th style='width:200px'>UOM</th>
 										<th style='width:200px'>Warehouse</th>
+										<th style='width:150px'>Actual Qty</th>
+										<th style='width:150px'>Reserved Qty</th>
 										<th style='width:200px'>Batch No</th>
 										<th style='width:200px'>Batch Qty</th>
 										<th style='width:200px'>Batch Expiry Date</th>
-										<th style='width:150px'>Reserved Qty</th>
-										<th style='width:150px'>Actual Qty</th>
 									</tr>
 								</thead>
 								<tbody>`;
@@ -97,11 +97,11 @@ class MyPage {
 									<td>${item.item_name || ''}</td>
 									<td>${item.stock_uom || ''}</td>
 									<td>${item.warehouse || ''}</td>
+									<td>${item.actual_qty || ''}</td>
+									<td>${item.reserved_qty || ''}</td>
 									<td>${item.name || ''}</td>
 									<td>${item.batch_qty || ''}</td>
 									<td>${item.expiry_date || ''}</td>
-									<td>${item.reserved_qty || ''}</td>
-									<td>${item.actual_qty || ''}</td>
 								</tr>`;
 						});
 	
