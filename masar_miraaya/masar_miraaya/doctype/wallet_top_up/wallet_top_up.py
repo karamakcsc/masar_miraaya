@@ -141,7 +141,6 @@ class WalletTopup(Document):
             elif self.action_type ==  "Debit":
                 credit_account = adj_account
                 debit_account = wallet_account
-        frappe.throw(str(gift_account))
         jv = frappe.new_doc("Journal Entry")
         jv.posting_date = self.posting_date
         jv.company = self.company

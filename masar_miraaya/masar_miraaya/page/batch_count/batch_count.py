@@ -2,7 +2,7 @@ import frappe
 
 
 @frappe.whitelist()
-def get_item(item=None, warehouse=None):
+def get_item(item=None):
     if item:
         query = frappe.db.sql("""
                             SELECT 
@@ -42,6 +42,27 @@ def get_item(item=None, warehouse=None):
                             LEFT JOIN
                                 `tabSerial and Batch Entry` tsabe ON tsabb.name = tsabe.parent 
                           """, as_dict=True)
-        
-    
+    return query
+
+@frappe.whitelist()
+def get_warehouse(warehouse):
+    query = frappe.db.sql("""
+                        SELECT 
+                            tb.item_code, 
+                            ti.item_name, 
+                            tb.stock_uom, 
+                            tb.warehouse, 
+                            tsabe.batch_no, 
+                            tb.reserved_qty, 
+                            tb.actual_qty
+                        FROM 
+                            tabBin tb 
+                        INNER JOIN
+                            tabItem ti ON tb.item_code = ti.name
+                        INNER JOIN 
+                            `tabSerial and Batch Bundle` tsabb ON tb.item_code = tsabb.item_code
+                        INNER JOIN
+                            `tabSerial and Batch Entry` tsabe ON tsabb.name = tsabe.parent 
+                        WHERE tb.warehouse = %s
+                        """, (warehouse), as_dict=True)        
     return query
