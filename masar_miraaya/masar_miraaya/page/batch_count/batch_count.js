@@ -18,6 +18,8 @@ class MyPage {
             <form id="item-form"> 
                 <label for="item-input">Barcode:</label>
                 <input type="text" id="item-input" name="item"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				<label for="item-input">Warehouse:</label>
+                <input type="text" id="warehouse-input" name="warehouse"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 				<button type="button" id="asset-search-button">Search</button><br><br><br><br>
             </form>
 			<br><br>
@@ -31,6 +33,13 @@ class MyPage {
 				$("#item-input").val("");
 			}
 		});
+		$("#warehouse-input").on("keypress", (event) => {
+			if (event.key === "Enter") {
+				event.preventDefault();
+				this.submitForm();
+				$("#warehouse-input").val("");
+			}
+		});
 		$("#asset-search-button").on("click", () => {
 			this.submitForm();
 			$("#item-input").val("");
@@ -41,6 +50,7 @@ class MyPage {
 
 	submitForm() {
 		let item = $("#item-input").val().trim();
+		let warehouse = $("#warehouse-input").val().trim();
 	
 		frappe.call({
 			method: "masar_miraaya.masar_miraaya.page.batch_count.batch_count.get_item",

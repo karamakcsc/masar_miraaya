@@ -2,7 +2,7 @@ import frappe
 
 
 @frappe.whitelist()
-def get_item(item=None):
+def get_item(item=None, warehouse=None):
     if item:
         query = frappe.db.sql("""
                             SELECT 
@@ -15,11 +15,11 @@ def get_item(item=None):
                                 tb.actual_qty
                             FROM 
                                 tabBin tb 
-                            LEFT JOIN
+                            INNER JOIN
                                 tabItem ti ON tb.item_code = ti.name
-                            LEFT JOIN 
+                            INNER JOIN 
                                 `tabSerial and Batch Bundle` tsabb ON tb.item_code = tsabb.item_code
-                            LEFT JOIN
+                            INNER JOIN
                                 `tabSerial and Batch Entry` tsabe ON tsabb.name = tsabe.parent 
                             WHERE tb.item_code = %s
                           """, (item), as_dict=True)

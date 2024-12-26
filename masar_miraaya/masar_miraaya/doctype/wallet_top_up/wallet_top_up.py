@@ -105,6 +105,7 @@ class WalletTopup(Document):
 
 
     def create_journal_entry(self):
+        
         gift_account = self.gift_card_deferred_account
         lp_account = self.lp_expense_account
         comp_account = self.compensation_expense_account
@@ -140,6 +141,7 @@ class WalletTopup(Document):
             elif self.action_type ==  "Debit":
                 credit_account = adj_account
                 debit_account = wallet_account
+        frappe.throw(str(gift_account))
         jv = frappe.new_doc("Journal Entry")
         jv.posting_date = self.posting_date
         jv.company = self.company
