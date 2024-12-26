@@ -25,15 +25,23 @@ class WalletTopup(Document):
             SELECT 
                 custom_compensation_expense_account AS comp_account,
                 custom_lp_expense_account AS lp_account , 
-                cost_center, custom_gift_card_deferred_account AS gift_account
+                cost_center, custom_gift_card_deferred_account AS gift_account, 
+                custom_gift_card_expense_account AS free_account             
+                            
             FROM `tabCompany`
             WHERE name = %s
         """ , (self.company) , as_dict = True)
-        if self.transaction_type == "Gift Card":
+        if self.transaction_type == "Gift Card" and self.is_free == 0 :
                             if account and account[0] and account[0]['gift_account']:
                                 self.gift_card_deferred_account = account[0]['gift_account']
                             else:
                                 frappe.throw('Set Account in Company "Gift Card Deferred Account"') 
+
+        if self.transaction_type == "Gift Card" and self.is_free == 1 :
+                            if account and account[0] and account[0]['free_account']:
+                                self.gift_card_deferred_account = account[0]['free_account']
+                            else:
+                                frappe.throw('Set Account in Company "Gift Card Expense Account"') 
         if len(account) !=0:
             gift_account = None
             if with_cost_center== False:

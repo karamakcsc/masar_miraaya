@@ -16,11 +16,11 @@ class MyPage {
         const body = `
            <h1>Batch Count</h1>
             <form id="item-form"> 
-                <label for="item-input">Barcode:</label>
+                <label for="item-input"><b>Barcode:</b></label>
                 <input type="text" id="item-input" name="item"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-				<label for="item-input">Warehouse:</label>
+				<label for="item-input"><b>Warehouse:</b></label>
                 <input type="text" id="warehouse-input" name="warehouse"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-				<button type="button" id="asset-search-button">Search</button><br><br><br><br>
+				<button type="button" id="item-search-button">Search</button><br><br><br><br>
             </form>
 			<br><br>
 			<div id="result-container"></div>
@@ -40,9 +40,10 @@ class MyPage {
 				$("#warehouse-input").val("");
 			}
 		});
-		$("#asset-search-button").on("click", () => {
+		$("#item-search-button").on("click", () => {
 			this.submitForm();
 			$("#item-input").val("");
+			$("#warehouse-input").val("");
 		});
 	}
 
@@ -53,8 +54,8 @@ class MyPage {
 		let warehouse = $("#warehouse-input").val().trim();
 	
 		frappe.call({
-			method: "masar_miraaya.masar_miraaya.page.batch_count.batch_count.get_item",
-			args: item ? { item: item } : {},
+			method: "masar_miraaya.masar_miraaya.page.batch_count.batch_count.get_items",
+			args: { item: item, warehouse: warehouse },
 			callback: (response) => {
 				let resultContainer = $("#result-container");
 				resultContainer.empty();
@@ -72,7 +73,7 @@ class MyPage {
 	
 						let message = `
 							<b>Result:</b>
-							<br>
+							<br><br>
 							<table class='datatable'>
 								<thead>
 									<tr>
@@ -80,9 +81,11 @@ class MyPage {
 										<th style='width:200px'>Item Name</th>
 										<th style='width:200px'>UOM</th>
 										<th style='width:200px'>Warehouse</th>
-										<th style='width:200px'>Batch</th>
-										<th style='width:200px'>Reserved Qty</th>
-										<th style='width:200px'>Actual Qty</th>
+										<th style='width:200px'>Batch No</th>
+										<th style='width:200px'>Batch Qty</th>
+										<th style='width:200px'>Batch Expiry Date</th>
+										<th style='width:150px'>Reserved Qty</th>
+										<th style='width:150px'>Actual Qty</th>
 									</tr>
 								</thead>
 								<tbody>`;
@@ -94,7 +97,9 @@ class MyPage {
 									<td>${item.item_name || ''}</td>
 									<td>${item.stock_uom || ''}</td>
 									<td>${item.warehouse || ''}</td>
-									<td>${item.batch || ''}</td>
+									<td>${item.name || ''}</td>
+									<td>${item.batch_qty || ''}</td>
+									<td>${item.expiry_date || ''}</td>
 									<td>${item.reserved_qty || ''}</td>
 									<td>${item.actual_qty || ''}</td>
 								</tr>`;

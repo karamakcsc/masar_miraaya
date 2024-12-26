@@ -17,6 +17,7 @@
   "column_break_rftt",
   "posting_date",
   "transaction_type",
+  "is_free",
   "digital_wallet",
   "wallet_adjustment_account",
   "action_type",
@@ -317,6 +318,13 @@
    "fieldtype": "Float",
    "label": "Wallet Balance",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.transaction_type == \"Gift Card\"",
+   "fieldname": "is_free",
+   "fieldtype": "Check",
+   "label": "Free"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -328,7 +336,7 @@
    "link_fieldname": "custom_reference_doctype"
   }
  ],
- "modified": "2024-12-10 13:48:27.483479",
+ "modified": "2024-12-26 16:45:52.967344",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Wallet Top-up",

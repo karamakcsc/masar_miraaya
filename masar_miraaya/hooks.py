@@ -433,7 +433,9 @@ fixtures = [
                 "Item-custom_arabic_metatitle",
                 "Pick List-custom_magento_id",
                 "Payment Entry-custom_user_remarks",
-                "Payment Entry-custom_driver_details"
+                "Payment Entry-custom_driver_details",
+                "Company-custom_gift_card_expense_account",
+                
             ]
         ]
     ]},

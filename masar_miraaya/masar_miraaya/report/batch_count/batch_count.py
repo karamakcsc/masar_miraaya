@@ -19,7 +19,9 @@ def data(filters):
                                 ti.item_name, 
                                 tb.stock_uom, 
                                 tb.warehouse, 
-                                tsabe.batch_no, 
+                                tb2.name,
+								tb2.batch_qty,
+								tb2.expiry_date, 
                                 tb.reserved_qty, 
                                 tb.actual_qty
                             FROM 
@@ -27,20 +29,20 @@ def data(filters):
                             INNER JOIN
                                 tabItem ti ON tb.item_code = ti.name
                             INNER JOIN 
-                                `tabSerial and Batch Bundle` tsabb ON tb.item_code = tsabb.item_code
-                            INNER JOIN
-                                `tabSerial and Batch Entry` tsabe ON tsabb.name = tsabe.parent 
+								`tabBatch` tb2 ON tb.item_code = tb2.item
                             WHERE {conditions}
                         """)
     return sql
 
 def columns():
     return [
-		"Barcode:Link/Item:200",
-        "Item Name:data:200",
+		"Barcode:Link/Item:250",
+        "Item Name:data:300",
         "UOM:Data:200",
         "Warehouse:Link/Warehouse:200",
-        "Batch:Data:200",
+        "Batch No:Data:200",
+        "Batch Qty:Data:200",
+        "Batch Expiry Date:Data:200",
         "Reserved Qty:Float:200",
         "Actual Qty:Float:200"
 	]
