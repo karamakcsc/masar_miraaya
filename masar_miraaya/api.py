@@ -10,32 +10,42 @@ import json
 from typing import Optional, Union ##
 
 
+import requests
+from typing import Optional, Union
+import frappe
 
 def request_with_history(
-            req_method:  Optional[str] = None,
+            req_method: Optional[str] = None,
             document: Optional[str] = None, 
             doctype: Optional[str] = None, 
             url: Optional[str] = None, 
-            headers: Optional[Union[dict, str , float]] = None, 
-            payload: Optional[Union[dict, str  , float]] = None
+            headers: Optional[Union[dict, str, float]] = None, 
+            payload: Optional[Union[dict, str, float]] = None, 
+            data: Optional[Union[dict, str, float]] = None,
+            with_data: Optional[Union[float, int, bool]] = 0
         ):
     headers = headers or {}
     payload = payload or {}
-    if payload != {}:
-        response = requests.request(req_method, url, headers=headers , json= payload)
-    else:
-        response = requests.request(req_method, url, headers=headers)
     api = frappe.new_doc('API History')
     api.document = document
     api.doc_type = doctype
     api.url = url
     api.headers = str(headers)
     api.payload = str(payload)
-    api.response = str(response)
-    api.response_code_status = str(response.status_code)
-    api.response_text = str(response.text)
     api.insert(ignore_permissions=True , ignore_mandatory=True)
+    if with_data: 
+        response = requests.request(req_method, url, headers=headers, data=data)
+    else:
+        if payload: 
+            response = requests.request(req_method, url, headers=headers, json=payload)
+        else:
+            response = requests.request(req_method, url, headers=headers)
+    api.response = str(response.content) 
+    api.response_code_status = str(response.status_code)
+    api.response_text = str(response.text)  
+    api.save()
     return response
+
     
 
 def magento_admin_details():
@@ -1380,7 +1390,8 @@ def change_magento_status_to_fullfilled(so_name):
                             document=so_name, 
                             url=url, 
                             headers=headers,
-                            payload=payload)
+                            data=payload, 
+                            with_data=1)
     return response.text , response.status_code
 
 def change_magento_status_to_cancelled(so_name , so_magento_id):
