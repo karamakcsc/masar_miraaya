@@ -5446,7 +5446,7 @@
   "is_virtual": 0,
   "label": "Gift Card Expense Account",
   "length": 0,
-  "link_filters": "[[\"Account\",\"account_type\",\"=\",\"Expense Account\"],[\"Account\",\"is_group\",\"=\",0]]",
+  "link_filters": "[[\"Account\",\"is_group\",\"=\",0]]",
   "mandatory_depends_on": null,
   "modified": "2024-12-26 16:39:31.458944",
   "module": null,
