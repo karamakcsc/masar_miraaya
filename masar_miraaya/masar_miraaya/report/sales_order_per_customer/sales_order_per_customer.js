@@ -4,17 +4,20 @@
 frappe.query_reports["Sales Order Per Customer"] = {
 	"filters": [
 		{
-			"fieldname": "item",
-			"label": __("Barcode"),
+			"fieldname": "customer",
+			"label": __("Customer"),
 			"fieldtype": "Link",
-			"options": "Item"
+			"options": "Customer"
 		},
-
 		{
-			"fieldname": "warehouse",
-			"label": __("Warehouse"),
-			"fieldtype": "Link",
-			"options": "Warehouse"
+			"fieldname": "from_date",
+			"label": __("From Date"),
+			"fieldtype": "Date",
+		},
+		{
+			"fieldname": "to_date",
+			"label": __("To Date"),
+			"fieldtype": "Date",
 		}
 	]
 };
