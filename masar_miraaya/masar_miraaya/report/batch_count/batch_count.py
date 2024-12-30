@@ -23,7 +23,8 @@ def data(filters):
                                 tb.reserved_qty, 
                                 tb2.name,
 								tb2.batch_qty,
-								tb2.expiry_date
+								tb2.expiry_date,
+                                CASE WHEN ti.disabled = 0 THEN "Enabled" ELSE "Disabled" END
                             FROM 
                                 tabBin tb 
                             INNER JOIN
@@ -45,4 +46,5 @@ def columns():
         "Batch No:Data:200",
         "Batch Qty:Data:200",
         "Batch Expiry Date:Data:200",
+        "Item Status: Data:200"
 	]

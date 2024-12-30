@@ -86,11 +86,14 @@ class MyPage {
 										<th style='width:200px'>Batch No</th>
 										<th style='width:200px'>Batch Qty</th>
 										<th style='width:200px'>Batch Expiry Date</th>
+										<th style='width:200px'>Image</th>
+										<th style='width:200px'>Item Status</th>
 									</tr>
 								</thead>
 								<tbody>`;
 	
 						$.each(pageItems, (index, item) => {
+							let item_status = item.disabled === 1 ? 'red' : 'green';
 							message += `
 								<tr>
 									<td>${item.item_code || ''}</td>
@@ -102,6 +105,8 @@ class MyPage {
 									<td>${item.name || ''}</td>
 									<td>${item.batch_qty || ''}</td>
 									<td>${item.expiry_date || ''}</td>
+									<td><img src="${item.image || ''}" style="max-width: 100px; max-height: 100px;"></td>
+									<td style="color: ${item_status}">${item.disabled === 1 ? "Disabled" : "Enabled"}</td>
 								</tr>`;
 						});
 	

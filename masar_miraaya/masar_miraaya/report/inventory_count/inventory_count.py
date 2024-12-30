@@ -20,7 +20,8 @@ def data(filters):
                                 tb.stock_uom, 
                                 tb.warehouse, 
                                 tb.reserved_qty, 
-                                tb.actual_qty
+                                tb.actual_qty,
+                                CASE WHEN ti.disabled = 0 THEN "Enabled" ELSE "Disabled" END
                             FROM 
                                 tabBin tb 
                             INNER JOIN
@@ -36,5 +37,6 @@ def columns():
         "UOM:Data:200",
         "Warehouse:Link/Warehouse:200",
         "Reserved Qty:Float:200",
-        "Actual Qty:Float:200"
+        "Actual Qty:Float:200",
+        "Item Status: Data:200"
 	]

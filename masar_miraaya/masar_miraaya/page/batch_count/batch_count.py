@@ -21,7 +21,9 @@ def get_items(item=None, warehouse=None):
             tb2.batch_qty,
             tb2.expiry_date, 
             tb.reserved_qty, 
-            tb.actual_qty
+            tb.actual_qty,
+            ti.image,
+            ti.disabled
         FROM 
             tabBin tb 
         INNER JOIN
