@@ -1413,44 +1413,50 @@ def change_magento_status_to_cancelled(so_name , so_magento_id):
 
 ######## Customer Wallet Balance Magento API "Mahmoud API"
 @frappe.whitelist()
-def get_customer_wallet_balance(customer_id , magento_id):
-    if (customer_id is not None ) and (magento_id  not in [0 , None]):
-        customer_doc = frappe.get_doc('Customer' , customer_id)
-        base_url, headers =base_data(request_in="magento_customer_auth" , customer_email=customer_doc.custom_email)
-        url = base_url + "graphql"
-        payload = {
-            "query":  f"""
-                query {{
-                    admincustomerwalletdetail(customerId: "{str(magento_id)}") {{
-                        Amount
-                        Action
-                        Status
+def get_customer_wallet_balance(customer_id , magento_id , erpnext = True):
+    if erpnext:
+        balance = frappe.db.sql(""" Select SUM(tge.credit) - SUM(tge.debit) as Balance
+                FROM `tabGL Entry` tge
+                WHERE tge.customer = %s AND tge.is_cancelled = 0""",(customer_id))
+        return balance[0][0] if balance else 0
+    elif erpnext == False: 
+        if (customer_id is not None ) and (magento_id  not in [0 , None]):
+            customer_doc = frappe.get_doc('Customer' , customer_id)
+            base_url, headers =base_data(request_in="magento_customer_auth" , customer_email=customer_doc.custom_email)
+            url = base_url + "graphql"
+            payload = {
+                "query":  f"""
+                    query {{
+                        admincustomerwalletdetail(customerId: "{str(magento_id)}") {{
+                            Amount
+                            Action
+                            Status
+                        }}
                     }}
-                }}
-        """
-            }
-        setting = frappe.get_doc("Magento Setting")
-        auth = setting.magento_admin_prod_auth
-        headers['Authorization'] = f"Bearer {auth}"
-        response =  request_with_history(
-                            req_method='POST', 
-                            doctype='Wallet Balance', 
-                            document=f"for Customer:{customer_id}", 
-                            url=url, 
-                            headers=headers,
-                            payload=payload)
-        res = response.json()
-        credit = 0 
-        debit = 0 
-        data = res.get('data')
-        if data:
-            wallet_details = data.get('admincustomerwalletdetail')
-            if wallet_details:
-                for wd in wallet_details:
-                    if wd.get('Status') == 'Approve':
-                        if wd.get('Action') == 'credit':
-                            credit += float(wd.get('Amount'))
-                        if wd.get('Action') == 'debit':
-                            debit += float(wd.get('Amount'))
-        return (credit - debit)
-    return None
+            """
+                }
+            setting = frappe.get_doc("Magento Setting")
+            auth = setting.magento_admin_prod_auth
+            headers['Authorization'] = f"Bearer {auth}"
+            response =  request_with_history(
+                                req_method='POST', 
+                                doctype='Wallet Balance', 
+                                document=f"for Customer:{customer_id}", 
+                                url=url, 
+                                headers=headers,
+                                payload=payload)
+            res = response.json()
+            credit = 0 
+            debit = 0 
+            data = res.get('data')
+            if data:
+                wallet_details = data.get('admincustomerwalletdetail')
+                if wallet_details:
+                    for wd in wallet_details:
+                        if wd.get('Status') == 'Approve':
+                            if wd.get('Action') == 'credit':
+                                credit += float(wd.get('Amount'))
+                            if wd.get('Action') == 'debit':
+                                debit += float(wd.get('Amount'))
+            return (credit - debit)
+        return None

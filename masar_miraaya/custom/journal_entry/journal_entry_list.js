@@ -7,10 +7,10 @@
 //     }
 // };
 
-frappe.listview_settings['Journal Entry'] = {
-    onload: function(listview) {
-        setTimeout(() => {
-            $('.filter-x-button').click();
-        }, 50);
-    }
-};
+// frappe.listview_settings['Journal Entry'] = {
+//     onload: function(listview) {
+//         setTimeout(() => {
+//             $('.filter-x-button').click();
+//         }, 50);
+//     }
+// };

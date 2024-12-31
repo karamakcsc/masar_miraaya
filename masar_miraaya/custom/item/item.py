@@ -348,6 +348,7 @@ def get_brand_id(brand):    ## To Get Brand Id
         WHERE tig.item_group_name LIKE "%{brand}%"
     """,  as_dict=True)
     brand_id = None
+    parent_id = None
     if brand_query:
         brand_id = brand_query[0]['custom_item_group_id']
         parent_id = brand_query[0]['custom_parent_item_group_id']

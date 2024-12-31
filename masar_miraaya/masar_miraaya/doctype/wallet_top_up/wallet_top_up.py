@@ -121,9 +121,9 @@ class WalletTopup(Document):
         adj_account = self.wallet_adjustment_account
         cost_center = self.get_accounts_form_company(with_cost_center=True)
         party_type = "Customer"
-        party = self.customer
+        party = self.digital_wallet  #### 
         user_remarks = self.user_remarks
-        dimension_account = self.digital_wallet
+        dimension_account = self.customer ####
         
         if self.transaction_type == 'Gift Card':
             debit_account = gift_account

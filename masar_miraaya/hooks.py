@@ -486,3 +486,8 @@ from frappe.model.document import Document
 from masar_miraaya.override import _document
 Document.validate_amended_from  = _document.validate_amended_from_override
 
+### Picked Override 
+from erpnext.stock.doctype.pick_list import pick_list
+from masar_miraaya.override import _pick_list
+pick_list.filter_locations_by_picked_materials = _pick_list.filter_locations_by_picked_materials_override
+

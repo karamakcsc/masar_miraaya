@@ -37,6 +37,7 @@ def make_gl(self):
                             "debit": abs(r.amount),
                             "party_type": "Customer",
                             "party": r.channel,
+                            "customer" : self.customer , #####
                             "remarks": r.channel + ' : ' + self.name,
                             "voucher_type" : self.doctype , 
                             "voucher_no" : self.name
@@ -52,6 +53,7 @@ def make_gl(self):
                             "credit": abs(r.amount),
                             "party_type": "Customer",
                             "party": r.channel,
+                            "customer" : self.customer ,  #####
                             "remarks": r.channel + ' : ' + self.name,
                             "voucher_type" : self.doctype , 
                             "voucher_no" : self.name

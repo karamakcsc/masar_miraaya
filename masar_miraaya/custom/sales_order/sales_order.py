@@ -18,6 +18,7 @@ def get_payment_channel_amount(child):
     return payment_chnnel_amount
 
 def validate(self, method):
+    cach_and_payment_channel_validate(self)
     validation_payment_channel_amount(self)
 
 
@@ -40,7 +41,26 @@ def wallet_balance_validation(self):
                     Please Ensure That The Amount Does Not Exceed The Wallet Balance."""
                   )
         
-    
+def cach_and_payment_channel_validate(self): 
+    if self.custom_cash_on_delivery_amount > 0 and self.custom_is_cash_on_delivery == 0: 
+            frappe.throw(f" Cash on Delivery Amount is {self.custom_cash_on_delivery_amount} so Is Cach on Delivery must be checked")
+    if (
+            (
+            ( self.custom_payment_channel_amount  if self.custom_payment_channel_amount else 0 )
+            +
+            (self.custom_cash_on_delivery_amount if self.custom_cash_on_delivery_amount else 0 )
+        ) != self.custom_total_amount
+    ):
+        frappe.throw(f"""
+                     Total Amount Must be Equal to Cach on Delivery Amount and Payment Channel Amount. <br>
+                     Cash on Delivery Amount : {self.custom_cash_on_delivery_amount} < br> 
+                     Payment Chaannel Amount: { self.custom_payment_channel_amount} <br> 
+                     So Total Amount must be {
+                        ( self.custom_payment_channel_amount  if self.custom_payment_channel_amount else 0 )
+                        +
+                        (self.custom_cash_on_delivery_amount if self.custom_cash_on_delivery_amount else 0 )} 
+                    Not {self.custom_total_amount}""")
+        
 
 def validation_payment_channel_amount(self):
     if self.custom_total_amount is None or self.grand_total is None:
@@ -208,6 +228,7 @@ def digital_wallet_account(customer_id , company):
 def on_update_after_submit(self, method):
         if  self.docstatus == 1:
             if self.custom_magento_status == 'On the Way':
+                delete_previous_jv(self)
                 cost_of_delivery_jv(self)
                 create_delivery_company_jv(self)
                 stock_entry_method(self)
@@ -518,6 +539,8 @@ def create_delivery_note(self):
         item_doc= frappe.get_doc('Item' , item.item_code)
         if item_doc.is_stock_item ==0 :
             target.items.remove(item)
+        item.delivery_company = self.custom_delivery_company
+        item.driver = self.custom_driver
     target.save()
     target.submit()
     return target.name
@@ -689,6 +712,16 @@ def create_material_request(self):
     mr.save(ignore_permissions = True)
     mr.submit()
 
+def delete_previous_jv(self): 
+    je = frappe.qb.DocType('Journal Entry')
+    linked_jv = frappe.qb.from_(je).select(je.name , je.docstatus).where(je.custom_reference_doctype == self.name).run(as_dict = True)
+    if len(linked_jv) != 0 : 
+        for jv in linked_jv: 
+            if jv.docstatus == 1 : 
+                jv_doc = frappe.get_doc('Journal Entry' , jv.name)
+                jv_doc.run_method('cancel')
+            frappe.delete_doc('Journal Entry',jv.name)
+            
 def cost_of_delivery_jv(self):
     company_doc = frappe.get_doc('Company' , self.company)
     dc_doc = frappe.get_doc('Customer' , self.custom_delivery_company)
