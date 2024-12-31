@@ -126,10 +126,16 @@ class WalletTopup(Document):
         dimension_account = self.customer ####
         
         if self.transaction_type == 'Gift Card':
-            debit_account = gift_account
-            credit_account = wallet_account
-            debit_amount = float(self.topup_amount)
-            credit_amount = float(self.topup_amount)
+            if self.is_free: 
+                debit_account = self.gift_card_expense_account
+                credit_account = wallet_account
+                debit_amount = float(self.topup_amount)
+                credit_amount = float(self.topup_amount)
+            else:
+                debit_account = gift_account
+                credit_account = wallet_account
+                debit_amount = float(self.topup_amount)
+                credit_amount = float(self.topup_amount)
         elif self.transaction_type == 'Loyality Program (LP)':    
             debit_account = lp_account
             credit_account = wallet_account
