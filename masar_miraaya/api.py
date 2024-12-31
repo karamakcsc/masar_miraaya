@@ -1415,9 +1415,15 @@ def change_magento_status_to_cancelled(so_name , so_magento_id):
 @frappe.whitelist()
 def get_customer_wallet_balance(customer_id , magento_id , erpnext = True):
     if erpnext:
-        balance = frappe.db.sql(""" Select SUM(tge.credit) - SUM(tge.debit) as Balance
-                FROM `tabGL Entry` tge
-                WHERE tge.customer = %s AND tge.is_cancelled = 0""",(customer_id))
+        balance = frappe.db.sql(""" 
+            SELECT 
+                SUM(tge.credit) - SUM(tge.debit) AS Balance
+            FROM 
+                `tabGL Entry` tge
+            WHERE 
+                tge.customer = %s
+                AND tge.is_cancelled = 0 
+                AND tge.party IN (SELECT name FROM `tabCustomer` WHERE custom_is_digital_wallet = 1);""",(customer_id))
         return balance[0][0] if balance else 0
     elif erpnext == False: 
         if (customer_id is not None ) and (magento_id  not in [0 , None]):
