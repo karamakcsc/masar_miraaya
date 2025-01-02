@@ -276,7 +276,7 @@ def create_new_template(configurable, item_group):
     new_templete.insert(ignore_permissions=True)
     frappe.db.set_value('Item', new_templete.name, 'has_variants', 1)
     frappe.db.set_value('Item', new_templete.name, 'custom_is_publish', 1 if configurable['status'] == 1 else 0)
-    frappe.db.set_value('Item', new_templete.name, 'disabled', 0 if configurable['status'] == 1 else 1)
+    frappe.db.set_value('Item', new_templete.name, 'custom_magento_disabled', 0 if configurable['status'] == 1 else 1)
     return new_templete
 
 def add_attributes(item_name, attributes_list):
@@ -863,7 +863,7 @@ def get_magento_products(response_json, all_configurable_links, altenative_items
                     new_item_.insert(ignore_permissions=True)
                     # Set additional values
                     frappe.db.set_value('Item', new_item_.name, 'custom_is_publish', publish_to_magento)
-                    frappe.db.set_value('Item', new_item_.name, 'disabled', disabled)
+                    frappe.db.set_value('Item', new_item_.name, 'custom_magento_disabled', disabled)
                     
                     # Variant processing
                     for configurable in all_configurable_links:
@@ -1417,7 +1417,7 @@ def get_customer_wallet_balance(customer_id , magento_id , erpnext = True):
     if erpnext:
         balance = frappe.db.sql(""" 
             SELECT 
-                SUM(tge.credit) - SUM(tge.debit) AS Balance
+                IFNULL (SUM(tge.credit) - SUM(tge.debit),0 ) AS Balance
             FROM 
                 `tabGL Entry` tge
             WHERE 

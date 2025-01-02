@@ -435,6 +435,7 @@ fixtures = [
                 "Payment Entry-custom_user_remarks",
                 "Payment Entry-custom_driver_details",
                 "Company-custom_gift_card_expense_account",
+                 "Item-custom_magento_disabled"
                 
             ]
         ]
@@ -474,6 +475,7 @@ fixtures = [
                     "Address-main-field_order",
                     "Address-phone-reqd",
                     "Address-pincode-reqd"
+                   
                 ]
             ]
         ]

@@ -42,14 +42,14 @@ def wallet_balance_validation(self):
                   )
         
 def cach_and_payment_channel_validate(self): 
-    if self.custom_cash_on_delivery_amount > 0 and self.custom_is_cash_on_delivery == 0: 
+    if float(self.custom_cash_on_delivery_amount) > 0 and float(self.custom_is_cash_on_delivery) == 0: 
             frappe.throw(f" Cash on Delivery Amount is {self.custom_cash_on_delivery_amount} so Is Cach on Delivery must be checked")
     if (
             (
-            ( self.custom_payment_channel_amount  if self.custom_payment_channel_amount else 0 )
+            ( float(self.custom_payment_channel_amount)  if self.custom_payment_channel_amount else 0 )
             +
-            (self.custom_cash_on_delivery_amount if self.custom_cash_on_delivery_amount else 0 )
-        ) != self.custom_total_amount
+            (float(self.custom_cash_on_delivery_amount) if self.custom_cash_on_delivery_amount else 0 )
+        ) != float(self.custom_total_amount)
     ):
         frappe.throw(f"""
                      Total Amount Must be Equal to Cach on Delivery Amount and Payment Channel Amount. <br>

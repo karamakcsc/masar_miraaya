@@ -269,7 +269,7 @@ def base_item_data(self):
             type_id = "simple"
         attribute_set_id = attribute_set_id_function(self)
         price =  price_function(self)
-        if self.disabled == 0 :
+        if self.custom_magento_disabled == 0 :
             status = 1
         else:
             status = 2 
