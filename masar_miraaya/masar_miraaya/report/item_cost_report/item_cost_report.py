@@ -19,9 +19,11 @@ def data(filters):
 					ti.name AS `Item Code`, 
 					ti.item_name AS `Item Name`,
 					ti.custom_item_id AS `Magento ID`,
+                    tb.valuation_rate,
 					SUM(CASE WHEN tip.price_list = 'Standard Buying' THEN tip.price_list_rate END) AS `Buying Price`,
-					tb.valuation_rate,
-					SUM(CASE WHEN tip.price_list = 'Standard Selling' THEN tip.price_list_rate END) AS `Selling Price`
+					SUM(CASE WHEN tip.price_list = 'Standard Selling' THEN tip.price_list_rate END) AS `Selling Price`,
+                    SUM(CASE WHEN tip.price_list = 'Standard Selling' THEN tip.price_list_rate END) - 
+					SUM(CASE WHEN tip.price_list = 'Standard Buying' THEN tip.price_list_rate END) AS `Price Difference`
 				FROM tabItem ti
 				INNER JOIN `tabItem Price` tip ON ti.name = tip.item_code
 				INNER JOIN tabBin tb ON ti.name = tb.item_code
@@ -36,7 +38,8 @@ def columns():
         "Item Code: Link/Item:200",
         "Item Name: Data:200",
         "Magento ID: Data:200",
-        "Buying Price: Float:200",
         "Valuation Rate: Float:200",
-        "Selling Price: Float:200"
+        "Buying Price: Float:200",
+        "Selling Price: Float:200",
+        "Price Difference: Float:200"
     ]

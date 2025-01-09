@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"hXM2srUg5D\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Miraaya Reports</span>\",\"col\":12}},{\"id\":\"O2CmHUO-qq\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"PHvf551b1A\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"U0usTF1Zd_\",\"type\":\"card\",\"data\":{\"card_name\":\"Pages\",\"col\":4}}]",
+ "content": "[{\"id\":\"hXM2srUg5D\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Miraaya Reports</span>\",\"col\":12}},{\"id\":\"O2CmHUO-qq\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"PHvf551b1A\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Report\",\"col\":4}},{\"id\":\"e23mAeYTRj\",\"type\":\"card\",\"data\":{\"card_name\":\"Buying Report\",\"col\":4}},{\"id\":\"wmKSeGjVxc\",\"type\":\"card\",\"data\":{\"card_name\":\"Selling Report\",\"col\":4}},{\"id\":\"U0usTF1Zd_\",\"type\":\"card\",\"data\":{\"card_name\":\"Pages\",\"col\":4}}]",
  "creation": "2025-01-08 12:45:39.126485",
  "custom_blocks": [],
  "docstatus": 0,
@@ -35,8 +35,8 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Reports",
-   "link_count": 6,
+   "label": "Stock Report",
+   "link_count": 8,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -44,7 +44,7 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Batch Count Report",
+   "label": "Batch Count",
    "link_count": 0,
    "link_to": "Batch Count",
    "link_type": "Report",
@@ -54,7 +54,7 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Inventory Count Report",
+   "label": "Inventory Count",
    "link_count": 0,
    "link_to": "Inventory Count",
    "link_type": "Report",
@@ -64,29 +64,9 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Sales Order Per Customer Report",
-   "link_count": 0,
-   "link_to": "Sales Order Per Customer",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Item Details Report",
+   "label": "Item Details",
    "link_count": 0,
    "link_to": "Item Details",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Sales Order Item Profit Report",
-   "link_count": 0,
-   "link_to": "Sales Order Item Profit",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -100,9 +80,137 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Batch Item Expiry Status",
+   "link_count": 0,
+   "link_to": "Batch Item Expiry Status",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Item Prices",
+   "link_count": 0,
+   "link_to": "Item Prices",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Item Price Stock",
+   "link_count": 0,
+   "link_to": "Item Price Stock",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Warehouse Wise Stock Balance",
+   "link_count": 0,
+   "link_to": "Warehouse Wise Stock Balance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Buying Report",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Purchase Analytics",
+   "link_count": 0,
+   "link_to": "Purchase Analytics",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Purchase Order Analysis",
+   "link_count": 0,
+   "link_to": "Purchase Order Analysis",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Purchase Receipt Trends",
+   "link_count": 0,
+   "link_to": "Purchase Receipt Trends",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Selling Report",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales Order Per Customer",
+   "link_count": 0,
+   "link_to": "Sales Order Per Customer",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales Order Item Profit",
+   "link_count": 0,
+   "link_to": "Sales Order Item Profit",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Supplier-Wise Sales Analytics",
+   "link_count": 0,
+   "link_to": "Supplier-Wise Sales Analytics",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Item-wise Sales History",
+   "link_count": 0,
+   "link_to": "Item-wise Sales History",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-01-08 16:12:42.090066",
+ "modified": "2025-01-09 11:11:02.434636",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Miraaya Reports",
