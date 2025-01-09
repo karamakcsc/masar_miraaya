@@ -1,0 +1,118 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"hXM2srUg5D\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Miraaya Reports</span>\",\"col\":12}},{\"id\":\"O2CmHUO-qq\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"PHvf551b1A\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"U0usTF1Zd_\",\"type\":\"card\",\"data\":{\"card_name\":\"Pages\",\"col\":4}}]",
+ "creation": "2025-01-08 12:45:39.126485",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "solid-success",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Miraaya Reports",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Pages",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Batch Count Page",
+   "link_count": 0,
+   "link_to": "batch-count",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Batch Count Report",
+   "link_count": 0,
+   "link_to": "Batch Count",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Inventory Count Report",
+   "link_count": 0,
+   "link_to": "Inventory Count",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales Order Per Customer Report",
+   "link_count": 0,
+   "link_to": "Sales Order Per Customer",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Item Details Report",
+   "link_count": 0,
+   "link_to": "Item Details",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Sales Order Item Profit Report",
+   "link_count": 0,
+   "link_to": "Sales Order Item Profit",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Item Cost Report",
+   "link_count": 0,
+   "link_to": "Item Cost Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-01-08 16:12:42.090066",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Miraaya Reports",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 29.0,
+ "shortcuts": [],
+ "title": "Miraaya Reports"
+}

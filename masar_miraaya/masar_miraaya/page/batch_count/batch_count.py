@@ -23,7 +23,8 @@ def get_items(item=None, warehouse=None):
             tb.reserved_qty, 
             tb.actual_qty,
             ti.image,
-            ti.disabled
+            ti.disabled,
+            ti.custom_magento_disabled
         FROM 
             tabBin tb 
         INNER JOIN

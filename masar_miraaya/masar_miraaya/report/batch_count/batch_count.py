@@ -12,6 +12,10 @@ def data(filters):
         conditions += f' AND tb.item_code = "{filters.get("item")}"'
     if filters.get('warehouse'):
         conditions += f' AND tb.warehouse = "{filters.get("warehouse")}"'
+    if filters.get('mag_status'):
+        conditions += f' AND ti.custom_magento_disabled = "{filters.get("mag_status")}"'
+    if filters.get('erp_status'):
+        conditions += f' AND ti.disabled = "{filters.get("erp_status")}"'
         
     sql = frappe.db.sql(f"""
                         	SELECT 
@@ -24,7 +28,8 @@ def data(filters):
                                 tb2.name,
 								tb2.batch_qty,
 								tb2.expiry_date,
-                                CASE WHEN ti.disabled = 0 THEN "Enabled" ELSE "Disabled" END
+                                CASE WHEN ti.disabled = 0 THEN "Enabled" ELSE "Disabled" END,
+                                CASE WHEN ti.custom_magento_disabled = 0 THEN "Enabled" ELSE "Disabled" END
                             FROM 
                                 tabBin tb 
                             INNER JOIN
@@ -46,5 +51,6 @@ def columns():
         "Batch No:Data:200",
         "Batch Qty:Data:200",
         "Batch Expiry Date:Data:200",
-        "Item Status: Data:200"
+        "Item ERP Status: Data:200",
+        "Item Magento Status: Data:200"
 	]

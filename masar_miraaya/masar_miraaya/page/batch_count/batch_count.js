@@ -81,13 +81,14 @@ class MyPage {
 										<th style='width:200px'>Item Name</th>
 										<th style='width:200px'>UOM</th>
 										<th style='width:200px'>Warehouse</th>
-										<th style='width:150px'>Actual Qty</th>
-										<th style='width:150px'>Reserved Qty</th>
+										<th style='width:200px'>Actual Qty</th>
+										<th style='width:200px'>Reserved Qty</th>
 										<th style='width:200px'>Batch No</th>
 										<th style='width:200px'>Batch Qty</th>
 										<th style='width:200px'>Batch Expiry Date</th>
 										<th style='width:200px'>Image</th>
-										<th style='width:200px'>Item Status</th>
+										<th style='width:200px'>ERP Status</th>
+										<th style='width:200px'>Magento Status</th>
 									</tr>
 								</thead>
 								<tbody>`;
@@ -107,6 +108,7 @@ class MyPage {
 									<td>${item.expiry_date || ''}</td>
 									<td><img src="${item.image || ''}" style="max-width: 100px; max-height: 100px;"></td>
 									<td style="color: ${item_status}">${item.disabled === 1 ? "Disabled" : "Enabled"}</td>
+									<td style="color: ${item_status}">${item.custom_magento_disabled === 1 ? "Disabled" : "Enabled"}</td>
 								</tr>`;
 						});
 	

@@ -15,6 +15,16 @@ frappe.query_reports["Batch Count"] = {
 			"label": __("Warehouse"),
 			"fieldtype": "Link",
 			"options": "Warehouse"
+		},
+		{
+			"fieldname": "mag_status",
+			"label": __("Magento Disabled"),
+			"fieldtype": "Check",
+		},
+		{
+			"fieldname": "erp_status",
+			"label": __("ERP Disabled"),
+			"fieldtype": "Check",
 		}
 	]
 };
