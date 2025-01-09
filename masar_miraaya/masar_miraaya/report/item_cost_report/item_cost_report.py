@@ -9,7 +9,7 @@ def execute(filters=None):
 def data(filters):
     conditions = " 1=1 "
     if filters.get("item"):
-        conditions += f" AND ti.item = '{filters.get('item')}' "
+        conditions += f" AND ti.item LIKE '%{filters.get('item')}%' "
     if filters.get("magento_id"):
         conditions += f" AND ti.custom_item_id LIKE '%{filters.get('magento_id')}%'"
     
