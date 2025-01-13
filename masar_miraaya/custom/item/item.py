@@ -224,7 +224,10 @@ def base_item_data(self):
                     "website_ids": [
                         1
                     ],
-                    "category_links": category_links
+                    "category_links": category_links,
+                    "stock_item": {
+                        "is_in_stock": True
+                    }
                 }
         if self.has_variants:
             type_id = "configurable"

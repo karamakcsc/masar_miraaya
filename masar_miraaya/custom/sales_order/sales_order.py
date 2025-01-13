@@ -1031,7 +1031,7 @@ def fleetroot_reorder(self , magento_id , entity_id , address_id):
     url = base_url + f'/order/save-order-and-track/{env}'
     coupon_amount = self.discount_amount if self.discount_amount else 0 
     items ,  fees_shipping = get_items_details(self)
-    total_amount = self.total - fees_shipping
+    total_amount = self.total - fees_shipping # Order Total - Shipping Fess
     order_details = {
         "address_id" : address_id,
         "coupon_amount": coupon_amount, 
@@ -1044,7 +1044,7 @@ def fleetroot_reorder(self , magento_id , entity_id , address_id):
         "payment_method" : "cashondelivery" if (self.custom_payment_channel_amount  in [None , 0 ]) else "prepaid",
         "shipping_fee": fees_shipping,
         "total_amount" : total_amount,
-        "wallet_amount_used": str(self.custom_payment_channel_amount if self.custom_payment_channel_amount else 0 )
+        "wallet_amount_used": str(self.custom_payment_channel_amount if self.custom_payment_channel_amount else 0 ) # Wallet Amount
     } 
     pickup = {
         "lat": "33.2793535","lng": "44.3867075","address": "Jadryah 915 | 26 | 3","stop_type": 1, "note": "pickup point",
