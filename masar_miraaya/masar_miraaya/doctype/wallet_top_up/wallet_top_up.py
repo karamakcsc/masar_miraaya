@@ -217,9 +217,9 @@ class WalletTopup(Document):
             "query": f"""
             mutation {{
                 adjustamounttowallet(
-                    customerIds: "{self.customer_id}"
-                    walletamount: {wallet_amount}
-                    walletactiontype: "{action_type}"
+                    customerIds: "{self.customer_id}" , 
+                    walletamount: {wallet_amount} , 
+                    walletactiontype: "{action_type}" , 
                     walletnote: "{self.user_remarks}"
                 ) {{
                     message
@@ -243,7 +243,7 @@ class WalletTopup(Document):
                 frappe.msgprint(f"Wallet Updated Successfully for Customer: {self.customer} With Amount: {wallet_amount}. in Magento", alert=True, indicator='green')
         else:
             frappe.throw(f"Failed to Update Wallet. {str(response.text)}")
-            
+        ##    
     def debit_validation(self):
         if self.transaction_type == 'Adjustment' and self.action_type == 'Debit':
             if (self.adjustment_amount if self.adjustment_amount else 0 )  > (self.wallet_balance if self.wallet_balance else 0 ):
