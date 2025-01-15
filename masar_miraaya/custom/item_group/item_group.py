@@ -66,7 +66,8 @@ def new_item_group_in_magento(self):
             magento_name = json_response['name']
             print(json_response)
             self.custom_item_group_id = group_id
-            # frappe.rename_doc('Item Group' , self.name , f'{group_id} - {magento_name}')
+            self.name = f"{group_id} - {self.name}"
+            # frappe.rename_doc("Item Group", self.name, new_item_group_name)
             frappe.msgprint("Category Created Successfully in Magento", alert = True, indicator = 'green')
 
 def update_item_group_in_magento(self):
