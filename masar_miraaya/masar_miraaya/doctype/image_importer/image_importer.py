@@ -15,6 +15,7 @@ class ImageImporter(Document):
             else:
                 frappe.throw("The 'Done' folder was not found in the unzipped directory.")
             self.delete_unzipped_folder(extract_to)
+        return True
 
     def get_file_path(self):
         file_doc = frappe.get_doc("File", {"file_url": self.attach})
