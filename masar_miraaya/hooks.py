@@ -209,9 +209,9 @@ scheduler_events = {
 	# "all": [
 	# 	"masar_miraaya.override._reorder_item.reorder_item"
 	# ],
-	# "daily": [
-	# 	"masar_miraaya.override._reorder_item.reorder_item"
-	# ],
+	"daily": [
+		"masar_miraaya.notifications.batch_expiry.near_expiry_batches"
+	],
 	"hourly": [
 		"masar_miraaya.jobs._reorder_item.reorder_item"
 	],

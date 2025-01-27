@@ -27,7 +27,7 @@ def wallet_balance_validation(self):
     wallet_balance = get_customer_wallet_balance(customer_id=self.customer , magento_id=customer_doc.custom_customer_id)
     if wallet_balance is None:
         frappe.throw(
-            f'Please Check if Customer <b>{str(self.customer)}</b> is Publish to Magento.'
+            f'Please Check if Customer {str(self.customer)} is Publish to Magento.'
         )
     for channel in self.custom_payment_channels:
         if channel.channel:
@@ -36,8 +36,7 @@ def wallet_balance_validation(self):
                 if channel.amount > float(wallet_balance):
                     frappe.throw(
                     f"""The Customer has a Wallet Balance of {wallet_balance}, 
-                    but the Amount Specified in The Channel <b>({channel.channel})</b> Exceeds the Available Balance.
-                    <br> 
+                    but the Amount Specified in The Channel ({channel.channel})Exceeds the Available Balance
                     Please Ensure That The Amount Does Not Exceed The Wallet Balance."""
                   )
         
@@ -52,9 +51,9 @@ def cach_and_payment_channel_validate(self):
         ) != float(self.custom_total_amount)
     ):
         frappe.throw(f"""
-                     Total Amount Must be Equal to Cach on Delivery Amount and Payment Channel Amount. <br>
-                     Cash on Delivery Amount : {self.custom_cash_on_delivery_amount} < br> 
-                     Payment Chaannel Amount: { self.custom_payment_channel_amount} <br> 
+                     Total Amount Must be Equal to Cach on Delivery Amount and Payment Channel Amount. 
+                     Cash on Delivery Amount : {self.custom_cash_on_delivery_amount}  
+                     Payment Chaannel Amount: { self.custom_payment_channel_amount}
                      So Total Amount must be {
                         ( self.custom_payment_channel_amount  if self.custom_payment_channel_amount else 0 )
                         +
@@ -625,6 +624,7 @@ def reverse_delivery_note_jv(self):
 def return_delivery_note(self): 
     dn = frappe.qb.DocType('Delivery Note')
     dni = frappe.qb.DocType('Delivery Note Item')
+    pli = frappe.qb.DocType('Pick List Item')
     exist_dn = (
         frappe.qb.from_(dn)
         .join(dni).on(dn.name == dni.parent)
@@ -636,6 +636,16 @@ def return_delivery_note(self):
     return_set = set(lst_dn)
     for return_dn in list(return_set):
             doc = make_return_doc("Delivery Note", return_dn, None)
+            ##### Return the item to box 
+            for i in doc.items:
+                warehouse = (
+                   frappe.qb.from_(pli).select(pli.warehouse)
+                   .where(pli.item_code == i.item_code)
+                   .where(pli.sales_order == i.against_sales_order)
+                   ).run(as_dict = True)
+                if warehouse and warehouse[0] and  warehouse[0]['warehouse']: 
+                    i.warehouse = warehouse[0]['warehouse']
+            #### End Return item to box
             if doc : 
                 doc.save().submit()
     

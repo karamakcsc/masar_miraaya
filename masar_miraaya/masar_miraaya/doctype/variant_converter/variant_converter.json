@@ -1,0 +1,131 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:naming_series",
+ "creation": "2025-01-22 09:47:23.759029",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "template_item",
+  "template_item_name",
+  "color_attr",
+  "size_attr",
+  "column_break_vxvt",
+  "posting_date",
+  "shade_attr",
+  "size_ml_attr",
+  "section_break_sydc",
+  "items",
+  "amended_from",
+  "naming_series"
+ ],
+ "fields": [
+  {
+   "fieldname": "template_item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Template Item",
+   "link_filters": "[[\"Item\",\"has_variants\",\"=\",1],[\"Item\",\"disabled\",\"=\",0]]",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_sydc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Variant Converter Item"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Variant Converter",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_vxvt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "template_item.item_name",
+   "fieldname": "template_item_name",
+   "fieldtype": "Data",
+   "label": "Template Item Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "color_attr",
+   "fieldtype": "Data",
+   "label": "Color Attribute",
+   "read_only": 1
+  },
+  {
+   "fieldname": "size_attr",
+   "fieldtype": "Data",
+   "label": "Size Attribute",
+   "read_only": 1
+  },
+  {
+   "fieldname": "shade_attr",
+   "fieldtype": "Data",
+   "label": "Shade Attribute",
+   "read_only": 1
+  },
+  {
+   "fieldname": "size_ml_attr",
+   "fieldtype": "Data",
+   "label": "Size (ml) Attribute",
+   "read_only": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "VC-.YYYY.-"
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-01-23 13:30:37.649128",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Variant Converter",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_views": 1
+}

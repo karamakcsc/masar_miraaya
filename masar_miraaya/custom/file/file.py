@@ -36,11 +36,23 @@ def add_image_to_item(self, doc, file_path):
     
     with open(file_path, "rb") as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-        
+    
+    
+    img_count = frappe.db.sql("""
+                SELECT tf.attached_to_name
+                FROM tabFile tf 
+                WHERE tf.attached_to_doctype = "Item" AND tf.attached_to_name = %s
+            """,(doc.name), as_dict=True)
+    
+    
+    
+    position = 1
     if self.attached_to_field == 'image':
-        types = ["image", "small_image", "thumbnail", "media_gallery"]
+        types = ["image", "small_image", "thumbnail"]
+        position = 1
     else:
-        types = ["media_gallery"]
+        types = []
+        position = len(img_count)
     
     
     base_url, headers = base_data("magento")
@@ -48,7 +60,7 @@ def add_image_to_item(self, doc, file_path):
         "entry": {
             "media_type": "image",
             "label": "",
-            "position": 1,
+            "position": position,
             "disabled": False,
             "types": types,
             "content": {
@@ -58,7 +70,7 @@ def add_image_to_item(self, doc, file_path):
             }
         }
     }
-    
+        
     url = base_url + f"/rest/V1/products/{doc.item_code}/media"
 
     response =  request_with_history(
