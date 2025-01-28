@@ -31,9 +31,9 @@ class VariantConverter(Document):
     def update_item_to_variant(self):
         template = frappe.get_doc("Item", self.template_item)
         for item in self.items:
-            item_doc = frappe.get_doc("Item", item.item_code)
             frappe.db.set_value("Item", item.item_code, "variant_of", self.template_item)
             frappe.db.set_value("Item", item.item_code, "variant_based_on", "Item Attribute")
+            item_doc = frappe.get_doc("Item", item.item_code)
             for d in template.attributes:
                 attribute_value = None
                 item_doc.attributes = []
@@ -55,6 +55,13 @@ class VariantConverter(Document):
                         "attribute": d.attribute,
                         "attribute_value": attribute_value
                     }).insert()
+            # item_doc.run_method("save")
+            # check_value = item_doc.grant_commission
+            # new_check = not check_value
+            # item_doc.grant_commission = new_check
+            # item_doc.grant_commission = check_value
+            # item_doc.save()
+            # frappe.throw(str(new_check))
 
 
     @frappe.whitelist()

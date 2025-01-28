@@ -1351,7 +1351,7 @@ def get_qty_items_details(main , child_name , name):
         .where(doc.name == name)
         .groupby(child.item_code)
         .select(
-            (child.item_code) , (Sum(child.qty).as_('qty'))
+            (child.item_code) , (Sum(child.qty).as_('qty')), (child.s_warehouse)
         )
     ).run(as_dict = True)
     
