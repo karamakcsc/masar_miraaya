@@ -10,7 +10,7 @@ frappe.ui.form.on("Image Importer", {
             freeze: true,
 			freeze_message: __("Import Image ..."),
             callback: function(r) {
-                frappe.msgprint("Images Imported Successfully.")
+                frappe.msgprint("Images Run in background.")
             }
         })
 

@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+# from masar_miraaya.custom.item import create_new_item
 
 
 class VariantConverter(Document):
@@ -55,15 +56,13 @@ class VariantConverter(Document):
                         "attribute": d.attribute,
                         "attribute_value": attribute_value
                     }).insert()
-            # item_doc.run_method("save")
-            # check_value = item_doc.grant_commission
-            # new_check = not check_value
-            # item_doc.grant_commission = new_check
-            # item_doc.grant_commission = check_value
-            # item_doc.save()
-            # frappe.throw(str(new_check))
+            
+            item_doc.reload()
+            # item_doc.save(ignore_version=True)
+            item_doc.run_method("save")
 
 
+            
     @frappe.whitelist()
     def set_temp_attributes(self):
         template_attributes = frappe.db.sql("""

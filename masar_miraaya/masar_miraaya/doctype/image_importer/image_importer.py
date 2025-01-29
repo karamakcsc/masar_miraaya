@@ -2,10 +2,20 @@ import frappe
 from frappe.model.document import Document
 import zipfile
 import os
+import base64
+from masar_miraaya.api import base_data , request_with_history
 
 class ImageImporter(Document):
     @frappe.whitelist()
     def execute(self):
+        frappe.enqueue(
+            method=self.execute_in_enqueue,
+            queue='long',
+            timeout=10000
+        ) 
+        return True
+         
+    def execute_in_enqueue(self):
         if self.attach:
             file_path = self.get_file_path()
             extract_to = self.unzip_file(file_path)
@@ -68,6 +78,11 @@ class ImageImporter(Document):
                 
                 if image["suffix"] == "1":
                     frappe.db.set_value(self.upload_to, item_code, "image", file_url)
+                self.sync_image_with_magento(
+                    file_url=file_url , 
+                    suffix=image["suffix"], 
+                    item_code=item_code
+                )  
     def attach_file_to_item(self, item_code, file_path ):
         with open(file_path, "rb") as file:
             file_content = file.read()
@@ -95,4 +110,32 @@ class ImageImporter(Document):
                     if os.path.exists(dir_path):
                         os.rmdir(dir_path)
             os.rmdir(extract_to)   
-    
+            
+    def sync_image_with_magento(self , file_url , suffix , item_code):
+        if "files/" in file_url: 
+            image = file_url.split("files/")[1]
+        bench_path = frappe.utils.get_bench_path()
+        site_name = frappe.utils.get_site_name(frappe.local.site)
+        file_path = os.path.join(bench_path, 'sites', site_name, 'public', 'files', image)
+        with open(file_path, "rb") as image_file:
+            encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+        if int(suffix) == 1:
+            types = ["image", "small_image", "thumbnail"]
+        else: 
+            types =[]
+        base_url, headers = base_data("magento")
+        url = base_url + f"/rest/V1/products/{item_code}/media"
+        data = {
+            "entry": {
+                "media_type": "image","label": "", "position": int(suffix),"disabled": False,
+                "types": types, "content": {"base64_encoded_data": encoded_image,"type": "image/jpeg","name": image}
+                }
+            }
+        response =  request_with_history(
+                    req_method='POST', 
+                    document=self.doctype, 
+                    doctype=self.name, 
+                    url=url, 
+                    headers=headers  ,
+                    payload=data        
+                )
