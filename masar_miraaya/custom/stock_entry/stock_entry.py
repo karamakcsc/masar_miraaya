@@ -67,13 +67,18 @@ def update_stock_transfer(self , operation):
         url = base_url + "/rest/V1/inventory/source-items"
         item_list = []
         sql = get_qty_items_details(self.doctype, 'Stock Entry Detail', self.name)
+        warehouse_sql = frappe.db.sql("""
+                                      SELECT tw.name FROM tabWarehouse tw WHERE tw.name NOT LIKE 'C%'
+                                      """, as_dict=True)
         
+        warehouse = [a.name for a in warehouse_sql if a.name]
+        # frappe.throw(str(warehouse)) 
         if sql:
             for item in sql:
                 item_doc = frappe.get_doc("Item", item.item_code)
                 if item_doc.custom_is_publish == 0:
                     continue
-                if item.s_warehouse not in ['Packaging Material - MC', 'Return to Suppliers - MC', 'Marketing - MC', 'Rejected Warehouse - MC', 'Jadria Products - MC', 'Delivery - MC', 'Transit - MC', 'Giveaway Material - MC', 'All Warehouses - MC']:
+                if item.s_warehouse not in [warehouse]:
                     item_stock = get_magento_item_stock(item.item_code)
                     stock_qty = item_stock.get('qty') if item_stock.get('qty') else 0
                     
