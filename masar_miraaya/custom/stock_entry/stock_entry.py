@@ -78,7 +78,7 @@ def update_stock_transfer(self , operation):
                 item_doc = frappe.get_doc("Item", item.item_code)
                 if item_doc.custom_is_publish == 0:
                     continue
-                if item.s_warehouse not in [warehouse]:
+                if item.s_warehouse not in warehouse:
                     item_stock = get_magento_item_stock(item.item_code)
                     stock_qty = item_stock.get('qty') if item_stock.get('qty') else 0
                     
