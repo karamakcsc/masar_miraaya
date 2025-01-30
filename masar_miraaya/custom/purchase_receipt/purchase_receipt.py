@@ -1,6 +1,7 @@
 import frappe
 import requests
-from masar_miraaya.api import base_data, get_qty_items_details, get_magento_item_stock , request_with_history
+from masar_miraaya.api import base_data, get_magento_item_stock , request_with_history, get_qty_items_details
+from frappe.query_builder.functions import  Sum 
 
 
 def on_submit(self, method):
@@ -10,12 +11,23 @@ def on_cancel(self, method):
     update_stock(self , '-')
     
     
-    
+# def get_qty_items_details(self):
+#     doc = frappe.qb.DocType(self.doctype)
+#     child = frappe.qb.DocType('Purchase Receipt Item')
+#     return (
+#         frappe.qb.from_(doc).join(child).on(child.parent == doc.name)
+#         .where(doc.name == self.name)
+#         .groupby(child.item_code)
+#         .select(
+#             (child.item_code) , (Sum(child.qty).as_('qty'))
+#         )
+#     ).run(as_dict = True)  
+
 def update_stock(self , operation):
         base_url, headers = base_data("magento")
         url = base_url + "/rest/V1/inventory/source-items"
         item_list = []
-        sql = get_qty_items_details(self.doctype, 'Purchase Receipt Item', self.name)
+        sql = get_qty_items_details(self.doctype, "Purchase Receipt Item", self.name)
         # frappe.throw(f"Item: {sql}")
         
         if sql:

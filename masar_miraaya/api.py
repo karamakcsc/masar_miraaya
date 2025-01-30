@@ -1346,14 +1346,17 @@ def get_magento_item_stock(item_code):
 def get_qty_items_details(main , child_name , name):
     doc = frappe.qb.DocType(main)
     child = frappe.qb.DocType(child_name)
-    return (
+    sql = (
         frappe.qb.from_(doc).join(child).on(child.parent == doc.name)
         .where(doc.name == name)
         .groupby(child.item_code)
         .select(
-            (child.item_code) , (Sum(child.qty).as_('qty')), (child.s_warehouse)
+            (child.item_code) , (Sum(child.qty).as_('qty'))
         )
-    ).run(as_dict = True)
+    )
+    if main == 'Stock Entry': 
+        sql = sql.select((child.s_warehouse), (child.t_warehouse))
+    return sql.run(as_dict = True)
     
                
 @frappe.whitelist()
