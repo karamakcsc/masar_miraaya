@@ -1355,7 +1355,7 @@ def get_qty_items_details(main , child_name , name):
         )
     )
     if main == 'Stock Entry': 
-        sql = sql.select((child.s_warehouse), (child.t_warehouse))
+        sql = sql.select((child.s_warehouse), (child.t_warehouse), (child.is_finished_item))
     return sql.run(as_dict = True)
     
                
@@ -1469,3 +1469,13 @@ def get_customer_wallet_balance(customer_id , magento_id , erpnext = True):
                                 debit += float(wd.get('Amount'))
             return (credit - debit)
         return None
+    
+    
+    
+def get_packed_warehouse(): 
+    wh = frappe.qb.DocType('Warehouse')
+    return (
+        frappe.qb.from_(wh)
+        .select(wh.name)
+        .where(wh.custom_is_packed_wh == 1 )
+        ).run(as_dict = True)

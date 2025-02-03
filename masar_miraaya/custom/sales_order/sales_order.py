@@ -9,7 +9,7 @@ from erpnext.stock.doctype.pick_list.pick_list import (
 from masar_miraaya.api import change_magento_status_to_cancelled , get_customer_wallet_balance
 from datetime import datetime
 from masar_miraaya.api import base_data , create_magento_auth_webhook , request_with_history
-import requests
+from masar_miraaya.custom.pick_list.pick_list import get_packed_wh , create_stock_reservation_entries
 @frappe.whitelist()
 def get_payment_channel_amount(child):
     payment_chnnel_amount = 0 
@@ -115,7 +115,7 @@ def get_account(company , customer ):
         return account 
 
 def get_cost_center(self):
-        if self.cost_center: 
+        if hasattr(self , 'cost_center') and self.cost_center: 
             cost_center = self.cost_center 
         else: 
             company_doc = frappe.get_doc('Company' , self.company)
@@ -401,9 +401,12 @@ def create_draft_pick_list(self):
 def stock_entry_method(self):
     allow_to_cerate_stock_entry  , delivery_company , driver = delivery_company_validation(self)
     if allow_to_cerate_stock_entry:
-        created = stock_entry_creation(self , delivery_company , driver)
-        if created:
-            return True
+        cancel_stock_reservation_entry(self)
+        cont = outing_se_existing(self)
+        if cont:
+            created = stock_entry_creation(self , delivery_company , driver)
+            if created:
+                return True
 
 def delivery_company_validation(self):
         if self.custom_magento_status == 'Cancelled':
@@ -420,46 +423,44 @@ def delivery_company_validation(self):
             return False , None , None 
         return True  , self.custom_delivery_company , self.custom_driver 
 
-
+def outing_se_existing(self): 
+    delivery_wh = delivery_warehouse()
+    sql = get_existing_se(self = self , warehouse = delivery_wh )
+    if len(sql) !=0 : 
+        return False
+    return True
+    
 def stock_entry_creation(self , delivery_company , driver):
-    pl = frappe.qb.DocType('Pick List')
-    pli = frappe.qb.DocType('Pick List Item')
-    so = frappe.qb.DocType(self.doctype)
-    soi = frappe.qb.DocType('Sales Order Item')
-    pick_list = (
-        frappe.qb.from_(pl)
-        .join(pli).on(pl.name == pli.parent)
-        .select((pl.name).as_('pl_name'))
-        .where(pl.docstatus == 1 )
+    packed_wh  , delivery_wh = get_packed_wh() , delivery_warehouse()
+    exist = get_existing_se(self)
+    if len(exist) != 0 : 
+        for s in exist: 
+            se_doc = frappe.get_doc('Stock Entry' , s.name)
+            se_doc.to_warehouse = delivery_wh
+            for item in se_doc.items: 
+                item.s_warehouse  , item.t_warehouse = packed_wh ,  delivery_wh 
+                item.driver = driver 
+                item.delivery_company = delivery_company
+            new_se = frappe.new_doc('Stock Entry').update(se_doc.as_dict()).save().submit()
+            create_stock_reservation_entry( self , new_se ,delivery_wh )
+            
+def get_existing_se(self , warehouse = None ):
+    se  , pli = frappe.qb.DocType('Stock Entry') , frappe.qb.DocType('Pick List Item')
+    exist = (
+        frappe.qb.from_(se)
+        .select(se.name)
+        .left_join(pli)
+        .on(pli.parent == se.pick_list)
         .where(pli.sales_order == self.name)
-        .groupby(pl.name)
-        ).run(as_dict = True)
-    for loop in pick_list:
-        pl_doc = frappe.get_doc('Pick List' , loop.pl_name)
-        dict_ = create_stock_entry((pl_doc.as_dict()))
-        if bool(dict_) == True and str(dict_) != 'null':
-            dict_['stock_entry_type'] = 'Material Transfer'
-            for r in dict_['items']:
-                warehouse  = (
-                    frappe.qb.from_(soi).select((soi.warehouse).as_('target'))
-                              .where(soi.item_code == r['item_code'])
-                              .where(soi.parent == self.name)
-                              ).run(as_dict = True)
-                t_warehouse = None 
-                if warehouse and warehouse[0] and warehouse[0]['target']:
-                    t_warehouse = warehouse[0]['target']
-                    
-            dict_['to_warehouse'] = t_warehouse
-            se_doc = (
-                frappe.new_doc('Stock Entry')
-                .update(dict_)
-                .save()
-            )
-            for row in se_doc.items:
-                row.driver = driver
-                row.delivery_company = delivery_company
-            se_doc.save().submit()
-            return True
+        .groupby(se.name)
+    )
+    if warehouse: 
+        exist = exist.where(se.to_warehouse == warehouse)
+    return exist.run(as_dict = True)
+
+def create_stock_reservation_entry( self , new_se , warehouse ):
+    picklist = frappe.get_doc('Pick List' , new_se.pick_list)
+    create_stock_reservation_entries(self= picklist ,  stock_entry_list=[new_se] , warehouse= warehouse)
 
 @frappe.whitelist()
 def create_stock_entry(pick_list):

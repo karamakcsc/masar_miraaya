@@ -180,10 +180,10 @@ doc_events = {
     },
     "Pick List": {
         "on_submit": "masar_miraaya.custom.pick_list.pick_list.on_submit"
+    },
+    "Warehouse": { 
+        "validate": "masar_miraaya.custom.warehouse.warehouse.validate"
     }
-    # "Delivery Note": { 
-    #     "on_submit": "masar_miraaya.custom.delivery_note.delivery_note.on_submit"
-    # }
 }
 
 doctype_js = {
@@ -435,7 +435,8 @@ fixtures = [
                 "Payment Entry-custom_user_remarks",
                 "Payment Entry-custom_driver_details",
                 "Company-custom_gift_card_expense_account",
-                 "Item-custom_magento_disabled"
+                "Item-custom_magento_disabled", 
+                "Warehouse-custom_is_packed_wh"
                 
             ]
         ]

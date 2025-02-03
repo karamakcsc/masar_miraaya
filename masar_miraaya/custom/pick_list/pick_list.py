@@ -1,8 +1,11 @@
 import frappe
 from erpnext.stock.doctype.pick_list.pick_list import  PickList
 import json
-from masar_miraaya.api import change_magento_status_to_fullfilled
+from masar_miraaya.api import change_magento_status_to_fullfilled , get_packed_warehouse 
+from erpnext.stock.doctype.stock_reservation_entry.stock_reservation_entry import get_available_qty_to_reserve
 from frappe.query_builder.functions import  Sum
+from frappe.utils import flt
+
 def on_submit(self , method):
     items_validation(self)
     qty_validation(self)
@@ -101,14 +104,25 @@ def user_vaildation(self):
 def packing(self):
     self = frappe._dict(json.loads(self))##
     linked_so = get_linked_so(self)##
-    error , continue_ = change_magento_status(linked_so)############# Magento
-    if continue_: ############# Magento
-        change_so_status(linked_so)
-        PickList.create_stock_reservation_entries(self= frappe.get_doc(self.doctype , self.name) , notify=True)
-        frappe.db.set_value(self.doctype , self.name , 'custom_packed' ,1)
-        return 1 
-    else : ############# Magento
-        frappe.throw('Error Magento Connection : {error}'.format(error = str(error))) ############# Magento
+    pack_wh = get_packed_wh()
+    if pack_wh:
+        error , continue_ = change_magento_status(linked_so)############# Magento
+        if continue_: ############# Magento
+            change_so_status(linked_so)
+            se_list = create_stock_transfar(
+                self = self , 
+                sales_order = linked_so , 
+                target_wh = pack_wh )
+            create_stock_reservation_entries(
+                self= frappe.get_doc(self.doctype , self.name) ,
+                stock_entry_list = se_list , 
+                warehouse = pack_wh
+            )
+            
+            frappe.db.set_value(self.doctype , self.name , 'custom_packed' ,1)
+            return 1 
+        else : ############# Magento
+            frappe.throw('Error Magento Connection : {error}'.format(error = str(error))) ############# Magento
 
 def change_magento_status(linked_so): 
     text = 'Magento ID is None or Sales Order is Not Submitted.' 
@@ -184,3 +198,84 @@ def user_validation_picker(self):
         )
         return False
     return True
+
+def get_cost_center(self):
+        if hasattr(self , 'cost_center') and self.cost_center: 
+            cost_center = self.cost_center 
+        else: 
+            company_doc = frappe.get_doc('Company' , self.company)
+            cost_center = company_doc.cost_center if company_doc.cost_center else None 
+        if cost_center is None : 
+            frappe.throw(
+                'Set Cost Center or Default Cost Center in Company.',
+                title = frappe._("Missing Cost Center"))
+        return cost_center
+    
+
+def get_packed_wh(): 
+    exist_wh = get_packed_warehouse()
+    if len(exist_wh) == 0: 
+        frappe.throw('A packed warehouse must be specified. No packed warehouse found.')
+        return None 
+    return exist_wh[0]['name']
+
+def create_stock_transfar(self  , sales_order , target_wh  ): 
+    _type =  'Material Transfer'
+    cost_center = get_cost_center(self=self)
+    items = list()
+    se_list = list()
+    for so in sales_order: 
+        data = {
+        "stock_entry_type" : _type,
+        "pick_list" : self.name,
+        "purpose" : _type , 
+        "to_warehouse" : target_wh
+        }
+        for l in self.locations:
+            items.append( { 
+                "s_warehouse" : l['warehouse'] ,
+                "t_warehouse" : target_wh , 
+                "item_code" : l['item_code'], 
+                "item_name" : l['item_name'] , 
+                "description" : l['description'] , 
+                "item_group" : l['item_group'] , 
+                "qty" : l['qty'] , 
+                "cost_center" : cost_center
+                })
+        data['items'] = items
+        se_doc = frappe.new_doc('Stock Entry').update(data).save().submit()
+        se_list.append(se_doc)
+    return se_list
+            
+def  create_stock_reservation_entries(
+                self ,stock_entry_list ,  warehouse
+):
+    if len(stock_entry_list) !=0 : 
+        for location in self.locations:
+            if not (location.sales_order and location.sales_order_item):
+                continue
+            is_stock_item, has_serial_no, has_batch_no = frappe.get_cached_value(
+                        "Item", location.item_code, ["is_stock_item", "has_serial_no", "has_batch_no"]
+                    )
+            if is_stock_item:
+                qty_to_reserve = flt(location.picked_qty) - flt(location.stock_reserved_qty)
+                item_data = {
+                    "item_code": location.item_code,
+                    "warehouse": warehouse,
+                    "voucher_type": "Sales Order",
+                    "has_serial_no": has_serial_no,
+                    "has_batch_no": has_batch_no,
+                    "voucher_no": location.sales_order,
+                    "voucher_detail_no": location.sales_order_item,
+                    "from_voucher_type": self.doctype,
+                    "from_voucher_no": self.name,
+                    "from_voucher_detail_no": location.name,
+                    "qty_to_reserve": qty_to_reserve,
+                    "available_qty": get_available_qty_to_reserve(location.item_code, warehouse),
+                    "voucher_qty": location.stock_qty,
+                    "company": self.company,
+                    "stock_uom": location.stock_uom,
+                    "reserved_qty": flt(location.stock_qty) if location.stock_qty else 0
+                }
+                sre = frappe.new_doc('Stock Reservation Entry').update(item_data).save().submit()
+                
