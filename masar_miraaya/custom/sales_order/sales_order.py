@@ -230,7 +230,10 @@ def on_update_after_submit(self, method):
                 delete_previous_jv(self)
                 cost_of_delivery_jv(self)
                 create_delivery_company_jv(self)
-                stock_entry_method(self)
+                if self.custom_stock_entry == 0 : 
+                    stock_entry_method(self)
+                    self.custom_stock_entry =1 
+                    frappe.db.set_value(self.doctype , self.name , 'custom_stock_entry' , 1 , update_modified=False )
             if self.custom_magento_status == 'Delivered':
                 stock_entry_validation(self)
                 cancel_stock_reservation_entry(self)

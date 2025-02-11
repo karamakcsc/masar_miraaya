@@ -436,7 +436,8 @@ fixtures = [
                 "Payment Entry-custom_driver_details",
                 "Company-custom_gift_card_expense_account",
                 "Item-custom_magento_disabled", 
-                "Warehouse-custom_is_packed_wh"
+                "Warehouse-custom_is_packed_wh",
+                "Sales Order-custom_stock_entry"
                 
             ]
         ]

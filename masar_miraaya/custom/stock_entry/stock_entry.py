@@ -41,6 +41,7 @@ def update_stock_issue(self , operation):
         warehouse = [a.name for a in warehouse_sql if a.name]
         if sql:
             for item in sql:
+                stock = 0 
                 item_doc = frappe.get_doc("Item", item.item_code)
                 if item_doc.custom_is_publish == 0:
                     continue
@@ -142,6 +143,7 @@ def update_stock_receipt(self , operation):
         warehouse = [a.name for a in warehouse_sql if a.name]
         if sql:
             for item in sql:
+                stock = 0 
                 item_doc = frappe.get_doc("Item", item.item_code)
                 if item_doc.custom_is_publish == 0:
                     continue
@@ -190,6 +192,7 @@ def update_stock_repack(self , operation):
         warehouse = [a.name for a in warehouse_sql if a.name]
         if sql:
             for item in sql:
+                stock = 0 
                 item_doc = frappe.get_doc("Item", item.item_code)
                 if item_doc.custom_is_publish == 0:
                     continue
@@ -245,6 +248,7 @@ def update_stock_disassemble(self , operation):
         warehouse = [a.name for a in warehouse_sql if a.name]
         if sql:
             for item in sql:
+                stock = 0 
                 item_doc = frappe.get_doc("Item", item.item_code)
                 if item_doc.custom_is_publish == 0:
                     continue
