@@ -256,16 +256,16 @@ def update_stock_disassemble(self , operation):
                     item_stock = get_magento_item_stock(item.item_code)
                     stock_qty = item_stock.get('qty') if item_stock.get('qty') else 0
                     if operation == 'submit':
-                        if item.s_warehouse: 
+                        if item.t_warehouse: 
                             stock = stock_qty + item.qty
-                        elif item.t_warehouse: 
+                        elif item.s_warehouse: 
                             if stock_qty < item.qty:
                                 frappe.throw(f"The Qty: {item.qty}, is More than the Stock Qty in Magento: {stock_qty}")
                             stock = stock_qty - item.qty
                     elif operation == 'cancel':
-                        if item.t_warehouse: 
+                        if item.s_warehouse: 
                             stock = stock_qty + item.qty
-                        elif item.s_warehouse: 
+                        elif item.t_warehouse: 
                             if stock_qty < item.qty:
                                 frappe.throw(f"The Qty: {item.qty}, is More than the Stock Qty in Magento: {stock_qty}")
                             stock = stock_qty - item.qty
