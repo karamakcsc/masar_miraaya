@@ -444,6 +444,7 @@ def stock_entry_creation(self , delivery_company , driver):
                 item.s_warehouse  , item.t_warehouse = packed_wh ,  delivery_wh 
                 item.driver = driver 
                 item.delivery_company = delivery_company
+                item.serial_and_batch_bundle = None
             new_se = frappe.new_doc('Stock Entry').update(se_doc.as_dict()).save().submit()
             create_stock_reservation_entry( self , new_se ,delivery_wh )
             
