@@ -178,7 +178,7 @@ def create_customer_auth(customer_email):
         else:
             frappe.throw(f'Error To Create User Token {str(token_json)}')
     else: 
-        frappe.throw(f'Error To Create User Token {str(token_json)}  <br> {str(url)} <br> {str(headers)} <br> {str(response.text)}')
+        frappe.throw(f'Error To Create User Token {str(token_json)}')
 
 @frappe.whitelist(allow_guest=True)
 def get_payment_channel():
