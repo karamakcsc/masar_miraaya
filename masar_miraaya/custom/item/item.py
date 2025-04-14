@@ -149,8 +149,7 @@ def custom_attributes_function(self):
                     custom_attributes.append ({'attribute_code' :att_doc.custom_attribute_code ,
                                             'value' : str(abbr)})
             
-                else:
-                    
+                elif self.variant_of:
                     att_doc = frappe.get_doc('Item Attribute' , attributes.attribute)
                     abbr = frappe.db.sql('SELECT abbr FROM `tabItem Attribute Value` WHERE parent = %s and attribute_value = %s' ,( attributes.attribute ,attributes.attribute_value ) )[0][0]
                     custom_attributes.append ({'attribute_code' :att_doc.custom_attribute_code ,

@@ -178,7 +178,7 @@ def create_customer_auth(customer_email):
         else:
             frappe.throw(f'Error To Create User Token {str(token_json)}')
     else: 
-        frappe.throw(f'Error To Create User Token {str(token_json)}')
+        frappe.throw(f'Error To Create User Token {str(token_json)}  <br> {str(url)} <br> {str(headers)} <br> {str(response.text)}')
 
 @frappe.whitelist(allow_guest=True)
 def get_payment_channel():
@@ -1479,3 +1479,29 @@ def get_packed_warehouse():
         .select(wh.name)
         .where(wh.custom_is_packed_wh == 1 )
         ).run(as_dict = True)
+    
+    
+    
+@frappe.whitelist()    
+def customer_notification(): 
+    customers = frappe.db.sql("""
+                        SELECT so1.company , so1.customer ,so1.customer_name , so1.transaction_date 
+                        FROM `tabSales Order` so1
+                        LEFT JOIN `tabSales Order` so2 
+                            ON so1.customer = so2.customer 
+                            AND so2.delivery_date > so1.delivery_date
+                        WHERE DATEDIFF(CURRENT_DATE() , so1.transaction_date) = 180 and so2.name IS NULL
+                        GROUP BY so1.customer
+                        """ , as_dict = 1 )
+    for c in customers: 
+        customer_email = frappe.db.get_value('Customer' , c.customer , 'custom_email')
+        if customer_email is not None:
+            frappe.sendmail(
+                recipients=customer_email,
+                subject='Last Order Notification',
+                message=f"Dear {c.customer_name},<br>This is a notification that you have not placed any orders for the last 180 days.<br> Best regards,<br><b>{c.company}</b>",
+                reference_doctype='Customer',
+                reference_name=c.customer
+            )
+        
+    

@@ -60,6 +60,9 @@ class ImageImporter(Document):
             if "_" in file_name:
                 item_code, suffix = file_name.split("_", 1)
                 suffix = suffix.split(".")[0] 
+            elif "-" in file_name:
+                item_code, suffix = file_name.split("-", 1)
+                suffix = suffix.split(".")[0] 
             else:
                 frappe.throw(f"Invalid file name format: {file_name}. Expected format: 'ITEMCODE_SUFFIX.jpg'")
                 continue

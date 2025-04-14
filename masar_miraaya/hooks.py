@@ -210,7 +210,8 @@ scheduler_events = {
 	# 	"masar_miraaya.override._reorder_item.reorder_item"
 	# ],
 	"daily": [
-		"masar_miraaya.notifications.batch_expiry.near_expiry_batches"
+		"masar_miraaya.notifications.batch_expiry.near_expiry_batches",
+        "masar_miraaya.api.customer_notification"
 	],
 	"hourly": [
 		"masar_miraaya.jobs._reorder_item.reorder_item"
@@ -493,5 +494,6 @@ Document.validate_amended_from  = _document.validate_amended_from_override
 ### Picked Override 
 from erpnext.stock.doctype.pick_list import pick_list
 from masar_miraaya.override import _pick_list
+from erpnext.stock.doctype.pick_list.pick_list import PickList
 pick_list.filter_locations_by_picked_materials = _pick_list.filter_locations_by_picked_materials_override
-
+pick_list.PickList.set_item_locations = _pick_list.PickListOverride.set_item_locations_override
