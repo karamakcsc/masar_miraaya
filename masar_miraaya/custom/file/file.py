@@ -4,14 +4,14 @@ import base64
 import os
 from masar_miraaya.api import base_data , request_with_history
 def validate(self, method):
-    if self.attached_to_doctype == 'Item' and self.custom_magento_sync == 0 :
+    if self.attached_to_doctype == 'Item' and self.custom_magento_sync == 0 and self.custom_uploaded_to_magento == 0:
         doc = frappe.get_doc('Item', self.attached_to_name)
         if doc.custom_is_publish ==1:
             file_path = self.file_url
             add_image_to_item(self, doc, file_path)
 
 def on_trash(self, method):
-    if self.attached_to_doctype == 'Item' and self.custom_magento_sync == 0:
+    if self.attached_to_doctype == 'Item' and self.custom_magento_sync == 0 and self.custom_uploaded_to_magento == 1:
         doc = frappe.get_doc('Item', self.attached_to_name)
         if doc.custom_is_publish ==1:
             get_magento_image_id(doc, self.file_name)
@@ -72,7 +72,7 @@ def add_image_to_item(self, doc, file_path):
     }
         
     url = base_url + f"/rest/V1/products/{doc.item_code}/media"
-
+    
     response =  request_with_history(
                     req_method='POST', 
                     document=self.doctype, 
@@ -83,7 +83,11 @@ def add_image_to_item(self, doc, file_path):
                 )
     
     if response.status_code == 200:
-        frappe.msgprint("Image Added to Item Successfully", alert = True, indicator = 'green')
+        frappe.msgprint("Image Added to Item Successfully")
+        self.custom_uploaded_to_magento = 1
+        frappe.db.set_value(self.doctype , self.name, "custom_uploaded_to_magento", 1, update_modified=False)
+        frappe.db.commit()
+
     else:
         frappe.throw(f"Error Image: {response.text}")
         
@@ -101,6 +105,7 @@ def get_magento_image_id(self, image_path):
                     url=url, 
                     headers=headers  ,
                 )
+    # frappe.throw(str(response.json()))
     if response.status_code == 200:
         image_data = response.json()
     else:
@@ -111,6 +116,7 @@ def get_magento_image_id(self, image_path):
         magento_filename = data['file'].split('/')[-1]
         if magento_filename == image_path:
             entity_id = data['id']
+    
     if entity_id:
         remove_image_from_magento(self, entity_id)
     else:

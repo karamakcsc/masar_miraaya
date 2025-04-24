@@ -438,7 +438,8 @@ fixtures = [
                 "Company-custom_gift_card_expense_account",
                 "Item-custom_magento_disabled", 
                 "Warehouse-custom_is_packed_wh",
-                "Sales Order-custom_stock_entry"
+                "Sales Order-custom_stock_entry",
+                "File-custom_uploaded_to_magento"
                 
             ]
         ]

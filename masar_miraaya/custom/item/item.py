@@ -7,15 +7,7 @@ def validate(self, method):
     if (self.custom_is_publish and ('API Integration' not in roles)) or (self.custom_is_publish and frappe.session.user == 'Administrator' ):
         magento = frappe.get_doc('Magento Sync')
         if magento.sync == 0 :
-            frappe.enqueue(
-                'masar_miraaya.custom.item.item.create_new_item',
-                queue='default',
-                timeout=300,
-                is_async=True,
-                enqueue_after_commit=True,
-                at_front=True,
-                self = self,
-            )
+            create_new_item(self)
         else: 
             frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
 def before_rename(self, method, old, new, merge):
@@ -36,10 +28,6 @@ def before_rename(self, method, old, new, merge):
                     payload=payload        
                 )
     if response.status_code == 200:
-        # json_response = response.json()
-        # self.custom_item_id = json_response['id']
-        # frappe.db.set_value("Item", self.name, "custom_item_id", json_response['id'])
-        # frappe.db.commit()
         frappe.msgprint(f"Item Renamed Successfully in Magento" , alert=True , indicator='green')
     else:
         frappe.throw(str(f"Error Renaming Item: {str(response.text)}."))
@@ -62,12 +50,18 @@ def create_new_item(self):
         self.custom_item_id = json_response['id']
         frappe.db.set_value("Item", self.name, "custom_item_id", json_response['id'])
         frappe.db.commit()
-        frappe.msgprint(f"Item Created Successfully in Magento" , alert=True , indicator='green')
+        frappe.msgprint(f"Item: {self.name} Created/Updated Successfully in Magento" , alert=True , indicator='green')
     else:
         frappe.throw(str(f"Error Creating Item: {str(response.text)}."))
     if self.variant_of:
-            templete_doc = frappe.get_doc('Item' , self.variant_of)
-            create_new_item(templete_doc)
+        frappe.enqueue(
+        'masar_miraaya.custom.item.item.create_new_item',
+        self=frappe.get_doc('Item', self.variant_of),
+        queue='default',
+        timeout=300,
+        is_async=True,
+        enqueue_after_commit=True
+    )
 
         
         
@@ -82,8 +76,6 @@ def custom_attributes_function(self):
             "custom_how_to_use": "how_to_use",
             "custom_formulation": "formulation",
             "description": "product_description",
-            # "custom_country_of_manufacture": "country_of_manufacture", 
-            # "tax_class_id" : "tax_class_id",
             "custom_item_name_ar" : "arabic_name",
             "custom_arabic_metatitle":"arabic_metatitle" , 
             "custom_arabic_description":"arabic_description",
@@ -151,9 +143,15 @@ def custom_attributes_function(self):
             
                 elif self.variant_of:
                     att_doc = frappe.get_doc('Item Attribute' , attributes.attribute)
-                    abbr = frappe.db.sql('SELECT abbr FROM `tabItem Attribute Value` WHERE parent = %s and attribute_value = %s' ,( attributes.attribute ,attributes.attribute_value ) )[0][0]
-                    custom_attributes.append ({'attribute_code' :att_doc.custom_attribute_code ,
-                                            'value' : abbr})
+                    abbr = frappe.db.sql('SELECT abbr FROM `tabItem Attribute Value` WHERE parent = %s and attribute_value = %s' ,( attributes.attribute ,attributes.attribute_value ) )
+                    if abbr and len(abbr) != 0:
+                        abbr = abbr[0][0]
+                        custom_attributes.append ({
+                            'attribute_code' :att_doc.custom_attribute_code ,
+                            'value' : abbr
+                        })
+                    else:
+                        frappe.throw(f"Attribute Value {attributes.attribute_value} not found in Item Attribute Value in item {self.name}")
         # if self.image:
         #     custom_images = ['image' , 'small_image' , 'thumbnail' , 'swatch_image']
         #     path_image = self.image

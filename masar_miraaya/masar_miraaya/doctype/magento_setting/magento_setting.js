@@ -59,5 +59,24 @@ frappe.ui.form.on('Magento Setting', {
             frm.toggle_display("magento_admin_details_section", false);
             frm.toggle_display("magento_wallet_details_section", false);
         }
-    }
+    },
+    // update_images: function (frm) {
+    //     update_images(frm);
+    // }
 });
+
+
+// function update_images(frm) {
+//     frappe.call({
+//         doc: frm.doc,
+//         method: "update_images",
+//         callback: function (r) {
+//             if (r.message) {
+//                 frappe.show_alert({
+//                     message: __('Images updated successfully'),
+//                     indicator: 'green'
+//                 });
+//             }
+//         }
+//     });
+// }
