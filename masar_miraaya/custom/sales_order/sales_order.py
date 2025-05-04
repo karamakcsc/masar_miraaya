@@ -549,12 +549,20 @@ def create_delivery_note(self):
     target.submit()
     return target.name
 
-def delivery_note_jv(self , delivery_note):
-    delivery_note = frappe.get_doc('Delivery Note' ,delivery_note )
+def delivery_note_jv(self , delivery_note = None ):
+    if delivery_note is not None: 
+        delivery_note = frappe.get_doc('Delivery Note' ,delivery_note )
     company_doc = frappe.get_doc("Company", self.company)
     sales_account = company_doc.default_income_account
     revenue_account =deferred_revenue_account(company=self.company)
+    margin_total = 0.0
+    for i in self.items:
+        margin_total+= i.margin_rate_or_amount if i.margin_rate_or_amount else 0 
     cost_center = get_cost_center(self)
+    total =  float(float(self.custom_payment_channel_amount) + 
+              float(self.custom_cash_on_delivery_amount) +
+              float(self.discount_amount) -
+              margin_total)
     if not sales_account:
                 frappe.throw(
                 'Set Defualt Income Account Account in Company {company}'
@@ -570,15 +578,15 @@ def delivery_note_jv(self , delivery_note):
     jv.custom_not_to_reverse = 1 
     dr_row = { 
             'account': revenue_account,
-            'debit_in_account_currency' : float(self.custom_total_amount),
-            'debit' : float(self.custom_total_amount),
+            'debit_in_account_currency' :total,
+            'debit' :total,
             'cost_center': cost_center,
         }
     jv.append("accounts", dr_row)
     cr_row = { 
                 'account' : sales_account, 
-                'credit_in_account_currency' :float(self.custom_total_amount),
-                'credit' : float(self.custom_total_amount), 
+                'credit_in_account_currency' :total,
+                'credit' : total, 
                 'cost_center' : cost_center
     }
     jv.append("accounts", cr_row)

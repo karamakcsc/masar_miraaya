@@ -20,7 +20,7 @@ def data(filters):
                                 tso.customer, 
                                 tso.customer_name, 
                                 COUNT(tso.name) AS `Sales Order Count`,
-                                SUM(tso.total_qty) AS `Sales Orders Qty` 
+                                SUM(tso.total_qty) - COUNT(tso.name) AS `Sales Orders Qty` 
                             FROM `tabSales Order` tso 
                             WHERE {conditions} AND tso.docstatus = 1
                             GROUP BY tso.customer

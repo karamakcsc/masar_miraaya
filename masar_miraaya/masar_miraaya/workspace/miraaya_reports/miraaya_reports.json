@@ -182,16 +182,6 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Sales Order Item Profit",
-   "link_count": 0,
-   "link_to": "Sales Order Item Profit",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
    "label": "Supplier-Wise Sales Analytics",
    "link_count": 0,
    "link_to": "Supplier-Wise Sales Analytics",
@@ -208,9 +198,19 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Gross Profit",
+   "link_count": 0,
+   "link_to": "Gross Profit",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-01-09 11:11:02.434636",
+ "modified": "2025-05-04 12:40:39.517549",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Miraaya Reports",
