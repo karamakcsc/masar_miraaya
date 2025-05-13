@@ -42,8 +42,7 @@
   "customer",
   "column_break_vtcc",
   "create_magento_customer_prod_auth",
-  "magento_cust_prod_auth",
-  "update_images"
+  "magento_cust_prod_auth"
  ],
  "fields": [
   {
@@ -240,18 +239,13 @@
    "fieldtype": "Link",
    "label": "Customer",
    "options": "Customer"
-  },
-  {
-   "fieldname": "update_images",
-   "fieldtype": "Button",
-   "label": "Update Images"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-04-16 14:27:41.507871",
+ "modified": "2025-05-07 11:12:14.134844",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Magento Setting",
@@ -268,6 +262,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

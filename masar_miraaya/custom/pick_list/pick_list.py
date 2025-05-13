@@ -106,19 +106,18 @@ def packing(self):
     linked_so = get_linked_so(self)##
     pack_wh = get_packed_wh()
     if pack_wh:
-        error , continue_ = change_magento_status(linked_so)############# Magento
-        if continue_: ############# Magento
-            change_so_status(linked_so)
-            se_list = create_stock_transfar(
+        se_list = create_stock_transfar(
                 self = self , 
                 sales_order = linked_so , 
                 target_wh = pack_wh )
-            create_stock_reservation_entries(
+        create_stock_reservation_entries(
                 self= frappe.get_doc(self.doctype , self.name) ,
                 stock_entry_list = se_list , 
                 warehouse = pack_wh
             )
-            
+        error , continue_ = change_magento_status(linked_so)############# Magento
+        if continue_: ############# Magento      
+            change_so_status(linked_so)      
             frappe.db.set_value(self.doctype , self.name , 'custom_packed' ,1)
             return 1 
         else : ############# Magento

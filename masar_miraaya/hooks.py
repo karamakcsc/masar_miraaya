@@ -159,7 +159,8 @@ doc_events = {
         "validate" : "masar_miraaya.custom.item_attribute.item_attribute.validate"
     },
     "Sales Invoice": {
-        "on_submit": "masar_miraaya.custom.sales_invoice.sales_invoice.on_submit"
+        "on_submit": "masar_miraaya.custom.sales_invoice.sales_invoice.on_submit", 
+        "validate": "masar_miraaya.custom.sales_invoice.sales_invoice.validate"
     },
     "Item Price": {
         "validate": "masar_miraaya.custom.item_price.item_price.validate"
@@ -439,7 +440,10 @@ fixtures = [
                 "Item-custom_magento_disabled", 
                 "Warehouse-custom_is_packed_wh",
                 "Sales Order-custom_stock_entry",
-                "File-custom_uploaded_to_magento"
+                "File-custom_uploaded_to_magento",
+                # "Sales Order-custom_reposted"
+                "Company-custom_default_return_income_account",
+                "Stock Entry-custom_is_publish"
                 
             ]
         ]

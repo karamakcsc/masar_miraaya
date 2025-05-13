@@ -24,7 +24,10 @@ frappe.ui.form.on("Repost Sales Order", {
                         refresh_field('orders');
                     }
                 })
-    }
+    }, 
+    status: function(frm) {
+        GetSalesOrders(frm);
+    },
 });
 
 function GetSalesOrders(frm){ 
@@ -39,4 +42,12 @@ function GetSalesOrders(frm){
             })
         }, __("Get"));
     }
+    frm.fields_dict['orders'].grid.get_field('sales_order').get_query = function() {
+        return { 
+            filters: [
+                ["custom_magento_status", "=", frm.doc.status],
+                ["is_group", "=", 0]
+            ]
+        };
+    };
 }

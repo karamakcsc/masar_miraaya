@@ -115,6 +115,8 @@ class ImageImporter(Document):
             os.rmdir(extract_to)   
             
     def sync_image_with_magento(self , file_url , suffix , item_code):
+        if '_' in suffix:
+            suffix = suffix.replace('_', '')
         if "files/" in file_url: 
             image = file_url.split("files/")[1]
         bench_path = frappe.utils.get_bench_path()
@@ -122,7 +124,7 @@ class ImageImporter(Document):
         file_path = os.path.join(bench_path, 'sites', site_name, 'public', 'files', image)
         with open(file_path, "rb") as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-        if int(suffix) == 1:
+        if suffix in [1 , 1.0 , '1' ,"1" , "1.0" , '1.0']:
             types = ["image", "small_image", "thumbnail"]
         else: 
             types =[]

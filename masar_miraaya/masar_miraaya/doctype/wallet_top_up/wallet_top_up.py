@@ -197,9 +197,7 @@ class WalletTopup(Document):
         
     def adjust_amount_to_wallet_magento(self):
         customer_doc = frappe.get_doc('Customer' , self.customer)
-        base_url, headers =base_data(request_in="magento_customer_auth" , customer_email=customer_doc.custom_email)
-        url = base_url + "graphql"
-        
+        base_url, headers =base_data(request_in="magento")
         action_type = None
         wallet_amount = 0        
         
@@ -212,20 +210,16 @@ class WalletTopup(Document):
                 action_type = "credit"
             elif self.action_type ==  "Debit":
                 action_type = "debit"
-        
+        if action_type == 'credit':
+            end_url = 'add'
+        elif action_type == 'debit':
+            end_url = 'deduct'
+        else:
+            frappe.throw("Invalid action type. Must be either 'credit' or 'debit'.")
+        url = base_url + f"/rest/V1/wallet/{end_url}"
         payload = {
-            "query": f"""
-            mutation {{
-                adjustamounttowallet(
-                    customerIds: "{self.customer_id}" , 
-                    walletamount: {wallet_amount} , 
-                    walletactiontype: "{action_type}" , 
-                    walletnote: "{self.user_remarks}"
-                ) {{
-                    message
-                }}
-            }}
-            """
+           "customerId" : int(self.customer_id),
+           "amount" : float(wallet_amount)
         }
         response = request_with_history(
                     req_method='POST', 

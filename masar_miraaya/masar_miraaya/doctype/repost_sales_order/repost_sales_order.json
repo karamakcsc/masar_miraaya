@@ -9,6 +9,7 @@
   "from_date",
   "column_break_zewv",
   "to_date",
+  "status",
   "repost",
   "section_break_hmee",
   "orders"
@@ -50,13 +51,20 @@
    "fieldname": "repost",
    "fieldtype": "Button",
    "label": "Repost"
+  },
+  {
+   "default": "Delivered",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Delivered\nCancelled"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-05-04 14:43:14.372040",
+ "modified": "2025-05-05 13:42:43.360574",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Repost Sales Order",
@@ -73,6 +81,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

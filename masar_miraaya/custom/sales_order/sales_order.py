@@ -10,6 +10,7 @@ from masar_miraaya.api import change_magento_status_to_cancelled , get_customer_
 from datetime import datetime
 from masar_miraaya.api import base_data , create_magento_auth_webhook , request_with_history
 from masar_miraaya.custom.pick_list.pick_list import get_packed_wh , create_stock_reservation_entries
+from datetime import timedelta
 @frappe.whitelist()
 def get_payment_channel_amount(child):
     payment_chnnel_amount = 0 
@@ -153,11 +154,16 @@ def create_sales_invoice(self):
 
         if not exist_sales:
             doc = make_sales_invoice(self.name)
+            doc.set_posting_time = 1
+            doc.posting_date = self.transaction_date  # 2024-12-21
+            doc.due_date = self.transaction_date
             for item in doc.items: 
                 item.enable_deferred_revenue = 1 
                 item.deferred_revenue_account = deferred_revenue_acc
                 item.service_start_date = self.transaction_date
                 item.service_end_date = self.transaction_date
+                if item.qty == 0: 
+                    item.qty = frappe.db.get_value('Sales Order Item' , item.so_detail , 'qty')
             doc.save()
             doc.submit()
             frappe.msgprint(
@@ -555,14 +561,14 @@ def delivery_note_jv(self , delivery_note = None ):
     company_doc = frappe.get_doc("Company", self.company)
     sales_account = company_doc.default_income_account
     revenue_account =deferred_revenue_account(company=self.company)
-    margin_total = 0.0
+    total_discount = 0.0
     for i in self.items:
-        margin_total+= i.margin_rate_or_amount if i.margin_rate_or_amount else 0 
+        total_discount+= i.discount_amount if i.discount_amount else 0 
     cost_center = get_cost_center(self)
     total =  float(float(self.custom_payment_channel_amount) + 
               float(self.custom_cash_on_delivery_amount) +
-              float(self.discount_amount) -
-              margin_total)
+              float(self.discount_amount) +
+              total_discount)
     if not sales_account:
                 frappe.throw(
                 'Set Defualt Income Account Account in Company {company}'
@@ -830,7 +836,8 @@ def cancelled_pick_list(self):
                 ).run(as_dict=True)
                 if len(stock_entry) !=0:
                     for se_loop in stock_entry:
-                        frappe.db.set_value('Stock Entry' , se_loop.name , 'pick_list' , None)
+                        se_doc = frappe.get_doc('Stock Entry' , se_loop.name)
+                        se_doc.run_method('cancel')
                 cancel_stock_reservation_entry(self)
                 pl_doc= frappe.get_doc('Pick List' , pl_loop.name)
                 pl_doc.run_method('cancel')
