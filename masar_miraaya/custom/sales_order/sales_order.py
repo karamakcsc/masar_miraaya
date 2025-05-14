@@ -71,7 +71,7 @@ def validation_payment_channel_amount(self):
         
     if abs(float(self.custom_total_amount) - float(self.grand_total) ) > 0.001 :
         frappe.throw(
-            'The total amount for the item must match the total amount for the payment channels with Cash on Delivery.'
+            f'The total amount for the item must match the total amount for the payment channels with Cash on Delivery.'
             , title = frappe._("Validation Error")
         )
 
@@ -403,7 +403,8 @@ def create_draft_pick_list(self):
     doc.custom_delivery_date = self.delivery_date
     doc.custom_delivery_time = self.custom_delivery_time
     doc.custom_magento_id = self.custom_magento_id
-    doc.save()
+    if len(doc.locations) != 0 :
+        doc.save()
 
 
 @frappe.whitelist()
@@ -565,10 +566,7 @@ def delivery_note_jv(self , delivery_note = None ):
     for i in self.items:
         total_discount+= i.discount_amount if i.discount_amount else 0 
     cost_center = get_cost_center(self)
-    total =  float(float(self.custom_payment_channel_amount) + 
-              float(self.custom_cash_on_delivery_amount) +
-              float(self.discount_amount) +
-              total_discount)
+    total =  float(self.total)
     if not sales_account:
                 frappe.throw(
                 'Set Defualt Income Account Account in Company {company}'

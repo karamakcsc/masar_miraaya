@@ -57,14 +57,14 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Delivered\nCancelled"
+   "options": "\nNew\nFullfilled\nOn the Way\nDelivered\nCancelled\nReorder"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-05-05 13:42:43.360574",
+ "modified": "2025-05-14 12:08:26.316031",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Repost Sales Order",

@@ -22,30 +22,26 @@ class RepostSalesOrder(Document):
         if self.from_date > self.to_date:
             frappe.throw("From date should be less than to date") 
         so = frappe.qb.DocType("Sales Order")
-        orders = (
+        orders_query = (
             frappe.qb.from_(so)
-            .select(so.name.as_("sales_order"), so.customer, so.customer_name, so.grand_total)
-            .where((so.docstatus == 1) & (so.custom_magento_status == self.status))
+            .select(
+                so.name.as_("sales_order"),
+                so.customer,
+                so.customer_name,
+                so.grand_total
+            )
+            .where(so.docstatus == 1)
             .where(so.transaction_date.between(self.from_date, self.to_date))
             .orderby(so.transaction_date)
-        ).run(as_dict=True)
+        )
+        if self.status:
+            orders_query = orders_query.where(so.custom_magento_status == self.status)
+
+        orders = orders_query.run(as_dict=True)
+
         self.orders = []
         for order in orders:
             self.append("orders", order)
-    # def handle_return_delivery_notes(self, sales_order):
-    #         if sales_order.custom_magento_status != "Delivered":
-    #             return
-    #         delivery_notes = frappe.db.get_all(
-    #             "Delivery Note",
-    #             filters={"against_sales_order": sales_order.name, "is_return": 1},
-    #             fields=["name", "docstatus"]
-    #         )
-    #         for dn in delivery_notes:
-    #             dn_doc = frappe.get_doc("Delivery Note", dn.name)
-    #             if dn_doc.docstatus == 1:
-    #                 dn_doc.cancel()
-    #             frappe.delete_doc("Delivery Note", dn_doc.name)
-    #             print(f"Return Delivery Note {dn_doc.name} has been canceled and deleted.")
     @frappe.whitelist()
     def repost_sales_orders(self):
         if not self.orders:
@@ -54,14 +50,53 @@ class RepostSalesOrder(Document):
         if frappe.session.user != "Administrator":
             frappe.throw("You are not allowed to repost sales orders")
 
-        frappe.enqueue(self.repost, queue="long" , timeout=10000)
+    #     frappe.enqueue(self.repost, queue="long" , timeout=10000)
 
-        frappe.msgprint("Reposting sales orders in progress ...", alert=True, indicator="blue")         
-    def repost(self):
+    #     frappe.msgprint("Reposting sales orders in progress ...", alert=True, indicator="blue")         
+    # def repost(self):
         if not self.orders:
             frappe.throw("No sales orders to repost")
         for order in self.orders:
                 sales_order = frappe.get_doc("Sales Order", order.sales_order)
+                items_to_remove = []
+                replacement_data = None
+                for i in sales_order.items:
+                    if i.is_stock_item == 0 and i.price_list_rate != i.rate:
+                        correct_item = frappe.db.sql(f"""
+                                                SELECT p.item_code ,i.item_name , i.description ,  p.price_list_rate FROM `tabItem Price` p 
+                                                INNER JOIN  tabItem  i ON i.name =p.item_code 
+                                                WHERE i.is_stock_item = 0 AND p.selling = 1 AND p.price_list_rate = {i.rate}
+                                                 """ , as_dict=True)
+                        if correct_item and correct_item[0] and correct_item[0]['item_code']:
+                            if correct_item:
+                                replacement_data = correct_item[0]
+                                items_to_remove.append(i.name)
+                if replacement_data:
+                    frappe.db.set_value('Sales Order' , sales_order.name , 'docstatus' , 0 , update_modified=False)
+                    sales_order.docstatus = 0 
+                    for i in sales_order.items:
+                        frappe.db.set_value('Sales Order Item' , i.name , 'docstatus' , 0 , update_modified=False)
+                        i.docstatus = 0 
+                    sales_order.items = [i for i in sales_order.items if i.name not in items_to_remove]
+                    
+                    sales_order.append("items", {
+                            "item_code": replacement_data['item_code'],
+                            "item_name": replacement_data['item_name'],
+                            "description": replacement_data['description'],
+                            "rate": replacement_data['price_list_rate'],
+                            "price_list_rate": replacement_data['price_list_rate'],
+                            "qty": 1,
+                            "amount": replacement_data['price_list_rate'],
+                            "is_stock_item": 0
+                        })   
+                    sales_order.save(ignore_permissions=True)
+                    frappe.db.set_value('Sales Order' , sales_order.name , 'docstatus' , 1 , update_modified=False)
+                    sales_order.docstatus = 1 
+                    for i in sales_order.items:
+                        frappe.db.set_value('Sales Order Item' , i.name , 'docstatus' , 1 , update_modified=False)
+                        i.docstatus = 1
+                        
+                        
                 self.delete_journal_entries(sales_order)
                 linked_dn = frappe.db.get_all(
                     "Delivery Note Item",
@@ -72,9 +107,17 @@ class RepostSalesOrder(Document):
                     cost_of_delivery_jv(self=sales_order)
                     create_delivery_company_jv(self=sales_order)
                     delivery_note_jv(self=sales_order)
+                elif  sales_order.custom_magento_status == 'On the Way':
+                    cost_of_delivery_jv(self=sales_order)
+                    create_delivery_company_jv(self=sales_order)
                 if sales_order.custom_magento_status in ["Cancelled" , "Reorder"]:
                     reverse_journal_entry(self=sales_order)
+                    
+                    
+                    
+                    
                 self.repost_sales_invoices(sales_order)
+                
                 if not frappe.db.exists("Sales Invoice Item", {"docstatus": ["!=", 2], "sales_order": sales_order.name}):
                     if sales_order.custom_magento_status in ["Delivered", "Cancelled" , "Reorder"]:
                         create_new_invoice(sales_order)
@@ -97,6 +140,11 @@ class RepostSalesOrder(Document):
             as_dict=True,
         )
         self.delete_gl_entries(sales_order_name = sales_order.name)
+        default_discount_account = frappe.get_cached_value("Company", self.company, "default_discount_account")
+        if not default_discount_account:
+            frappe.throw(
+                f"Set Default Discount Account in Company {frappe.utils.get_link_to_form('Company', si_doc.company)}"
+            )
         for re in si_list:
             original_name = re["parent"]
             return_invoices = frappe.get_all("Sales Invoice", filters={"return_against": original_name}, pluck="name")
@@ -107,16 +155,47 @@ class RepostSalesOrder(Document):
                 if sales_order.custom_magento_status == "Delivered":
                     frappe.delete_doc("Sales Invoice", return_doc.name)
             si_doc = frappe.get_doc("Sales Invoice", original_name)
-            frappe.db.set_value("Sales Invoice", si_doc.name, "docstatus", 0)
+            frappe.db.set_value("Sales Invoice", si_doc.name, "docstatus", 0 , update_modified=False)
             si_doc.reload()
             si_doc.docstatus = 0
             si_doc.set_posting_time = 1
             si_doc.posting_date =  sales_order.transaction_date
             si_doc.due_date = sales_order.transaction_date
+            items_to_remove = []
+            replacement_data = None
             for item in si_doc.items:
                 item.service_start_date = sales_order.transaction_date
                 item.service_end_date = sales_order.transaction_date
+                item.discount_account = default_discount_account
+                if frappe.db.get_value('Item' , item.item_code , 'is_stock_item') == 0 and item.price_list_rate != item.rate:
+                    correct_item = frappe.db.sql(f"""
+                                                SELECT p.item_code ,i.item_name , i.description ,  p.price_list_rate FROM `tabItem Price` p 
+                                                INNER JOIN  tabItem  i ON i.name =p.item_code 
+                                                WHERE i.is_stock_item = 0 AND p.selling = 1 AND p.price_list_rate = {item.rate}
+                                                 """ , as_dict=True)
+                    if correct_item and correct_item[0] and correct_item[0]['item_code']:
+                        replacement_data = correct_item[0]
+                        items_to_remove.append(item.name)
+            if replacement_data:
+                    for i in si_doc.items:
+                        frappe.db.set_value('Sales Invoice Item' , i.name , 'docstatus' , 0 , update_modified=False)
+                        i.docstatus = 0 
+                    si_doc.items = [i for i in si_doc.items if i.name not in items_to_remove]
+                    
+                    si_doc.append("items", {
+                            "item_code": replacement_data['item_code'],
+                            "item_name": replacement_data['item_name'],
+                            "description": replacement_data['description'],
+                            "rate": replacement_data['price_list_rate'],
+                            "price_list_rate": replacement_data['price_list_rate'],
+                            "qty": 1,
+                            "amount": replacement_data['price_list_rate'],
+                            "is_stock_item": 0
+                        })   
             si_doc.payment_schedule = []
+            if si_doc.discount_amount != 0 and si_doc.additional_discount_account is None:
+                si_doc.additional_discount_account = default_discount_account
+                    
             si_doc.save()
             si_doc.submit()
             if sales_order.custom_magento_status in  ["Cancelled" , "Reorder"]:
@@ -142,8 +221,36 @@ class RepostSalesOrder(Document):
                     new_return.posting_time = new_dt.time()
                     new_return.payment_schedule = []
                     set_return_account(self = new_return)
+                    items_to_remove = []
+                    replacement_data = None
                     for item in new_return.items:
                         item.service_start_date = item.service_end_date = new_dt.date()
+                        item.discount_account = default_discount_account
+                        if frappe.db.get_value('Item' , item.item_code , 'is_stock_item') == 0 and item.price_list_rate != item.rate:
+                            correct_item = frappe.db.sql(f"""
+                                                        SELECT p.item_code ,i.item_name , i.description ,  p.price_list_rate FROM `tabItem Price` p 
+                                                        INNER JOIN  tabItem  i ON i.name =p.item_code 
+                                                        WHERE i.is_stock_item = 0 AND p.selling = 1 AND p.price_list_rate = {item.rate}
+                                                        """ , as_dict=True)
+                            if correct_item and correct_item[0] and correct_item[0]['item_code']:
+                                replacement_data = correct_item[0]
+                                items_to_remove.append(item.name)
+                    if replacement_data:
+                        for i in new_return.items:
+                            frappe.db.set_value('Sales Invoice Item' , i.name , 'docstatus' , 0 , update_modified=False)
+                            i.docstatus = 0 
+                        new_return.items = [i for i in new_return.items if i.name not in items_to_remove]
+                        
+                        new_return.append("items", {
+                                "item_code": replacement_data['item_code'],
+                                "item_name": replacement_data['item_name'],
+                                "description": replacement_data['description'],
+                                "rate": replacement_data['price_list_rate'],
+                                "price_list_rate": replacement_data['price_list_rate'],
+                                "qty": -1,
+                                "amount": replacement_data['price_list_rate'],
+                                "is_stock_item": 0
+                            })   
                     new_return.save()
                     
                     new_return.submit()              
