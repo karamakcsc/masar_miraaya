@@ -331,8 +331,8 @@ def stock_entry_validation(self):
             .where(se.docstatus == 1 )
             .where(se.pick_list.isin([p.parent for p in pick_list]))
         ).run(as_dict = True)
-    if len(stock_entry) == 0: 
-        frappe.throw('Please ensure the order is packed and the stock entry is created before proceeding with delivery.')
+    # if len(stock_entry) == 0: 
+    #     frappe.throw('Please ensure the order is packed and the stock entry is created before proceeding with delivery.')
     
 
         
@@ -562,9 +562,6 @@ def delivery_note_jv(self , delivery_note = None ):
     company_doc = frappe.get_doc("Company", self.company)
     sales_account = company_doc.default_income_account
     revenue_account =deferred_revenue_account(company=self.company)
-    total_discount = 0.0
-    for i in self.items:
-        total_discount+= i.discount_amount if i.discount_amount else 0 
     cost_center = get_cost_center(self)
     total =  float(self.total)
     if not sales_account:

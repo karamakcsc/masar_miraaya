@@ -15,6 +15,8 @@ from masar_miraaya.custom.sales_invoice.sales_invoice import set_return_account 
 from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice
 from datetime import datetime, timedelta, time
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
+from erpnext.controllers.sales_and_purchase_return import make_return_doc
+
 
 class RepostSalesOrder(Document):
     @frappe.whitelist()
@@ -50,10 +52,10 @@ class RepostSalesOrder(Document):
         if frappe.session.user != "Administrator":
             frappe.throw("You are not allowed to repost sales orders")
 
-    #     frappe.enqueue(self.repost, queue="long" , timeout=10000)
+        frappe.enqueue(self.repost, queue="long" , timeout=10000)
 
-    #     frappe.msgprint("Reposting sales orders in progress ...", alert=True, indicator="blue")         
-    # def repost(self):
+        frappe.msgprint("Reposting sales orders in progress ...", alert=True, indicator="blue")         
+    def repost(self):
         if not self.orders:
             frappe.throw("No sales orders to repost")
         for order in self.orders:
@@ -88,14 +90,13 @@ class RepostSalesOrder(Document):
                             "qty": 1,
                             "amount": replacement_data['price_list_rate'],
                             "is_stock_item": 0
-                        })   
-                    sales_order.save(ignore_permissions=True)
+                        })  
+                    sales_order.save()
                     frappe.db.set_value('Sales Order' , sales_order.name , 'docstatus' , 1 , update_modified=False)
                     sales_order.docstatus = 1 
                     for i in sales_order.items:
                         frappe.db.set_value('Sales Order Item' , i.name , 'docstatus' , 1 , update_modified=False)
                         i.docstatus = 1
-                        
                         
                 self.delete_journal_entries(sales_order)
                 linked_dn = frappe.db.get_all(
@@ -103,14 +104,14 @@ class RepostSalesOrder(Document):
                     filters={"against_sales_order": sales_order.name},
                     fields=["DISTINCT parent"],
                 )
-                if linked_dn:
+                if linked_dn or sales_order.custom_magento_status == 'Delivered':
                     cost_of_delivery_jv(self=sales_order)
                     create_delivery_company_jv(self=sales_order)
                     delivery_note_jv(self=sales_order)
                 elif  sales_order.custom_magento_status == 'On the Way':
                     cost_of_delivery_jv(self=sales_order)
                     create_delivery_company_jv(self=sales_order)
-                if sales_order.custom_magento_status in ["Cancelled" , "Reorder"]:
+                if sales_order.custom_magento_status in ["Cancelled" , "Reorder"] and len(linked_dn) ==0 :
                     reverse_journal_entry(self=sales_order)
                     
                     
@@ -133,7 +134,7 @@ class RepostSalesOrder(Document):
             SELECT DISTINCT sii.parent
             FROM `tabSales Invoice Item` sii
             JOIN `tabSales Invoice` si ON si.name = sii.parent
-            WHERE sii.sales_order = %s AND si.return_against IS NULL
+            WHERE sii.sales_order = %s AND si.return_against IS NULL AND si.docstatus = 1 
             ORDER BY si.modified DESC
             """,
             sales_order.name,
@@ -155,6 +156,7 @@ class RepostSalesOrder(Document):
                 if sales_order.custom_magento_status == "Delivered":
                     frappe.delete_doc("Sales Invoice", return_doc.name)
             si_doc = frappe.get_doc("Sales Invoice", original_name)
+            # si_doc.cancel()
             frappe.db.set_value("Sales Invoice", si_doc.name, "docstatus", 0 , update_modified=False)
             si_doc.reload()
             si_doc.docstatus = 0
@@ -167,6 +169,8 @@ class RepostSalesOrder(Document):
                 item.service_start_date = sales_order.transaction_date
                 item.service_end_date = sales_order.transaction_date
                 item.discount_account = default_discount_account
+                item.enable_deferred_revenue = 1 
+                item.deferred_revenue_account = deferred_revenue_account(company=sales_order.company)
                 if frappe.db.get_value('Item' , item.item_code , 'is_stock_item') == 0 and item.price_list_rate != item.rate:
                     correct_item = frappe.db.sql(f"""
                                                 SELECT p.item_code ,i.item_name , i.description ,  p.price_list_rate FROM `tabItem Price` p 
@@ -189,6 +193,10 @@ class RepostSalesOrder(Document):
                             "rate": replacement_data['price_list_rate'],
                             "price_list_rate": replacement_data['price_list_rate'],
                             "qty": 1,
+                            "enable_deferred_revenue" : 1 ,
+                            "service_start_date" : sales_order.transaction_date , 
+                            "service_end_date" : sales_order.transaction_date,
+                            "deferred_revenue_account"  : deferred_revenue_account(company=sales_order.company) ,
                             "amount": replacement_data['price_list_rate'],
                             "is_stock_item": 0
                         })   
@@ -199,61 +207,67 @@ class RepostSalesOrder(Document):
             si_doc.save()
             si_doc.submit()
             if sales_order.custom_magento_status in  ["Cancelled" , "Reorder"]:
-                for return_inv in return_invoices:
-                    frappe.db.set_value("Sales Invoice", return_doc.name, "docstatus", 0)
-                    frappe.db.set_value("Sales Invoice", return_doc.name, "amended_from", "")
-                    new_return = frappe.get_doc("Sales Invoice", return_inv)
-                    new_return.docstatus = 0
-                    new_return.set_posting_time = 1
-                    if isinstance(si_doc.posting_time, timedelta):
-                        total_seconds = int(si_doc.posting_time.total_seconds())
-                        hours, remainder = divmod(total_seconds, 3600)
-                        minutes, seconds = divmod(remainder, 60)
-                        posting_time_obj = time(hour=hours, minute=minutes, second=seconds)
-                    elif isinstance(si_doc.posting_time, str):
-                        posting_time_obj = datetime.strptime(si_doc.posting_time, "%H:%M:%S").time()
-                    else:
-                        posting_time_obj = si_doc.posting_time 
-                    original_dt = datetime.combine(si_doc.posting_date, posting_time_obj)
-                    new_dt = original_dt + timedelta(hours=1)
-                    new_return.posting_date = new_dt.date()
-                    new_return.due_date = new_dt.date()
-                    new_return.posting_time = new_dt.time()
-                    new_return.payment_schedule = []
-                    set_return_account(self = new_return)
-                    items_to_remove = []
-                    replacement_data = None
-                    for item in new_return.items:
-                        item.service_start_date = item.service_end_date = new_dt.date()
-                        item.discount_account = default_discount_account
-                        if frappe.db.get_value('Item' , item.item_code , 'is_stock_item') == 0 and item.price_list_rate != item.rate:
-                            correct_item = frappe.db.sql(f"""
-                                                        SELECT p.item_code ,i.item_name , i.description ,  p.price_list_rate FROM `tabItem Price` p 
-                                                        INNER JOIN  tabItem  i ON i.name =p.item_code 
-                                                        WHERE i.is_stock_item = 0 AND p.selling = 1 AND p.price_list_rate = {item.rate}
-                                                        """ , as_dict=True)
-                            if correct_item and correct_item[0] and correct_item[0]['item_code']:
-                                replacement_data = correct_item[0]
-                                items_to_remove.append(item.name)
-                    if replacement_data:
-                        for i in new_return.items:
-                            frappe.db.set_value('Sales Invoice Item' , i.name , 'docstatus' , 0 , update_modified=False)
-                            i.docstatus = 0 
-                        new_return.items = [i for i in new_return.items if i.name not in items_to_remove]
+                if len(return_invoices) != 0 :
+                    for return_inv in return_invoices:
                         
-                        new_return.append("items", {
-                                "item_code": replacement_data['item_code'],
-                                "item_name": replacement_data['item_name'],
-                                "description": replacement_data['description'],
-                                "rate": replacement_data['price_list_rate'],
-                                "price_list_rate": replacement_data['price_list_rate'],
-                                "qty": -1,
-                                "amount": replacement_data['price_list_rate'],
-                                "is_stock_item": 0
-                            })   
-                    new_return.save()
-                    
-                    new_return.submit()              
+                        frappe.db.set_value("Sales Invoice", return_doc.name, "docstatus", 0)
+                        frappe.db.set_value("Sales Invoice", return_doc.name, "amended_from", "")
+                        new_return = frappe.get_doc("Sales Invoice", return_inv)
+                        new_return.docstatus = 0
+                        new_return.set_posting_time = 1
+                        if isinstance(si_doc.posting_time, timedelta):
+                            total_seconds = int(si_doc.posting_time.total_seconds())
+                            hours, remainder = divmod(total_seconds, 3600)
+                            minutes, seconds = divmod(remainder, 60)
+                            posting_time_obj = time(hour=hours, minute=minutes, second=seconds)
+                        elif isinstance(si_doc.posting_time, str):
+                            posting_time_obj = datetime.strptime(si_doc.posting_time, "%H:%M:%S").time()
+                        else:
+                            posting_time_obj = si_doc.posting_time 
+                        original_dt = datetime.combine(si_doc.posting_date, posting_time_obj)
+                        new_dt = original_dt + timedelta(hours=1)
+                        new_return.posting_date = new_dt.date()
+                        new_return.due_date = new_dt.date()
+                        new_return.posting_time = new_dt.time()
+                        new_return.payment_schedule = []
+                        items_to_remove = []
+                        replacement_data = None
+                        for item in new_return.items:
+                            item.service_start_date = item.service_end_date = new_dt.date()
+                            item.discount_account = default_discount_account
+                            if frappe.db.get_value('Item' , item.item_code , 'is_stock_item') == 0 and item.price_list_rate != item.rate:
+                                correct_item = frappe.db.sql(f"""
+                                                            SELECT p.item_code ,i.item_name , i.description ,  p.price_list_rate FROM `tabItem Price` p 
+                                                            INNER JOIN  tabItem  i ON i.name =p.item_code 
+                                                            WHERE i.is_stock_item = 0 AND p.selling = 1 AND p.price_list_rate = {item.rate}
+                                                            """ , as_dict=True)
+                                if correct_item and correct_item[0] and correct_item[0]['item_code']:
+                                    replacement_data = correct_item[0]
+                                    items_to_remove.append(item.name)
+                        if replacement_data:
+                            for i in new_return.items:
+                                frappe.db.set_value('Sales Invoice Item' , i.name , 'docstatus' , 0 , update_modified=False)
+                                i.docstatus = 0 
+                            new_return.items = [i for i in new_return.items if i.name not in items_to_remove]
+                            
+                            new_return.append("items", {
+                                    "item_code": replacement_data['item_code'],
+                                    "item_name": replacement_data['item_name'],
+                                    "description": replacement_data['description'],
+                                    "rate": replacement_data['price_list_rate'],
+                                    "price_list_rate": replacement_data['price_list_rate'],
+                                    "qty": -1,
+                                    "amount": replacement_data['price_list_rate'],
+                                    "is_stock_item": 0 ,
+                                }) 
+                        if new_return.discount_amount != 0 and new_return.additional_discount_account is None:
+                            new_return.additional_discount_account = default_discount_account
+                        set_return_account(self = new_return)  
+                        
+                        new_return.save()
+                        new_return.submit()  
+                elif  len(return_invoices) == 0:
+                    not_exist_return_sales_invoice(self = sales_order)           
         print(f"Return Order {sales_order.name} has been created and submitted.")
     def delete_journal_entries(self, sales_order):
         """Delete all Journal Entries linked to a Sales Order."""
@@ -343,3 +357,73 @@ def set_invoice_dates(invoice_doc, date, deferred_acc):
         item.service_start_date = item.service_end_date = date
         if item.qty == 0:
             item.qty = frappe.db.get_value("Sales Order Item", item.so_detail, "qty")
+      
+            
+def  not_exist_return_sales_invoice(self):
+    default_discount_account = frappe.get_cached_value("Company", self.company, "default_discount_account")
+    sii = frappe.qb.DocType('Sales Invoice Item')
+    si = frappe.qb.DocType('Sales Invoice')
+    exist_si = (frappe.qb.from_(si)
+                .join(sii).on(sii.parent == si.name)
+                .select(si.name)
+                .where(sii.sales_order == self.name)
+                .where(si.docstatus == 1 )
+            ).run(as_dict = True)
+    lst_si = [si_loop.name for si_loop in exist_si if si_loop.name]
+    return_set = set(lst_si)
+    for return_si in list(return_set):
+        si_doc = frappe.get_doc('Sales Invoice' , return_si) 
+        cr_note = make_return_doc("Sales Invoice", return_si, None)
+        if cr_note:
+            cr_note.set_posting_time = 1
+            if isinstance(si_doc.posting_time, timedelta):
+                total_seconds = int(si_doc.posting_time.total_seconds())
+                hours, remainder = divmod(total_seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                posting_time_obj = time(hour=hours, minute=minutes, second=seconds)
+            elif isinstance(si_doc.posting_time, str):
+                posting_time_obj = datetime.strptime(si_doc.posting_time, "%H:%M:%S").time()
+            else:
+                posting_time_obj = si_doc.posting_time 
+            original_dt = datetime.combine(si_doc.posting_date, posting_time_obj)
+            new_dt = original_dt + timedelta(hours=1)
+            cr_note.posting_date = new_dt.date()
+            cr_note.due_date = new_dt.date()
+            cr_note.posting_time = new_dt.time()
+            cr_note.payment_schedule = []
+            items_to_remove = []
+            replacement_data = None
+            for item in cr_note.items:
+                item.service_start_date = item.service_end_date = new_dt.date()
+                item.discount_account = default_discount_account
+                if frappe.db.get_value('Item' , item.item_code , 'is_stock_item') == 0 and item.price_list_rate != item.rate:
+                    correct_item = frappe.db.sql(f"""
+                                                SELECT p.item_code ,i.item_name , i.description ,  p.price_list_rate FROM `tabItem Price` p 
+                                                INNER JOIN  tabItem  i ON i.name =p.item_code 
+                                                WHERE i.is_stock_item = 0 AND p.selling = 1 AND p.price_list_rate = {item.rate}
+                                                """ , as_dict=True)
+                    if correct_item and correct_item[0] and correct_item[0]['item_code']:
+                        replacement_data = correct_item[0]
+                        items_to_remove.append(item.name)
+            if replacement_data:
+                for i in cr_note.items:
+                    frappe.db.set_value('Sales Invoice Item' , i.name , 'docstatus' , 0 , update_modified=False)
+                    i.docstatus = 0 
+                cr_note.items = [i for i in cr_note.items if i.name not in items_to_remove]
+                
+                cr_note.append("items", {
+                        "item_code": replacement_data['item_code'],
+                        "item_name": replacement_data['item_name'],
+                        "description": replacement_data['description'],
+                        "rate": replacement_data['price_list_rate'],
+                        "price_list_rate": replacement_data['price_list_rate'],
+                        "qty": -1,
+                        "amount": replacement_data['price_list_rate'],
+                        "is_stock_item": 0
+                    }) 
+            if cr_note.discount_amount != 0 and cr_note.additional_discount_account is None:
+                cr_note.additional_discount_account = default_discount_account
+            set_return_account(self = cr_note)  
+            
+            cr_note.save()
+            cr_note.submit()

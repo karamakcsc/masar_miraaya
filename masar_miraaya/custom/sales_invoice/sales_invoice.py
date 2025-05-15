@@ -65,7 +65,10 @@ def make_gl_normal(self):
                     "voucher_type": self.doctype, 
                     "voucher_no": self.name
                 }))
-        
+        total_discount = 0 
+        for i in self.items:
+            total_discount += abs(i.discount_amount) if i.discount_amount else 0 
+        total =  abs(float(self.discount_amount)) + total_discount
         if sales_order.custom_is_cash_on_delivery and sales_order.custom_cash_on_delivery_amount != 0:
             cash_on_delivery_acc = cash_on_delivery_account(self)
             if cash_on_delivery_acc is None:
@@ -230,7 +233,10 @@ def make_unearned_reclassification_gl(self):
                     'Set Default Cash on Delivery Account in Company {company}'
                     .format(company=frappe.utils.get_link_to_form("Company", self.company)), 
                     title=frappe._("Missing Account"))
-            
+            total_discount = 0 
+            for i in self.items:
+                total_discount += abs(i.discount_amount) if i.discount_amount else 0 
+            total = abs(float(self.discount_amount)) + total_discount
             if sales_order.custom_cash_on_delivery_amount not in [None, 0]:
                 gl_entries.append(
                     self.get_gl_dict({
