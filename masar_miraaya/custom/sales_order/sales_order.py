@@ -198,8 +198,10 @@ def create_sales_invoice(self):
 
 def on_submit(self, method):
     wallet_balance_validation(self)
-    create_sales_invoice(self)
-    create_draft_pick_list(self)
+    cont =  create_draft_pick_list(self)
+    if cont : 
+        create_sales_invoice(self)
+   
     if self.amended_from is not None : 
         magento_id , entity_id ,address_id = magento_reorder(self)
         self.custom_magento_id = magento_id
@@ -233,6 +235,7 @@ def digital_wallet_account(customer_id , company):
 def on_update_after_submit(self, method):
         if  self.docstatus == 1:
             if self.custom_magento_status == 'On the Way':
+                validate_pick_list(self)
                 delete_previous_jv(self)
                 cost_of_delivery_jv(self)
                 create_delivery_company_jv(self)
@@ -241,6 +244,7 @@ def on_update_after_submit(self, method):
                     self.custom_stock_entry =1 
                     frappe.db.set_value(self.doctype , self.name , 'custom_stock_entry' , 1 , update_modified=False )
             if self.custom_magento_status == 'Delivered':
+                validate_pick_list(self)
                 stock_entry_validation(self)
                 cancel_stock_reservation_entry(self)
                 delivery_note = create_delivery_note(self)
@@ -362,7 +366,26 @@ def pick_list_known(self):
     }
     
     
-            
+def validate_pick_list(self):
+    pl = frappe.qb.DocType('Pick List')
+    pli = frappe.qb.DocType('Pick List Item')
+    query = (
+        frappe.qb.from_(pl)
+        .join(pli).on(pl.name == pli.parent)
+        .select(pl.name, pl.custom_packed)
+        .where(pli.sales_order == self.name)
+        .where(pl.docstatus == 1) 
+        .groupby(pl.name)
+    ).run(as_dict=True)
+    
+    if len(query) != 0:
+        for p in query:
+            if p.custom_packed:
+                return 0
+            else:
+                frappe.throw(f"Please ensure the Pick List {p.name} is fullfilled before change on the way or delivered.")
+    else:
+        frappe.throw(str("Please ensure the Pick List is fullfilled before change on the way or delivered."))
 
 
 def create_draft_pick_list(self):
@@ -404,7 +427,12 @@ def create_draft_pick_list(self):
     doc.custom_delivery_time = self.custom_delivery_time
     doc.custom_magento_id = self.custom_magento_id
     if len(doc.locations) != 0 :
-        doc.save()
+        try:
+            doc.save()
+            return True
+        except Exception as e:
+            return False 
+    return False
 
 
 @frappe.whitelist()
@@ -831,8 +859,11 @@ def cancelled_pick_list(self):
                 ).run(as_dict=True)
                 if len(stock_entry) !=0:
                     for se_loop in stock_entry:
-                        se_doc = frappe.get_doc('Stock Entry' , se_loop.name)
-                        se_doc.run_method('cancel')
+                        if self.custom_magento_status == 'Reorder':
+                            frappe.db.set_value('Stock Entry' , se_loop.name , 'pick_list' , None)
+                        else:
+                            se_doc = frappe.get_doc('Stock Entry' , se_loop.name)
+                            se_doc.run_method('cancel')
                 cancel_stock_reservation_entry(self)
                 pl_doc= frappe.get_doc('Pick List' , pl_loop.name)
                 pl_doc.run_method('cancel')

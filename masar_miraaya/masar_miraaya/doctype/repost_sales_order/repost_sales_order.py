@@ -97,7 +97,7 @@ class RepostSalesOrder(Document):
                     for i in sales_order.items:
                         frappe.db.set_value('Sales Order Item' , i.name , 'docstatus' , 1 , update_modified=False)
                         i.docstatus = 1
-                        
+                self.repost_sales_invoices(sales_order)        
                 self.delete_journal_entries(sales_order)
                 linked_dn = frappe.db.get_all(
                     "Delivery Note Item",
@@ -117,7 +117,7 @@ class RepostSalesOrder(Document):
                     
                     
                     
-                self.repost_sales_invoices(sales_order)
+                
                 
                 if not frappe.db.exists("Sales Invoice Item", {"docstatus": ["!=", 2], "sales_order": sales_order.name}):
                     if sales_order.custom_magento_status in ["Delivered", "Cancelled" , "Reorder"]:

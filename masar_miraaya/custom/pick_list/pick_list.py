@@ -7,10 +7,35 @@ from frappe.query_builder.functions import  Sum
 from frappe.utils import flt
 
 def on_submit(self , method):
+    sales_invoice_validation(self)
     items_validation(self)
     qty_validation(self)
     assigned_to_validate(self)
     user_vaildation(self)
+    
+    
+def sales_invoice_validation(self):
+    for ref in self.locations:
+        si = frappe.qb.DocType('Sales Invoice')
+        soi = frappe.qb.DocType('Sales Invoice Item')
+        query = (
+            frappe.qb.from_(si)
+            .join(soi).on(si.name == soi.parent)
+            .select(
+                (si.name).as_('si_name'),
+            )
+            .where(soi.sales_order == ref.sales_order)
+            .where(si.docstatus == 1)
+            .groupby(si.name)
+        ).run(as_dict = True)
+        if len(query) != 0:
+            for row in query:
+                if row.si_name:
+                    return 1
+                else:
+                    frappe.throw(str(f"Please create a Sales Invoice for the Sales Order {ref.sales_order} before proceeding with the Pick List."))
+        else:
+            frappe.throw(str(f"Please create a Sales Invoice for the Sales Order {ref.sales_order} before proceeding with the Pick List."))
     
 def items_validation(self):
     linked_so = get_linked_so(self)
