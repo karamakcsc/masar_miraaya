@@ -208,6 +208,7 @@ def on_submit(self, method):
         frappe.db.set_value(self.doctype , self.name , 'custom_magento_id' , magento_id)
         fleetroot_reorder(self , magento_id , entity_id , address_id)
         wallet_debit_reorder(self , magento_id)
+    frappe.db.set_value(self.doctype , self.name , 'custom_stock_entry' , 0, update_modified=False )
     
 def digital_wallet_account(customer_id , company): 
     account  = None   
@@ -282,6 +283,7 @@ def create_amend_so(self):
     new_so.transaction_date = delivery_date
     new_so.custom_magento_id = None
     remove_discount(new_so , discount = self.discount_amount)
+    new_so.custom_stock_entry = 0
     new_so.run_method('save')
     return new_so
 
@@ -856,7 +858,9 @@ def cancelled_pick_list(self):
                     frappe.qb.from_(se).select(se.name)
                     .where(se.pick_list ==pl_loop.name )
                     .where(se.docstatus ==1 )
+                    .orderby(se.modified , order=frappe.qb.desc)
                 ).run(as_dict=True)
+                cancel_stock_reservation_entry(self)
                 if len(stock_entry) !=0:
                     for se_loop in stock_entry:
                         if self.custom_magento_status == 'Reorder':
@@ -864,7 +868,7 @@ def cancelled_pick_list(self):
                         else:
                             se_doc = frappe.get_doc('Stock Entry' , se_loop.name)
                             se_doc.run_method('cancel')
-                cancel_stock_reservation_entry(self)
+                
                 pl_doc= frappe.get_doc('Pick List' , pl_loop.name)
                 pl_doc.run_method('cancel')
                 
