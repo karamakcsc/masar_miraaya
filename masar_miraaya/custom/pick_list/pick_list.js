@@ -3,16 +3,19 @@ frappe.ui.form.on('Pick List', {
         hide_create_button(frm);
         create_picked_button(frm);
         create_assigned_button(frm);
+        create_miraaya_fullfilled_button(frm);
     },    
     refresh: function (frm) {
         hide_create_button(frm);
         create_picked_button(frm);
         create_assigned_button(frm);
+        create_miraaya_fullfilled_button(frm);
     },
     setup: function (frm) {
         hide_create_button(frm);
         create_picked_button(frm);
         create_assigned_button(frm);
+        create_miraaya_fullfilled_button(frm);
     }
 });
 
@@ -58,6 +61,22 @@ function create_picked_button(frm) {
         });
     }
 }
+
+function create_miraaya_fullfilled_button(frm) {
+    if(frm.doc.docstatus === 1 && frm.doc.custom_packed === 0 && frappe.user.has_role('Miraaya Fullfilled')) { 
+        frm.add_custom_button(__('ERP Packing'), function() {
+           frappe.call({
+            method:'masar_miraaya.custom.pick_list.pick_list.miraaya_packing', 
+            args:{self: frm.doc},
+            callback:function(r){
+                frm.refresh_field("custom_packed");
+                frm.reload_doc();
+            }
+           })
+        });
+    }
+}
+
 
 
 frappe.ui.form.on('Pick List', {
