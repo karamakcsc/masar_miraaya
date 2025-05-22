@@ -12,9 +12,8 @@ def filter_locations_by_picked_materials_override(locations, picked_item_details
 		key = row.warehouse
 		if row.batch_no:
 			key = (row.warehouse, row.batch_no)
-		print (picked_item_details )
 		picked_qty = 0  ################ 
-        # picked_item_details.get(key, {}).get("picked_qty", 0)
+		picked_item_details.get(key, {}).get("picked_qty", 0)
 		if not picked_qty:
 			filterd_locations.append(row)
 			continue
@@ -53,8 +52,15 @@ class PickListOverride(Document):
 			if wh  in mc_warehouse:
 				from_warehouses.remove(wh)
 		# reset
-		self.delete_key("locations")
+		reset_rows = []
+		for row in self.get("locations"):
+			if not row.picked_qty:
+				reset_rows.append(row)
+
+		for row in reset_rows:
+			self.remove(row)
 		updated_locations = frappe._dict()
+		len_idx = len(self.get("locations")) or 0
 		for item_doc in items:
 			item_code = item_doc.item_code
 
@@ -97,6 +103,8 @@ class PickListOverride(Document):
 			if location.picked_qty > location.stock_qty:
 				location.picked_qty = location.stock_qty
 
+			len_idx += 1
+			location.idx = len_idx
 			self.append("locations", location)
 
 		# If table is empty on update after submit, set stock_qty, picked_qty to 0 so that indicator is red
@@ -105,7 +113,11 @@ class PickListOverride(Document):
 			for location in locations_replica:
 				location.stock_qty = 0
 				location.picked_qty = 0
+
+				len_idx += 1
+				location.idx = len_idx
 				self.append("locations", location)
+
 			frappe.msgprint(
 				_(
 					"Please Restock Items and Update the Pick List to continue. To discontinue, cancel the Pick List."

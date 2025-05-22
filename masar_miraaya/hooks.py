@@ -195,6 +195,7 @@ doctype_js = {
    "Customer": "custom/customer/customer.js",
    "Item": "custom/item/item.js",
    "Pick List": "custom/pick_list/pick_list.js",
+   "Payment Entry": "custom/payment_entry/payment_entry.js",
 #    "Material Request": "custom/material_request/material_request.js"
 
 }
@@ -443,7 +444,9 @@ fixtures = [
                 "File-custom_uploaded_to_magento",
                 # "Sales Order-custom_reposted"
                 "Company-custom_default_return_income_account",
-                "Stock Entry-custom_is_publish"
+                "Stock Entry-custom_is_publish",
+                "Payment Entry Reference-custom_magento_id",
+                "Payment Entry-custom_get_magento_id"
                 
             ]
         ]

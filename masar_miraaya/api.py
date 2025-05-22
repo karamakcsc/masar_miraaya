@@ -1412,6 +1412,8 @@ def change_magento_status_to_cancelled(so_name , so_magento_id):
                             url=url, 
                             headers=headers
                         )
+    if response.status_code not in [200, 201]:
+        frappe.throw(f"Failed to cancel order on Magento. Response: {response.text}")
     return response.text , response.status_code ## returns: Order (magento id) has been successfully cancelled
 
 ######## Customer Wallet Balance Magento API "Mahmoud API"
