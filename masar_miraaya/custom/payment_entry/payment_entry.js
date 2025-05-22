@@ -1,7 +1,7 @@
 frappe.ui.form.on("Payment Entry", {
-    validate: function(frm) {
-        set_magento_id(frm);
-    },
+    // validate: function(frm) {
+    //     set_magento_id(frm);
+    // },
     custom_get_magento_id: function(frm) {
         set_magento_id(frm);
     }
@@ -12,7 +12,7 @@ function set_magento_id(frm) {
         frappe.call({
             method: "masar_miraaya.custom.payment_entry.payment_entry.get_magento_id",
             args: {
-                pe_doc: frm.doc.name
+                pe_doc: frm.doc
             },
             callback: function(r) {
                 if (r.message) {
