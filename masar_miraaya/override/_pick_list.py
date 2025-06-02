@@ -1,34 +1,44 @@
 import frappe
 from frappe.utils import flt
 from frappe.model.document import Document
-from erpnext.stock.doctype.pick_list.pick_list import get_available_item_locations, get_items_with_location_and_quantity
+from erpnext.stock.doctype.pick_list.pick_list import (
+	get_available_item_locations,
+	get_items_with_location_and_quantity,
+)
 from frappe import _
 from frappe.utils.nestedset import get_descendants_of
 
+
 def filter_locations_by_picked_materials_override(locations, picked_item_details) -> list[dict]:
-	filterd_locations = []
+	filtered_locations = []
 	precision = frappe.get_precision("Pick List Item", "qty")
+
 	for row in locations:
 		key = row.warehouse
 		if row.batch_no:
 			key = (row.warehouse, row.batch_no)
-		picked_qty = 0  ################ 
-		picked_item_details.get(key, {}).get("picked_qty", 0)
+
+		picked_qty = picked_item_details.get(key, {}).get("picked_qty", 0)
+
 		if not picked_qty:
-			filterd_locations.append(row)
+			filtered_locations.append(row)
 			continue
+
 		if picked_qty > row.qty:
-			row.qty = 0
 			picked_item_details[key]["picked_qty"] -= row.qty
+			row.qty = 0
 		else:
 			row.qty -= picked_qty
 			picked_item_details[key]["picked_qty"] = 0.0
 			if row.serial_nos:
-				row.serial_nos = list(set(row.serial_nos) - set(picked_item_details[key].get("serial_no")))
+				row.serial_nos = list(
+					set(row.serial_nos) - set(picked_item_details[key].get("serial_no", []))
+				)
 
 		if flt(row.qty, precision) > 0:
-			filterd_locations.append(row)
-	return filterd_locations
+			filtered_locations.append(row)
+
+	return filtered_locations
 
 
 class PickListOverride(Document):
@@ -37,30 +47,44 @@ class PickListOverride(Document):
 		self.validate_for_qty()
 		items = self.aggregate_item_qty()
 		picked_items_details = self.get_picked_items_details(items)
+
+		if not hasattr(self, "item_count_map"):
+			self.item_count_map = {}
+
 		self.item_location_map = frappe._dict()
-		mc_warehouse = [wh.name for wh in frappe.db.sql("""SELECT name from `tabWarehouse` tw WHERE  tw.name LIKE("%MC%") AND tw.is_group =0 """, as_dict=True)]
-		not_mc_warehouse = frappe.db.sql("""SELECT name from `tabWarehouse` tw WHERE  tw.name NOT LIKE("%MC%") AND tw.is_group =0 """, as_dict=True)
-		from_warehouses = [self.parent_warehouse] if self.parent_warehouse else []
+
+		# Get warehouses
+		mc_warehouses = [wh.name for wh in frappe.db.sql("""
+			SELECT name FROM `tabWarehouse` 
+			WHERE name LIKE "%MC%" AND is_group = 0
+		""", as_dict=True)]
+
+		non_mc_warehouses = [
+			wh.name for wh in frappe.db.sql("""
+				SELECT name FROM `tabWarehouse` 
+				WHERE name NOT LIKE "%MC%" AND is_group = 0
+			""", as_dict=True)
+		]
+
+		from_warehouses = [self.parent_warehouse] if self.parent_warehouse else non_mc_warehouses
+
 		if self.parent_warehouse:
 			from_warehouses.extend(get_descendants_of("Warehouse", self.parent_warehouse))
-		else:
-			from_warehouses = [w.name for w in not_mc_warehouse]
-		# Create replica before resetting, to handle empty table on update after submit.
-		
-		locations_replica = self.get("locations")
-		for wh in from_warehouses:
-			if wh  in mc_warehouse:
-				from_warehouses.remove(wh)
-		# reset
-		reset_rows = []
-		for row in self.get("locations"):
-			if not row.picked_qty:
-				reset_rows.append(row)
 
+		# Exclude MC warehouses
+		from_warehouses = [wh for wh in from_warehouses if wh not in mc_warehouses]
+
+		# Keep backup of current locations
+		locations_replica = self.get("locations")
+
+		# Remove unpicked rows
+		reset_rows = [row for row in self.get("locations") if not row.picked_qty]
 		for row in reset_rows:
 			self.remove(row)
+
 		updated_locations = frappe._dict()
 		len_idx = len(self.get("locations")) or 0
+
 		for item_doc in items:
 			item_code = item_doc.item_code
 
@@ -76,10 +100,9 @@ class PickListOverride(Document):
 				),
 			)
 
-			locations = get_items_with_location_and_quantity(item_doc, self.item_location_map, self.docstatus)
-
-			item_doc.idx = None
-			item_doc.name = None
+			locations = get_items_with_location_and_quantity(
+				item_doc, self.item_location_map, self.docstatus
+			)
 
 			for row in locations:
 				location = item_doc.as_dict()
@@ -94,33 +117,32 @@ class PickListOverride(Document):
 				)
 
 				if key not in updated_locations:
-					updated_locations.setdefault(key, location)
+					updated_locations[key] = location
 				else:
 					updated_locations[key].qty += location.qty
 					updated_locations[key].stock_qty += location.stock_qty
 
 		for location in updated_locations.values():
-			if location.picked_qty > location.stock_qty:
-				location.picked_qty = location.stock_qty
+			if (location.get("picked_qty") or 0) > location.get("stock_qty", 0):
+				location["picked_qty"] = location["stock_qty"]
 
 			len_idx += 1
-			location.idx = len_idx
+			location["idx"] = len_idx
 			self.append("locations", location)
 
-		# If table is empty on update after submit, set stock_qty, picked_qty to 0 so that indicator is red
-		# and give feedback to the user. This is to avoid empty Pick Lists.
+		# If no locations left, restore dummy rows for visual red indicator
 		if not self.get("locations") and self.docstatus == 1:
 			for location in locations_replica:
 				location.stock_qty = 0
 				location.picked_qty = 0
-
 				len_idx += 1
 				location.idx = len_idx
 				self.append("locations", location)
 
 			frappe.msgprint(
 				_(
-					"Please Restock Items and Update the Pick List to continue. To discontinue, cancel the Pick List."
+					"Please Restock Items and Update the Pick List to continue. "
+					"To discontinue, cancel the Pick List."
 				),
 				title=_("Out of Stock"),
 				indicator="red",

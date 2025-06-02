@@ -446,7 +446,8 @@ fixtures = [
                 "Company-custom_default_return_income_account",
                 "Stock Entry-custom_is_publish",
                 "Payment Entry Reference-custom_magento_id",
-                "Payment Entry-custom_get_magento_id"
+                "Payment Entry-custom_get_magento_id",
+                "Payment Entry Reference-custom_sales_order"
                 
             ]
         ]

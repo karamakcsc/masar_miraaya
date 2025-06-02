@@ -111,7 +111,7 @@ class RepostSalesOrder(Document):
                 elif  sales_order.custom_magento_status == 'On the Way':
                     cost_of_delivery_jv(self=sales_order)
                     create_delivery_company_jv(self=sales_order)
-                if sales_order.custom_magento_status in ["Cancelled" , "Reorder"] and len(linked_dn) ==0 :
+                if sales_order.custom_magento_status in ["Cancelled" , "Reorder"]:
                     reverse_journal_entry(self=sales_order)
                     
                     
@@ -263,12 +263,16 @@ class RepostSalesOrder(Document):
                         if new_return.discount_amount != 0 and new_return.additional_discount_account is None:
                             new_return.additional_discount_account = default_discount_account
                         set_return_account(self = new_return)  
-                        
-                        new_return.save()
-                        new_return.submit()  
+                        try:
+                            if new_return.docstatus !=0:
+                                new_return.docstatus = 0  
+                            new_return.save()
+                            new_return.submit()  
+                        except Exception as e:
+                            frappe.throw(f"Error while submitting return invoice {new_return.name}: {str(e)}")
                 elif  len(return_invoices) == 0:
                     not_exist_return_sales_invoice(self = sales_order)           
-        print(f"Return Order {sales_order.name} has been created and submitted.")
+                    
     def delete_journal_entries(self, sales_order):
         """Delete all Journal Entries linked to a Sales Order."""
         je = frappe.qb.DocType("Journal Entry")

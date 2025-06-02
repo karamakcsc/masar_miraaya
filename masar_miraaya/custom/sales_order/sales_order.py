@@ -694,19 +694,25 @@ def return_delivery_note(self):
                 doc.save().submit()
     
 def reverse_journal_entry(self):
-    je = frappe.qb.DocType('Journal Entry')
-    linked_jv = (
-        frappe.qb.from_(je)
-        .select(je.name)
-        .where(je.docstatus ==1 )
-        .where(je.custom_reference_doctype == self.name)
-        .where(je.custom_not_to_reverse == 0 )
-    ).run(as_dict = True)
-    if len(linked_jv) != 0 :
-        for jv in linked_jv:
-            doc = make_reverse_journal_entry(jv.name)
-            doc.posting_date = self.transaction_date
-            doc.save().submit()
+    linked_dn = frappe.db.get_all(
+                    "Delivery Note Item",
+                    filters={"against_sales_order": self.name},
+                    fields=["DISTINCT parent"],
+                )
+    if len(linked_dn) ==0 :
+        je = frappe.qb.DocType('Journal Entry')
+        linked_jv = (
+            frappe.qb.from_(je)
+            .select(je.name)
+            .where(je.docstatus ==1 )
+            .where(je.custom_reference_doctype == self.name)
+            .where(je.custom_not_to_reverse == 0 )
+        ).run(as_dict = True)
+        if len(linked_jv) != 0 :
+            for jv in linked_jv:
+                doc = make_reverse_journal_entry(jv.name)
+                doc.posting_date = self.transaction_date
+                doc.save().submit()
 
 @frappe.whitelist()
 def delivery_warehouse():
