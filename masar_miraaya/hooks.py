@@ -506,3 +506,4 @@ from masar_miraaya.override import _pick_list
 from erpnext.stock.doctype.pick_list.pick_list import PickList
 pick_list.filter_locations_by_picked_materials = _pick_list.filter_locations_by_picked_materials_override
 pick_list.PickList.set_item_locations = _pick_list.PickListOverride.set_item_locations_override
+pick_list.PickList._get_pick_list_items = _pick_list.PickListOverride._get_pick_list_items_override

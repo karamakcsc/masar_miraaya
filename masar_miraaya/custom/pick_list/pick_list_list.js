@@ -12,9 +12,9 @@ frappe.ui.form.on('Pick List', {
                 },
                 callback: function(r) {
                     if (!r.exc) {
-                        frm.fields_dict.forEach(function(fieldname) {
-                            frm.set_df_property(fieldname, 'read_only', 1);
-                        });
+                        // frm.fields_dict.forEach(function(fieldname) {
+                        //     frm.set_df_property(fieldname, 'read_only', 1);
+                        // });
                         frappe.msgprint(__('This Pick List is assigned to another user and cannot be modified.'));
                     } else {
                         frappe.set_route('List', 'Pick List');

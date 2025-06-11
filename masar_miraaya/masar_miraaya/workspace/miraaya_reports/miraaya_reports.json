@@ -162,16 +162,6 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Item Cost Report",
-   "link_count": 0,
-   "link_to": "Item Cost Report",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
    "label": "Batch Item Expiry Status",
    "link_count": 0,
    "link_to": "Batch Item Expiry Status",
@@ -218,9 +208,19 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Pick List With Price",
+   "link_count": 0,
+   "link_to": "Pick List With Price",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-05-07 10:49:25.472228",
+ "modified": "2025-06-11 13:38:31.758592",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Miraaya Reports",

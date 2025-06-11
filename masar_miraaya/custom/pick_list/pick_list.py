@@ -109,6 +109,8 @@ def qty_validation(self):
                     )      
         
 def assigned_to_validate(self): 
+    if frappe.session.user == 'Administrator':
+        return True
     if self.custom_assigned_to is None: 
         frappe.throw(
             '''Please ensure that you click the "Assign To Me" button before submitting. 
@@ -117,6 +119,8 @@ def assigned_to_validate(self):
         )
 @frappe.whitelist()
 def user_vaildation(self):
+    if frappe.session.user == 'Administrator':
+        return True
     if frappe.session.user != self.custom_assigned_to: 
         frappe.throw(
                 'Pick List is already assigned to {assigned_to}. You cannot assign this request to yourself.'
@@ -201,6 +205,8 @@ def assign_to_me(self):
     self = frappe._dict(json.loads(self))
     user = frappe.session.user
     role = frappe.get_roles(user)
+    if user == 'Administrator':
+        return 
     if 'Picker' not in role:
             frappe.throw(
                 'User {user} does not have the "Picker" role assigned and therefore cannot be assigned the Stock Entry.'
@@ -223,7 +229,8 @@ def assign_to_me(self):
 
 @frappe.whitelist()
 def user_validation_picker(self):
-   
+    if frappe.session.user == 'Administrator':
+        return True
     self = frappe.get_doc(json.loads(self))
     if not self.custom_assigned_to:
         frappe.throw(

@@ -7,7 +7,7 @@ from erpnext.stock.doctype.pick_list.pick_list import (
 )
 from frappe import _
 from frappe.utils.nestedset import get_descendants_of
-
+from frappe.query_builder import Case
 
 def filter_locations_by_picked_materials_override(locations, picked_item_details) -> list[dict]:
 	filtered_locations = []
@@ -16,8 +16,7 @@ def filter_locations_by_picked_materials_override(locations, picked_item_details
 	for row in locations:
 		key = row.warehouse
 		if row.batch_no:
-			key = (row.warehouse, row.batch_no)
-
+			key = (row.warehouse, row.batch_no)	
 		picked_qty = picked_item_details.get(key, {}).get("picked_qty", 0)
 
 		if not picked_qty:
@@ -37,7 +36,6 @@ def filter_locations_by_picked_materials_override(locations, picked_item_details
 
 		if flt(row.qty, precision) > 0:
 			filtered_locations.append(row)
-
 	return filtered_locations
 
 
@@ -150,3 +148,37 @@ class PickListOverride(Document):
 
 		if save:
 			self.save()
+
+	def _get_pick_list_items_override(self, items):
+		pi = frappe.qb.DocType("Pick List")
+		pi_item = frappe.qb.DocType("Pick List Item")
+		query = (
+			frappe.qb.from_(pi)
+			.inner_join(pi_item)
+			.on(pi.name == pi_item.parent)
+			.select(
+				pi_item.item_code,
+				pi_item.warehouse,
+				pi_item.batch_no,
+				pi_item.serial_and_batch_bundle,
+				pi_item.serial_no,
+				(Case().when(pi_item.picked_qty > 0, pi_item.picked_qty).else_(pi_item.stock_qty)).as_(
+					"picked_qty"
+				),
+			)
+			.where(
+				(pi_item.item_code.isin([x.item_code for x in items]))
+				& ((pi_item.picked_qty > 0) | (pi_item.stock_qty > 0))
+				& (pi.status != "Completed")
+				& (pi.status != "Cancelled")
+				& (pi_item.docstatus != 2)
+				& (pi.name == self.name)
+			)
+		)
+
+		if self.name:
+			query = query.where(pi_item.parent != self.name)
+		print(query)
+		query = query.for_update()
+
+		return query.run(as_dict=True)
