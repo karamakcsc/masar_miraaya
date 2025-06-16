@@ -1507,3 +1507,38 @@ def customer_notification():
             )
         
     
+@frappe.whitelist()
+def update_points():
+    try:
+        magento_id = frappe.form_dict.get("magento_id")
+        if not magento_id:
+            frappe.throw("Magento ID is required")
+
+        data = frappe.form_dict.get("data")
+        if not data:
+            frappe.throw("Missing 'data' field in request")
+        for key in data:
+            if key != "custom_points_balance":
+                frappe.throw(f"Invalid key '{key}' in data. Only 'custom_points_balance' is allowed.")
+        if not data.get("custom_points_balance"):
+            frappe.throw("Missing 'custom_points_balance' in data")
+        customer_name = frappe.get_value("Customer", {"custom_customer_id": magento_id}, "name")
+        if not customer_name:
+            frappe.throw(f"Customer with Magento ID {magento_id} not found")
+        frappe.db.set_value("Customer", customer_name, "custom_points_balance", data["custom_points_balance"], update_modified=False)
+        frappe.db.commit()
+
+        return {
+            "status": "success",
+            "magento_id": magento_id,
+            "message": f"Customer {customer_name} updated successfully",
+            "data": data
+        }
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Update Customer by Magento ID Error")
+        frappe.response["http_status_code"] = 417
+        return {
+            "status": "error",
+            "message": str(e)
+        }

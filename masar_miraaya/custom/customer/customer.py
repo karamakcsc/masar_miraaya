@@ -129,8 +129,10 @@ def check_validation(self):
     #             if not group_doc.custom_is_digital_wallet:
     #                 frappe.throw("The selected Customer Group must support Digital Wallet.")
     
-    if self.custom_is_delivery and (self.custom_is_payment_channel or self.custom_is_digital_wallet):
+    if self.custom_is_delivery and (self.custom_is_payment_channel or self.custom_is_digital_wallet or self.custom_is_loyalty_points):
         frappe.throw("Please select Either: Delivery or Payment Channel or Digital Wallet." , title= _("Validation Error"))
+    if self.custom_is_payment_channel and self.custom_is_loyalty_points:
+        frappe.throw("Please select Either: Payment Channel or Loyality Points." , title= _("Validation Error"))
     
     if self.custom_is_digital_wallet and not self.custom_is_payment_channel:
         self.custom_is_payment_channel = 1
