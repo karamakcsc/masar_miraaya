@@ -1520,8 +1520,8 @@ def update_points():
         for key in data:
             if key != "custom_points_balance":
                 frappe.throw(f"Invalid key '{key}' in data. Only 'custom_points_balance' is allowed.")
-        if not data.get("custom_points_balance"):
-            frappe.throw("Missing 'custom_points_balance' in data")
+        if data.get("custom_points_balance") in [None, "", " "]:
+            frappe.throw("Missing 'custom_points_balance' value in data")
         customer_name = frappe.get_value("Customer", {"custom_customer_id": magento_id}, "name")
         if not customer_name:
             frappe.throw(f"Customer with Magento ID {magento_id} not found")

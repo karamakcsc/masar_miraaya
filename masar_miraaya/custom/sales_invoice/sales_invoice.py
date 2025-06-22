@@ -4,10 +4,11 @@ from erpnext.accounts.general_ledger import make_gl_entries
 from masar_miraaya.custom.sales_order.sales_order import get_account, cash_on_delivery_account
 
 def on_submit(self, method):
-    make_gl(self)
+    if self.custom_manually == 1:
+        make_gl(self)
 
 def validate(self , method): 
-    if self.is_return == 1:
+    if self.is_return == 1 and self.custom_manually == 1:
         set_return_account(self)  
 
 def make_gl(self):

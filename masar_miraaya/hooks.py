@@ -448,8 +448,9 @@ fixtures = [
                 "Payment Entry Reference-custom_magento_id",
                 "Payment Entry-custom_get_magento_id",
                 "Payment Entry Reference-custom_sales_order",
-                "Customer-custom_is_loyalty_points"
-                
+                "Customer-custom_is_loyalty_points",
+                "Sales Order-custom_manually",
+                "Sales Invoice-custom_manually"
             ]
         ]
     ]},

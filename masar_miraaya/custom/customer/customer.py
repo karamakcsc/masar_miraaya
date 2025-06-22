@@ -136,6 +136,8 @@ def check_validation(self):
     
     if self.custom_is_digital_wallet and not self.custom_is_payment_channel:
         self.custom_is_payment_channel = 1
+    if self.custom_is_loyalty_points and not self.custom_is_payment_channel:
+        self.custom_is_payment_channel = 1
         
         
 def create_delivery_company(self):

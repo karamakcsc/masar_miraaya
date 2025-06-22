@@ -197,18 +197,22 @@ def create_sales_invoice(self):
 
 
 def on_submit(self, method):
-    wallet_balance_validation(self)
-    cont =  create_draft_pick_list(self)
-    if cont : 
-        create_sales_invoice(self)
-   
-    if self.amended_from is not None : 
-        magento_id , entity_id ,address_id = magento_reorder(self)
-        self.custom_magento_id = magento_id
-        frappe.db.set_value(self.doctype , self.name , 'custom_magento_id' , magento_id)
-        fleetroot_reorder(self , magento_id , entity_id , address_id)
-        wallet_debit_reorder(self , magento_id)
-    frappe.db.set_value(self.doctype , self.name , 'custom_stock_entry' , 0, update_modified=False )
+    if self.custom_manually == 0:
+        wallet_balance_validation(self)
+        cont =  create_draft_pick_list(self)
+        if cont : 
+            create_sales_invoice(self)
+        if self.amended_from is not None : 
+            magento_id , entity_id ,address_id = magento_reorder(self)
+            self.custom_magento_id = magento_id
+            frappe.db.set_value(self.doctype , self.name , 'custom_magento_id' , magento_id)
+            fleetroot_reorder(self , magento_id , entity_id , address_id)
+            wallet_debit_reorder(self , magento_id)
+        frappe.db.set_value(self.doctype , self.name , 'custom_stock_entry' , 0, update_modified=False )
+    elif self.custom_manually == 1: 
+        cont =  create_draft_pick_list(self)
+        if cont : 
+            create_sales_invoice(self)
     
 def digital_wallet_account(customer_id , company): 
     account  = None   
@@ -234,7 +238,7 @@ def digital_wallet_account(customer_id , company):
         
 
 def on_update_after_submit(self, method):
-        if  self.docstatus == 1:
+        if  self.docstatus == 1 and self.custom_manually == 1:
             if self.custom_magento_status == 'On the Way':
                 validate_pick_list(self)
                 delete_previous_jv(self)
