@@ -238,7 +238,7 @@ def digital_wallet_account(customer_id , company):
         
 
 def on_update_after_submit(self, method):
-        if  self.docstatus == 1 and self.custom_manually == 1:
+        if  self.docstatus == 1 and self.custom_manually == 0:
             if self.custom_magento_status == 'On the Way':
                 validate_pick_list(self)
                 delete_previous_jv(self)
