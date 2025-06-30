@@ -1590,3 +1590,16 @@ def update_address():
             "status": "error",
             "message": str(e)
         }
+        
+@frappe.whitelist()
+def get_address_id(customer_id, add_type):
+    query = frappe.db.sql("""
+                            select ta.name as 'Address ERP ID', tc.name as 'Customer ERP ID', tc.custom_customer_id as 'Magento ID', ta.address_type
+                            from tabDynamic Link tdl 
+                            inner join tabCustomer tc on tdl.link_name = tc.name
+                            inner join tabAddress ta on tdl.parent = ta.name
+                            where tc.custom_customer_id  = %s and ta.address_type = %s
+                          
+                          """,(customer_id, add_type,), as_dict=True)
+    
+    return query
