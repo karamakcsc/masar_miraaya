@@ -5,9 +5,11 @@ from masar_miraaya.api import base_data , request_with_history
 def validate(self, method):
     roles = (frappe.get_roles(frappe.session.user))
     if ('API Integration' not in roles) or frappe.session.user == 'Administrator':
-        update_customer_address(self)
+        update_customer_address(self, internal=True)
 
-def update_customer_address(self):
+def update_customer_address(self, internal=False):
+    if not internal:
+        return
     customer_name = None
     customer_id = None
     if self.links:        

@@ -1542,3 +1542,51 @@ def update_points():
             "status": "error",
             "message": str(e)
         }
+        
+
+@frappe.whitelist(methods=['POST'])
+def update_address():
+    try:
+        magento_id = frappe.form_dict.get("magento_id")
+        if not magento_id:
+            frappe.throw("Magento ID is required")
+
+        data = frappe.form_dict.get("data")
+        if not data:
+            frappe.throw("Missing 'data' field in request")
+        
+        customer_name = frappe.get_value("Customer", {"custom_customer_id": magento_id}, "name")
+        if not customer_name:
+            frappe.throw(f"Customer with Magento ID {magento_id} not found")
+            
+        customer_doc = frappe.get_doc("Customer", customer_name)
+        if not customer_doc.customer_primary_address:
+            frappe.throw(f"Customer {customer_name} with Magento ID {magento_id} does not have a primary address set")
+            
+        address_doc = frappe.get_doc("Address", customer_doc.customer_primary_address)
+        if not address_doc:
+            frappe.throw(f"Address for Customer ID {magento_id} not found")
+
+        for key, value in data.items():
+            if hasattr(address_doc, key):
+                setattr(address_doc, key, value)
+            else:
+                frappe.throw(f"Invalid field '{key}' in data for Address")
+
+        address_doc.save()
+        frappe.db.commit()
+
+        return {
+            "status": "success",
+            "magento_id": magento_id,
+            "message": f"Address updated successfully for customer {customer_name}",
+            "data": data
+        }
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Update Address by Magento ID Error")
+        frappe.response["http_status_code"] = 417
+        return {
+            "status": "error",
+            "message": str(e)
+        }
