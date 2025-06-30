@@ -1601,7 +1601,14 @@ def get_address_id(customer_id, add_type):
             ta.name AS address_erp_id, 
             tc.name AS customer_erp_id, 
             tc.custom_customer_id AS magento_id, 
-            ta.address_type
+            ta.address_type,
+            ta.address_title AS 'Address Title',
+            ta.address_line1 AS 'Address1',
+            ta.city AS 'City',
+            ta.country AS 'Country',
+            ta.phone AS 'Phone',
+            ta.custom_first_name AS 'First Name',
+            ta.custom_last_name AS 'Last Name'
         FROM 
             `tabDynamic Link` tdl
         INNER JOIN `tabCustomer` tc ON tdl.link_name = tc.name
