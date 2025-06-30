@@ -1593,13 +1593,22 @@ def update_address():
         
 @frappe.whitelist()
 def get_address_id(customer_id, add_type):
+    if not customer_id or not add_type:
+        frappe.throw(_("Missing customer_id or address_type"))
+
     query = frappe.db.sql("""
-                            select ta.name as 'Address ERP ID', tc.name as 'Customer ERP ID', tc.custom_customer_id as 'Magento ID', ta.address_type
-                            from tabDynamic Link tdl 
-                            inner join tabCustomer tc on tdl.link_name = tc.name
-                            inner join tabAddress ta on tdl.parent = ta.name
-                            where tc.custom_customer_id  = %s and ta.address_type = %s
-                          
-                          """,(customer_id, add_type,), as_dict=True)
-    
+        SELECT 
+            ta.name AS address_erp_id, 
+            tc.name AS customer_erp_id, 
+            tc.custom_customer_id AS magento_id, 
+            ta.address_type
+        FROM 
+            `tabDynamic Link` tdl
+        INNER JOIN `tabCustomer` tc ON tdl.link_name = tc.name
+        INNER JOIN `tabAddress` ta ON tdl.parent = ta.name
+        WHERE 
+            tc.custom_customer_id = %s 
+            AND ta.address_type = %s
+    """, (customer_id, add_type), as_dict=True)
+
     return query
