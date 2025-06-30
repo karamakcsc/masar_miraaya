@@ -1598,10 +1598,10 @@ def get_address_id(customer_id, add_type):
 
     query = frappe.db.sql("""
         SELECT 
-            ta.name AS address_erp_id, 
-            tc.name AS customer_erp_id, 
-            tc.custom_customer_id AS magento_id, 
-            ta.address_type,
+            ta.name AS 'Address ERP ID', 
+            tc.name AS 'ERP ID', 
+            tc.custom_customer_id AS 'Magento ID', 
+            ta.address_type AS 'Address Type',
             ta.address_title AS 'Address Title',
             ta.address_line1 AS 'Address1',
             ta.city AS 'City',
