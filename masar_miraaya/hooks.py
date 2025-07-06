@@ -455,7 +455,9 @@ fixtures = [
                 "Sales Order-custom_magento_address",
                 "Sales Order-custom_magento_billing_address",
                 "Sales Order-custom_column_break_7osg6",
-                "Sales Order-custom_magento_shipping_address"
+                "Sales Order-custom_magento_shipping_address",
+                "Sales Order-custom_magento_extra_data_sec",
+                "Sales Order-custom_magento_extra_data"
             ]
         ]
     ]},
