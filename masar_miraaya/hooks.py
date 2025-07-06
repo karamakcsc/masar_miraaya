@@ -215,9 +215,9 @@ scheduler_events = {
 		"masar_miraaya.notifications.batch_expiry.near_expiry_batches",
         "masar_miraaya.api.customer_notification"
 	],
-	"hourly": [
-		"masar_miraaya.jobs._reorder_item.reorder_item"
-	],
+	# "hourly": [
+	# 	"masar_miraaya.jobs._reorder_item.reorder_item"
+	# ],
 	# "weekly": [
 	# 	"masar_miraaya.tasks.weekly"
 	# ],
@@ -450,7 +450,12 @@ fixtures = [
                 "Payment Entry Reference-custom_sales_order",
                 "Customer-custom_is_loyalty_points",
                 "Sales Order-custom_manually",
-                "Sales Invoice-custom_manually"
+                "Sales Invoice-custom_manually",
+                "Purchase Receipt-custom_is_publish",
+                "Sales Order-custom_magento_address",
+                "Sales Order-custom_magento_billing_address",
+                "Sales Order-custom_column_break_7osg6",
+                "Sales Order-custom_magento_shipping_address"
             ]
         ]
     ]},

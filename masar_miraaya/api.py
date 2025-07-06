@@ -1594,7 +1594,7 @@ def update_address():
 @frappe.whitelist()
 def get_address_id(customer_id, add_type):
     if not customer_id or not add_type:
-        frappe.throw(_("Missing customer_id or address_type"))
+        frappe.throw("Missing customer_id or address_type")
 
     query = frappe.db.sql("""
         SELECT 

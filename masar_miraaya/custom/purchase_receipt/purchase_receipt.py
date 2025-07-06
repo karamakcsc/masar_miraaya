@@ -5,44 +5,35 @@ from frappe.query_builder.functions import  Sum
 
 
 def on_submit(self, method):
-    update_stock(self , '+')
+    if self.custom_is_publish:
+        update_stock(self , '+')
+    pass
 
 def on_cancel(self, method):
-    update_stock(self , '-')
+    if self.custom_is_publish:
+        update_stock(self , '-')
+    pass
     
     
-# def get_qty_items_details(self):
-#     doc = frappe.qb.DocType(self.doctype)
-#     child = frappe.qb.DocType('Purchase Receipt Item')
-#     return (
-#         frappe.qb.from_(doc).join(child).on(child.parent == doc.name)
-#         .where(doc.name == self.name)
-#         .groupby(child.item_code)
-#         .select(
-#             (child.item_code) , (Sum(child.qty).as_('qty'))
-#         )
-#     ).run(as_dict = True)  
-
 def update_stock(self , operation):
         base_url, headers = base_data("magento")
         url = base_url + "/rest/V1/inventory/source-items"
         item_list = []
         sql = get_qty_items_details(self.doctype, "Purchase Receipt Item", self.name)
-        # frappe.throw(f"Item: {sql}")
         
         if sql:
             for item in sql:
                 item_doc = frappe.get_doc("Item", item.item_code)
-                if item_doc.custom_is_publish == 0:
+                if item_doc.custom_is_publish == 0: # this item is not published in magento
                     continue
                 item_stock = get_magento_item_stock(item.item_code)
                 stock_qty = item_stock.get('qty') if item_stock.get('qty') else 0
                 if operation == '+': 
-                    stock = stock_qty + item.qty
+                    stock = stock_qty + item.qty # if submit add the qty to stock
                 elif operation == '-':
                     if stock_qty < item.qty:
                         frappe.throw(f"The Qty: {item.qty}, is More than the Stock Qty in Magento: {stock_qty}") 
-                    stock = stock_qty - item.qty
+                    stock = stock_qty - item.qty # if cancel subtract the qty from stock
                 item_list.append({
                     "sku": item.item_code,
                     "source_code": "default",
