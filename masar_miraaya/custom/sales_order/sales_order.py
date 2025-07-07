@@ -157,11 +157,18 @@ def create_sales_invoice(self):
             doc.set_posting_time = 1
             doc.posting_date = self.transaction_date  # 2024-12-21
             doc.due_date = self.transaction_date
+            
             for item in doc.items: 
-                item.enable_deferred_revenue = 1 
-                item.deferred_revenue_account = deferred_revenue_acc
-                item.service_start_date = self.transaction_date
-                item.service_end_date = self.transaction_date
+                if self.custom_manually == 0:
+                    item.enable_deferred_revenue = 1 
+                    item.deferred_revenue_account = deferred_revenue_acc
+                    item.service_start_date = self.transaction_date
+                    item.service_end_date = self.transaction_date
+                else: 
+                    item.enable_deferred_revenue = 0
+                    item.deferred_revenue_account = None
+                    item.service_start_date = None
+                    item.service_end_date = None
                 if item.qty == 0: 
                     item.qty = frappe.db.get_value('Sales Order Item' , item.so_detail , 'qty')
             doc.save()
