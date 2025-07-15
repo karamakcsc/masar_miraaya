@@ -1619,3 +1619,46 @@ def get_address_id(customer_id, add_type):
     """, (customer_id, add_type), as_dict=True)
 
     return query
+
+@frappe.whitelist(methods=["POST"])
+def lp_management():
+    try:
+        magento_id = frappe.form_dict.get("magento_id")
+        if not magento_id:
+            frappe.throw("Magento ID is required")
+
+        data = frappe.form_dict.get("data")
+        if not data:
+            frappe.throw("Missing 'data' field in request")
+        
+        customer_name = frappe.get_value("Customer", {"custom_customer_id": magento_id}, "name")
+        if not customer_name:
+            frappe.throw(f"Customer with Magento ID {magento_id} not found")
+            
+        customer_doc = frappe.get_doc("Customer", customer_name)
+        
+        new_lpm = frappe.new_doc("Loyality Points Management")
+        new_lpm.customer = customer_doc.name
+        new_lpm.custom_customer_id = customer_doc.custom_customer_id
+        new_lpm.customer_name = customer_doc.customer_name
+        for key, value in data.items():
+            if hasattr(new_lpm, key):
+                setattr(new_lpm, key, value)
+            else:
+                frappe.throw(f"Invalid field '{key}' in data for Address")
+        new_lpm.insert(ignore_permissions=True)
+        new_lpm.submit()
+        
+        return {
+            "status": "success",
+            "magento_id": magento_id,
+            "message": f"Loyality Points Management created successfully for customer {customer_name}",
+            "data": data
+        }
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Loyality Points Management Error")
+        frappe.response["http_status_code"] = 417
+        return {
+            "status": "error",
+            "message": str(e)
+        }
