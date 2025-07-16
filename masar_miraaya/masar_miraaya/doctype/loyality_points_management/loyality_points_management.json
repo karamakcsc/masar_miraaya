@@ -19,6 +19,11 @@
   "amount",
   "column_break_ptya",
   "user_remarks",
+  "accounts_details_section",
+  "lp_expense_account",
+  "deferred_revenue_account",
+  "column_break_euqb",
+  "lp_account",
   "section_break_peiy",
   "amended_from",
   "column_break_pzzl",
@@ -125,7 +130,8 @@
   {
    "fieldname": "user_remarks",
    "fieldtype": "Small Text",
-   "label": "User Remarks"
+   "label": "User Remarks",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_pzzl",
@@ -138,13 +144,48 @@
    "hidden": 1,
    "label": "Naming Series",
    "options": "LP-.YYYY.-"
+  },
+  {
+   "fieldname": "accounts_details_section",
+   "fieldtype": "Section Break",
+   "label": "Accounts Details"
+  },
+  {
+   "fieldname": "column_break_euqb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "deferred_revenue_account",
+   "fieldtype": "Link",
+   "label": "Deferred Revenue Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lp_expense_account",
+   "fieldtype": "Link",
+   "label": "Loyality Points Expense Account",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lp_account",
+   "fieldtype": "Link",
+   "label": "Loyality Points Account",
+   "options": "Account",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [],
- "modified": "2025-07-14 16:13:42.640574",
+ "links": [
+  {
+   "link_doctype": "Journal Entry",
+   "link_fieldname": "custom_reference_doctype"
+  }
+ ],
+ "modified": "2025-07-15 16:34:36.879785",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Loyality Points Management",
