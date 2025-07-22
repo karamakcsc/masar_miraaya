@@ -213,7 +213,8 @@ scheduler_events = {
 	# ],
 	"daily": [
 		"masar_miraaya.notifications.batch_expiry.near_expiry_batches",
-        "masar_miraaya.api.customer_notification"
+        "masar_miraaya.api.customer_notification",
+        "masar_miraaya.jobs._reorder_item.reorder_item"
 	],
 	# "hourly": [
 	# 	"masar_miraaya.jobs._reorder_item.reorder_item"

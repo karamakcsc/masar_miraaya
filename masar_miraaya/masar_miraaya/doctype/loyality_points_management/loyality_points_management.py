@@ -44,15 +44,12 @@ class LoyalityPointsManagement(Document):
 		return lp_account
 
 	def get_accounts_form_company(self, with_cost_center=False):
-		account = frappe.db.get_value("Company", self.company, ["custom_lp_expense_account", "default_deferred_revenue_account, cost_center"], as_dict=True)
+		account = frappe.db.get_value("Company", self.company, ["custom_lp_expense_account", "cost_center"], as_dict=True)
 		if with_cost_center == False:
 			if account:
 				if not account.custom_lp_expense_account:
 					frappe.throw(_(f"Set Loyalty Points Expense Account in Company {self.company}"))
-				if not account.default_deferred_revenue_account:
-					frappe.throw(_(f"Set Deferred Revenue Account in Company {self.company}"))
 				self.lp_expense_account = account.custom_lp_expense_account
-				self.deferred_revenue_account = account.default_deferred_revenue_account
 		if with_cost_center == True:
 			if account.cost_center:
 				return account.cost_center
@@ -60,7 +57,6 @@ class LoyalityPointsManagement(Document):
 	def create_journal_entry(self):
 		lp_expense_account = self.lp_expense_account
 		lp_account = self.lp_account
-		deferred_revenue_account = self.deferred_revenue_account
 		cost_center = self.get_accounts_form_company(with_cost_center=True)
 		party_type = "Customer"
 		party = self.loyality_points  #### 
@@ -73,8 +69,8 @@ class LoyalityPointsManagement(Document):
 				debit_amount = float(self.amount)
 				credit_amount = float(self.amount)
 		elif self.transaction_type == "Deduction":			# If order is canceled in Magento
-			debit_account = deferred_revenue_account
-			credit_account = lp_account
+			debit_account = lp_account
+			credit_account = lp_expense_account
 			debit_amount = float(self.amount)
 			credit_amount = float(self.amount)
 		
@@ -99,13 +95,12 @@ class LoyalityPointsManagement(Document):
 		credit_accounts = {
 					"account": credit_account,
 					"credit_in_account_currency": credit_amount,
-					"credit" :credit_amount,
+					"credit" : credit_amount,
 					"cost_center": cost_center,
 					"customer": dimension_account,
 					"user_remark": user_remarks
-					
 				}
-		creadit_account_doc = frappe.get_doc('Account' ,credit_account )
+		creadit_account_doc = frappe.get_doc('Account', credit_account )
 		if creadit_account_doc.account_type in ['Receivable', 'Payable']:
 			credit_accounts["party_type"] = party_type
 			credit_accounts["party"] = party
@@ -114,4 +109,4 @@ class LoyalityPointsManagement(Document):
 		
 		jv.save(ignore_permissions=True)
 		jv.submit()
-		frappe.msgprint("Journal Entry has been Created Successfully.", alert=True, indicator='green')
+		frappe.msgprint("Journal Entry has been Created Successfully.", alert=True, indicator="green")

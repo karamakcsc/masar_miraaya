@@ -102,7 +102,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Transaction Type",
-   "options": "\nAddition\nDeduction\nAdjustment",
+   "options": "\nAddition\nDeduction",
    "reqd": 1
   },
   {
@@ -185,7 +185,7 @@
    "link_fieldname": "custom_reference_doctype"
   }
  ],
- "modified": "2025-07-15 16:34:36.879785",
+ "modified": "2025-07-16 10:50:22.073073",
  "modified_by": "Administrator",
  "module": "Masar Miraaya",
  "name": "Loyality Points Management",

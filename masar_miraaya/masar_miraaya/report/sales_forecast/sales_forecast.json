@@ -1,0 +1,37 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2025-07-22 13:49:53.655736",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "Mirraya",
+ "letterhead": null,
+ "modified": "2025-07-22 13:49:53.655736",
+ "modified_by": "Administrator",
+ "module": "Masar Miraaya",
+ "name": "Sales Forecast",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Sales Invoice",
+ "report_name": "Sales Forecast",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "API Integration"
+  },
+  {
+   "role": "Sales User"
+  }
+ ],
+ "timeout": 0
+}
