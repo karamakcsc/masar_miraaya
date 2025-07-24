@@ -17,7 +17,7 @@ def reorder_item():
 	# if initial setup not completed, return
 	if not (frappe.db.a_row_exists("Company") and frappe.db.a_row_exists("Fiscal Year")):
 		return
-
+	# cint is used to convert the value to integer
 	if cint(frappe.db.get_value("Stock Settings", None, "auto_indent")):
 		return _reorder_item()
 
@@ -27,7 +27,7 @@ def _reorder_item():
 	warehouse_company = frappe._dict(
 		frappe.db.sql(
 			"""select name, company from `tabWarehouse`
-		where disabled=0"""
+			where disabled=0"""
 		)
 	)
 	default_company = (
@@ -61,10 +61,6 @@ def _reorder_item():
 			projected_qty = flt(item_warehouse_projected_qty.get(kwargs.item_code, {}).get(kwargs.warehouse))
 
 		if (reorder_level or reorder_qty) and projected_qty <= reorder_level:
-			# deficiency = reorder_level - projected_qty
-			# if deficiency > reorder_qty:
-			# 	reorder_qty = deficiency
-
 			company = warehouse_company.get(kwargs.warehouse) or default_company
 
 			material_requests[kwargs.material_request_type].setdefault(company, []).append(
@@ -77,14 +73,35 @@ def _reorder_item():
 			)
 
 	for item_code, reorder_levels in items_to_consider.items():
+		warehouse = frappe.db.get_value(
+			'Item Default',
+			{'parent': item_code},
+			'default_warehouse'
+		)
 		for d in reorder_levels:
 			if d.has_variants:
+				continue
+
+			actual_qty = frappe.db.sql(
+				"""SELECT SUM(actual_qty) FROM `tabBin` WHERE item_code = %s AND warehouse = %s""",
+				(item_code, warehouse),
+			)[0][0] or 0.0
+
+			if d.custom_max_qty is not None:
+				calculated_reorder_qty = max(flt(d.custom_max_qty) - flt(actual_qty), 0)
+			else:
+				calculated_reorder_qty = None
+    
+			if calculated_reorder_qty is not None:
+				d.warehouse_reorder_qty = calculated_reorder_qty
+    
+			if not d.warehouse_reorder_qty:
 				continue
 
 			add_to_material_request(
 				item_code=item_code,
 				warehouse=d.warehouse,
-				reorder_level=d.warehouse_reorder_level,
+				reorder_level=calculated_reorder_qty,
 				reorder_qty=d.warehouse_reorder_qty,
 				material_request_type=d.material_request_type,
 				warehouse_group=d.warehouse_group,
@@ -120,6 +137,7 @@ def get_items_for_reorder() -> dict[str, list]:
 			reorder_table.material_request_type,
 			reorder_table.warehouse_reorder_level,
 			reorder_table.warehouse_reorder_qty,
+			reorder_table.custom_max_qty,
 			item_table.name,
 			item_table.stock_uom,
 			item_table.purchase_uom,
@@ -211,7 +229,7 @@ def get_item_warehouse_projected_qty(items_to_consider):
 
 	return item_warehouse_projected_qty
 
-
+#####################################################################################################################################
 def create_material_request(material_requests):
 	"""Create indent on reaching reorder level"""
 	mr_list = []

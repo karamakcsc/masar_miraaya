@@ -7,6 +7,7 @@ def validate(self, method):
     if (self.custom_is_publish and ('API Integration' not in roles)) or (self.custom_is_publish and frappe.session.user == 'Administrator' ):
         magento = frappe.get_doc('Magento Sync')
         if magento.sync == 0 :
+            set_reorder_qty(self)
             create_new_item(self)
         else: 
             frappe.throw("Set Sync in Magento Sync disabled. To Update/Create in magento.")
@@ -292,24 +293,32 @@ def base_item_data(self):
         })   
         return json_data
     
-# @frappe.whitelist()
-# def get_actual_qty_value(item_code):
-#     warehouse = frappe.db.get_value(
-#         'Item Default',
-#         {'parent': item_code},
-#         'default_warehouse'
-#     )
-#     item_actual_qty = frappe.db.sql("""
-#         SELECT actual_qty 
-#         FROM `tabBin` 
-#         WHERE item_code = %s AND warehouse = %s
-#     """, (item_code, warehouse), as_dict=True)
+def set_reorder_qty(self):
+    warehouse = None
+    if not self.item_defaults:
+        frappe.throw("Please set the default company and warehouse.")
+    for row in self.item_defaults:
+        if not row.default_warehouse:
+            frappe.throw("Please set the default warehouse.")
+        warehouse = row.default_warehouse
+        break
+
+    if not warehouse:
+        frappe.throw("Please set the default warehouse for the item")
+        
+    item_actual_qty = frappe.db.get_value(
+        "Bin",
+        {
+            "item_code": self.name,
+            "warehouse": warehouse
+        },
+        "actual_qty"
+    ) or 0
     
-#     if item_actual_qty:
-#         actual_qty = item_actual_qty[0].get('actual_qty', 0)
-#     else:
-#         actual_qty = 0
-#     return actual_qty
+    if self.reorder_levels:
+        for row in self.reorder_levels:
+            if row.warehouse == warehouse and row.custom_max_qty is not None:
+                row.warehouse_reorder_qty = row.custom_max_qty - item_actual_qty
 
 @frappe.whitelist()
 def get_item_price(item_code, uom):
