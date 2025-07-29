@@ -72,19 +72,14 @@ def _reorder_item():
 				}
 			)
 
-	for item_code, reorder_levels in items_to_consider.items():
-		warehouse = frappe.db.get_value(
-			'Item Default',
-			{'parent': item_code},
-			'default_warehouse'
-		)
+	for item_code, reorder_levels in items_to_consider.items(): 
 		for d in reorder_levels:
 			if d.has_variants:
 				continue
-
+			warehouse = d.warehouse ## Get the warehouse from (Request-For)
 			actual_qty = frappe.db.sql(
 				"""SELECT SUM(actual_qty) FROM `tabBin` WHERE item_code = %s AND warehouse = %s""",
-				(item_code, warehouse),
+				(item_code, warehouse), ## Get the actual qty for the item from the warehouse
 			)[0][0] or 0.0
 
 			if d.custom_max_qty is not None:

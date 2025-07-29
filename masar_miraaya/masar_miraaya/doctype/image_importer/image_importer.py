@@ -81,6 +81,7 @@ class ImageImporter(Document):
                 
                 if image["suffix"] == "1":
                     frappe.db.set_value(self.upload_to, item_code, "image", file_url)
+                    frappe.db.commit()
                 self.sync_image_with_magento(
                     file_url=file_url , 
                     suffix=image["suffix"], 
