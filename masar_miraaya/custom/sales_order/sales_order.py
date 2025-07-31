@@ -19,7 +19,7 @@ def get_payment_channel_amount(child):
     return payment_chnnel_amount
 
 def validate(self, method):
-    cach_and_payment_channel_validate(self)
+    cash_and_payment_channel_validate(self)
     validation_payment_channel_amount(self)
 
 
@@ -41,9 +41,12 @@ def wallet_balance_validation(self):
                     Please Ensure That The Amount Does Not Exceed The Wallet Balance."""
                   )
         
-def cach_and_payment_channel_validate(self): 
-    if float(self.custom_cash_on_delivery_amount) > 0 and float(self.custom_is_cash_on_delivery) == 0: 
-            frappe.throw(f" Cash on Delivery Amount is {self.custom_cash_on_delivery_amount} so Is Cach on Delivery must be checked")
+def cash_and_payment_channel_validate(self):
+    if not self.custom_total_amount:
+        frappe.throw("Please set the cash on delivery amount or payment channel amount.")
+    if self.custom_cash_on_delivery_amount is not None: 
+        if float(self.custom_cash_on_delivery_amount) > 0 and float(self.custom_is_cash_on_delivery) == 0: 
+                frappe.throw(f" Cash on Delivery Amount is {self.custom_cash_on_delivery_amount} so Is Cash on Delivery must be checked")
     if (
             (
             ( float(self.custom_payment_channel_amount)  if self.custom_payment_channel_amount else 0 )
@@ -52,7 +55,7 @@ def cach_and_payment_channel_validate(self):
         ) != float(self.custom_total_amount)
     ):
         frappe.throw(f"""
-                     Total Amount Must be Equal to Cach on Delivery Amount and Payment Channel Amount. 
+                     Total Amount Must be Equal to Cash on Delivery Amount and Payment Channel Amount. 
                      Cash on Delivery Amount : {self.custom_cash_on_delivery_amount}  
                      Payment Chaannel Amount: { self.custom_payment_channel_amount}
                      So Total Amount must be {
